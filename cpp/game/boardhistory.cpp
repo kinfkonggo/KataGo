@@ -259,13 +259,9 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
     cout << "Why you can pass\n";
     endGamePla(C_EMPTY);
   }
-#if RULE==STANDARD
-  if ((board.getMovePriorityAssumeLegal(movePla, moveLoc,false) == MP_FIVE))
-#else
   if ((board.getMovePriorityAssumeLegal(movePla, moveLoc, true) == MP_FIVE))
-#endif
     endGamePla(movePla);
-  else if (board.movenum >= (board.x_size*board.y_size-10))endGamePla(C_EMPTY);
+  else if (board.movenum >= (board.x_size*board.y_size))endGamePla(C_EMPTY);
 
 }
 

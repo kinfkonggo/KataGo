@@ -656,20 +656,7 @@ void NNEvaluator::evaluate(
     int legalCount = 0;
     for (int i = 0; i < policySize; i++) {
       Loc loc = NNPos::posToLoc(i, xSize, ySize, nnXLen, nnYLen);
-#if RULE==STANDARD
-      MPlist[i] = board.getMovePriority(nextPlayer, loc, false, true);
-#else
       MPlist[i] = board.getMovePriority(nextPlayer, loc, true, true);
-#endif
-      if (myvcfres == 1 && myvcfloc == loc)
-      {
-        if (MPlist[i] == MP_ILLEGAL)
-        {
-          cout << "Bad vcf  "<<Location::getX(loc,15)<<"  " << Location::getY(loc, 15)<<endl;
-          Board::printBoard(cout, board, Board::NULL_LOC, NULL);
-        }
-        if (MPlist[i] == MP_NORMAL)MPlist[i] = MP_VCF;
-      }
 
       isLegal[i] = (MPlist[i] != MP_ILLEGAL);
     }
@@ -685,8 +672,6 @@ void NNEvaluator::evaluate(
 
       if (MPlist[i] == MP_FIVE)policyValue += 1000;
       else if (MPlist[i] == MP_OPPOFOUR)policyValue += 800;
-      else if (MPlist[i] == MP_MYLIFEFOUR)policyValue += 600;
-      else if (MPlist[i] == MP_VCF)policyValue += 400;
 
       policy[i] = policyValue;
       if (policyValue > maxPolicy)

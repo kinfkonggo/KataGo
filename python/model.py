@@ -1426,7 +1426,7 @@ class Target_vars:
         self.td_value_loss +
         #0.3*self.scoremean_loss +
         #0.3*self.lead_loss +
-        0.2*self.variance_time_loss +
+        #0.2*self.variance_time_loss +
         #0.3*self.scorebelief_pdf_loss +
         #0.3*self.scorebelief_cdf_loss +
         #0.3*self.ownership_loss +

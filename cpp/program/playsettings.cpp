@@ -37,6 +37,10 @@ PlaySettings PlaySettings::loadForGatekeeper(ConfigParser& cfg) {
 
 PlaySettings PlaySettings::loadForSelfplay(ConfigParser& cfg) {
   PlaySettings playSettings;
+
+  playSettings.allowResignation = cfg.getBool("allowResignation");
+  playSettings.resignThreshold = cfg.getDouble("resignThreshold", -1.0, 0.0);  // Threshold on [-1,1], regardless of winLossUtilityFactor
+  playSettings.resignConsecTurns = cfg.getInt("resignConsecTurns", 1, 100);
   playSettings.initGamesWithPolicy = cfg.getBool("initGamesWithPolicy");
   playSettings.policyInitAreaProp = cfg.contains("policyInitAreaProp") ? cfg.getDouble("policyInitAreaProp",0.0,1.0) : 0.04;
   playSettings.startPosesPolicyInitAreaProp = cfg.contains("startPosesPolicyInitAreaProp") ? cfg.getDouble("startPosesPolicyInitAreaProp",0.0,1.0) : 0.0;

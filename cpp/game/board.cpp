@@ -173,6 +173,16 @@ void Board::initHash()
   IS_ZOBRIST_INITALIZED = true;
 }
 
+int Board::getLegalY(int x) const {
+  for(int y=y_size-1;y>=0;y--) 
+  {
+    Loc loc = Location::getLoc(x, y, x_size);
+    if(colors[loc] == C_EMPTY)
+      return y;
+  }
+  return -1;
+}
+
 bool Board::isOnBoard(Loc loc) const {
   return loc >= 0 && loc < MAX_ARR_SIZE && colors[loc] != C_WALL;
 }
@@ -186,21 +196,19 @@ bool Board::isLegal(Loc loc, Player pla, bool isStrict) const
     return !isStrict;
   if(loc < 0 ||loc >= MAX_ARR_SIZE ||(colors[loc] != C_EMPTY))return false;
   if (!isStrict)return true;
-  if (loc == PASS_LOC)return false;
-#if RULE==RENJU
-  if (pla == C_BLACK && isForbidden(loc))return false;
-#endif
-  return true;
+
+  int x = Location::getX(loc, x_size);
+  int y = Location::getY(loc, x_size);
+  return y == getLegalY(x);
+
+
 }
 
 MovePriority Board::getMovePriority(Player pla, Loc loc, bool isSixWin, bool isPassForbidded)const
 {
   if (loc == PASS_LOC)return isPassForbidded ? MP_ILLEGAL : MP_NORMAL;
-  if (!isLegal(loc, pla, false))return MP_ILLEGAL;
-  MovePriority MP = getMovePriorityAssumeLegal(pla, loc, isSixWin);
-#if RULE==RENJU
   if (!isLegal(loc, pla, true))return MP_ILLEGAL;
-#endif // RENJU
+  MovePriority MP = getMovePriorityAssumeLegal(pla, loc, isSixWin);
   return MP;
 }
 MovePriority Board::getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const
@@ -221,15 +229,10 @@ MovePriority Board::getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, 
   bool isMyLife1, isMyLife2, isOppLife1, isOppLife2;
   int myConNum = connectionLengthOneDirection(pla, loc, adj, isSixWin, isMyLife1) + connectionLengthOneDirection(pla, loc, -adj, isSixWin, isMyLife2) + 1;
   int oppConNum = connectionLengthOneDirection(opp, loc, adj, isSixWin, isOppLife1) + connectionLengthOneDirection(opp, loc, -adj, isSixWin, isOppLife2) + 1;
-  if (myConNum == 5 || (myConNum > 5 && isSixWin))return MP_FIVE;
-#if RULE==RENJU
-  if ((oppConNum == 5 && opp == P_BLACK) || (oppConNum >= 5 && opp == P_WHITE))return MP_OPPOFOUR;
-#else
-  if (oppConNum == 5 || (oppConNum > 5 && isSixWin))return MP_OPPOFOUR;
-#endif //  RENJU
-
-
-  if (myConNum == 4 && isMyLife1&&isMyLife2)return MP_MYLIFEFOUR;
+  if(myConNum == 4 || (myConNum > 4 && isSixWin))
+    return MP_FIVE;
+  if(oppConNum == 4 || (oppConNum > 4 && isSixWin))
+    return MP_OPPOFOUR;
   return MP_NORMAL;
 
 }
@@ -253,14 +256,6 @@ int Board::connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isS
         tmploc += adj;
         if (isOnBoard(tmploc) && colors[tmploc] == pla)isLife = false;
       }
-#if RULE==RENJU
-      if (pla == C_BLACK)
-      {
-
-        tmploc += adj;
-        if (isOnBoard(tmploc) && colors[tmploc] == C_BLACK)isLife = false;
-      }
-#endif
       break;
     }
     else break;
@@ -270,47 +265,6 @@ int Board::connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isS
 
 
 }
-#if RULE==RENJU
-bool Board::isForbidden(Loc loc) const
-{
-
-  if (loc == PASS_LOC)
-  {
-    return false;
-  }
-  if (!(loc >= 0 &&
-    loc < MAX_ARR_SIZE &&
-    (colors[loc] == C_EMPTY)))return false;
-  if (x_size == y_size)
-  {
-    int x = Location::getX(loc, x_size);
-    int y = Location::getY(loc, x_size);
-    int nearbyBlack = 0;
-              //x++; y++;
-    for (int i = std::max(x - 2, 0); i <= std::min(x + 2, x_size - 1); i++)
-      for (int j = std::max(y - 2, 0); j <= std::min(y + 2, y_size - 1); j++)
-      {
-        int xd = i - x;
-        int yd = j - y;
-        xd = xd > 0 ? xd : -xd;
-        yd = yd > 0 ? yd : -yd;
-        if (((xd + yd) != 3) && (colors[Location::getLoc(i, j, x_size)] == C_BLACK))nearbyBlack++;
-      }
-
-    if (nearbyBlack >= 2)
-    {
-      CForbiddenPointFinder fpf(x_size);
-      for (int x = 0; x < x_size; x++)
-        for (int y = 0; y < y_size; y++)
-        {
-          fpf.SetStone(x, y, colors[Location::getLoc(x, y, x_size)]);
-        }
-      if (fpf.isForbiddenNoNearbyCheck(Location::getX(loc, x_size), Location::getY(loc, x_size)))return true;
-    }
-  }
-  return false;
-}
-#endif
 bool Board::isEmpty() const {
   for(int y = 0; y < y_size; y++) {
     for(int x = 0; x < x_size; x++) {

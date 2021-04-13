@@ -277,9 +277,9 @@ void NNOutput::debugPrint(ostream& out, const Board& board) {
 //-------------------------------------------------------------------------------------------------------------
 
 static void copyWithSymmetry(const float* src, float* dst, int nSize, int hSize, int wSize, int cSize, bool useNHWC, int symmetry, bool reverse) {
-  bool transpose = (symmetry & 0x4) != 0 && hSize == wSize;
+  bool transpose = 0;
   bool swapX = (symmetry & 0x2) != 0;
-  bool swapY = (symmetry & 0x1) != 0;
+  bool swapY = 0;
   if(transpose && !reverse)
     std::swap(swapX,swapY);
   if(useNHWC) {
@@ -431,38 +431,6 @@ void NNInputs::fillRowV7(
     featureStride = nnXLen * nnYLen;
     posStride = 1;
   }
-#ifdef USE_VCF_FEATURE_IF_USE_VCF
-  if (myvcfres == 0)
-  {
-    uint16_t myvcfloc1;
-    VCFsolver::run(board, nextPlayer, myvcfres, myvcfloc1);//我自己能不能直接vcf
-    myvcfloc = myvcfloc1;
-  }
-  if (oppvcfres == 0)
-  {
-    uint16_t oppvcfloc;
-    VCFsolver::run(board, getOpp(nextPlayer), oppvcfres, oppvcfloc);//如果我不走，对手能不能vcf（对手这一手是不是活三/做杀）
-  }
-  if (myvcfres == 0 || oppvcfres == 0)cout << "vcf no result";
-
-#else
-  myvcfres = 2;
-  oppvcfres = 2;
-  myvcfloc = Board::NULL_LOC;
-#endif
-
-#if RULE==RENJU
-#ifdef FORBIDDEN_FEATURE 
-
-
-  CForbiddenPointFinder fpf(board.x_size);
-  for (int x = 0; x < board.x_size; x++)
-    for (int y = 0; y < board.y_size; y++)
-    {
-      fpf.SetStone(x, y, board.colors[Location::getLoc(x, y, board.x_size)]);
-    }
-#endif
-#endif // RENJU
   for (int y = 0; y < ySize; y++) {
     for (int x = 0; x < xSize; x++) {
       int pos = NNPos::xyToPos(x, y, nnXLen);
@@ -479,94 +447,40 @@ void NNInputs::fillRowV7(
       else if (stone == opp)
         setRowBin(rowBin, pos, 2, 1.0f, posStride, featureStride);
 
-      //Features 5 - vcf
-#ifdef USE_VCF_FEATURE_IF_USE_VCF
-      if(myvcfres==1&&loc==myvcfloc)setRowBin(rowBin, pos, 5, 1.0f, posStride, featureStride);
-#endif
+      setRowBin(rowBin, pos, 3, y % 2, posStride, featureStride);
 
-#if RULE==RENJU
-#ifdef FORBIDDEN_FEATURE 
-      if (pla == C_BLACK)
-      {
-        if (fpf.isForbidden(x, y)) setRowBin(rowBin, pos, 3, 1.0f, posStride, featureStride);
-      }
-      else if (pla == C_WHITE)
-      {
-
-        if (fpf.isForbidden(x, y)) setRowBin(rowBin, pos, 4, 1.0f, posStride, featureStride);
-
-      }
-#endif 
-#endif //RENJU
     }
   }
-#ifdef USE_HISTORY
-  //Hide history from the net if a pass would end things and we're behaving as if a pass won't.
-  //Or if the game is in fact over right now!
-  bool hideHistory = true;
-  //Features 9,10,11,12,13
-  if(!hideHistory) {
-    const vector<Move>& moveHistory = hist.moveHistory;
-    size_t moveHistoryLen = moveHistory.size();
-    int numTurnsThisPhase = moveHistoryLen;
 
-    if(numTurnsThisPhase >= 1 && moveHistory[moveHistoryLen-1].pla == opp) {
-      Loc prev1Loc = moveHistory[moveHistoryLen-1].loc;
-      if(prev1Loc == Board::PASS_LOC)
-        rowGlobal[0] = 1.0;
-      else if(prev1Loc != Board::NULL_LOC) {
-        int pos = NNPos::locToPos(prev1Loc,xSize,nnXLen,nnYLen);
-        setRowBin(rowBin,pos,9, 1.0f, posStride, featureStride);
-      }
-      if(numTurnsThisPhase >= 2 && moveHistory[moveHistoryLen-2].pla == pla) {
-        Loc prev2Loc = moveHistory[moveHistoryLen-2].loc;
-        if(prev2Loc == Board::PASS_LOC)
-          rowGlobal[1] = 1.0;
-        else if(prev2Loc != Board::NULL_LOC) {
-          int pos = NNPos::locToPos(prev2Loc,xSize,nnXLen,nnYLen);
-          setRowBin(rowBin,pos,10, 1.0f, posStride, featureStride);
-        }
-        if(numTurnsThisPhase >= 3 && moveHistory[moveHistoryLen-3].pla == opp) {
-          Loc prev3Loc = moveHistory[moveHistoryLen-3].loc;
-          if(prev3Loc == Board::PASS_LOC)
-            rowGlobal[2] = 1.0;
-          else if(prev3Loc != Board::NULL_LOC) {
-            int pos = NNPos::locToPos(prev3Loc,xSize,nnXLen,nnYLen);
-            setRowBin(rowBin,pos,11, 1.0f, posStride, featureStride);
-          }
-          if(numTurnsThisPhase >= 4 && moveHistory[moveHistoryLen-4].pla == pla) {
-            Loc prev4Loc = moveHistory[moveHistoryLen-4].loc;
-            if(prev4Loc == Board::PASS_LOC)
-              rowGlobal[3] = 1.0;
-            else if(prev4Loc != Board::NULL_LOC) {
-              int pos = NNPos::locToPos(prev4Loc,xSize,nnXLen,nnYLen);
-              setRowBin(rowBin,pos,12, 1.0f, posStride, featureStride);
-            }
-            if(numTurnsThisPhase >= 5 && moveHistory[moveHistoryLen-5].pla == opp) {
-              Loc prev5Loc = moveHistory[moveHistoryLen-5].loc;
-              if(prev5Loc == Board::PASS_LOC)
-                rowGlobal[4] = 1.0;
-              else if(prev5Loc != Board::NULL_LOC) {
-                int pos = NNPos::locToPos(prev5Loc,xSize,nnXLen,nnYLen);
-                setRowBin(rowBin,pos,13, 1.0f, posStride, featureStride);
-              }
-            }
-          }
-        }
-      }
+  for(int x = 0; x < xSize; x++) {
+    int legalY = board.getLegalY(x);
+    if(legalY != -1) {
+      int pos1 = NNPos::xyToPos(x, legalY, nnXLen);
+      setRowBin(rowBin, pos1, 4, 1.0, posStride, featureStride);
+    }
+    for(int y = 0; y < ySize; y++) {
+      int pos = NNPos::xyToPos(x, y, nnXLen);
+      Loc loc = Location::getLoc(x, y, xSize);
+
+      setRowBin(rowBin, pos, 5, legalY % 2, posStride, featureStride);
+      setRowBin(rowBin, pos, 6, legalY ==-1, posStride, featureStride);
+      setRowBin(rowBin, pos, 7, y % 2, posStride, featureStride);
     }
   }
-#endif
-  rowGlobal[5] = nextPlayer == P_BLACK ? -1 : 1;
-  //rowGlobal[6] =1;// hist.rules.koRule == Rules::KO_SITUATIONAL;//situational = sixNotWin
-#ifdef USE_VCF_FEATURE_IF_USE_VCF
-  if (myvcfres == 1)rowGlobal[7] = 1.0;//can vcf
-  else if (myvcfres == 2)rowGlobal[8] = 1.0;//cannot vcf
-  if (oppvcfres == 1)rowGlobal[9] = 1.0;//opp can vcf
-  else if (oppvcfres == 2)rowGlobal[10] = 1.0;//opp cannot vcf
-#endif
+  /*
+  if(hist.moveHistory.size() != 0) {
+    Loc lastmove = hist.moveHistory[hist.moveHistory.size() - 1].loc;
+    int pos = NNPos::locToPos(lastmove, xSize, nnXLen, nnYLen);
+    setRowBin(rowBin, pos, 8, 1.0f, posStride, featureStride);
+  }*/
 
-  rowGlobal[11] = nextPlayer == P_BLACK ? -nnInputParams.noResultUtilityForWhite : nnInputParams.noResultUtilityForWhite;
+
+  rowGlobal[0] = nextPlayer == P_BLACK ? -1 : 1;
+  rowGlobal[1] = board.y_size % 2 == 0 ;
+  rowGlobal[2] = board.x_size % 2 == 0 ;
+  rowGlobal[3] = (board.x_size * board.y_size) ;
+
+  rowGlobal[4] = nextPlayer == P_BLACK ? -nnInputParams.noResultUtilityForWhite : nnInputParams.noResultUtilityForWhite;
 
   //Used for handicap play
   //Parameter 15 is used because there's actually a discontinuity in how training behavior works when this is

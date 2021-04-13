@@ -99,38 +99,18 @@ static void loadOpenings()
 
 static void getRandomOpening(Rand& rand, Board& board, Player& startPla)
 {
-  loadOpenings();
-  if (!hasLoadOpenings)return;
-  int halfSizeX = board.x_size / 2;
-  int halfSizeY = board.y_size / 2;
-  double opIdxDouble = rand.nextDouble();
-  int opIdx = -1;
-  double probTotal = 0;
-  for (int i = 0; i < openings.size(); i++)
+  int prob[] = {1, 2, 3, 4, 4, 3, 2, 1};
+  int n=rand.nextUInt(prob,7);
+  startPla = C_BLACK;
+  for(int i=0;i<n;i++) 
   {
-    probTotal += openings[i].prob;
-    if (opIdxDouble < probTotal)
-    {
-      opIdx = i;
-      break;
-    }
-  }
-  if (opIdx == -1)
-  {
-    cout << "Failed to get an opening" << endl;
-    return;
-  }
-  Opening& op = openings[opIdx];
-  startPla = op.startPla;
-  for (int i = 0; i < op.movenum; i++)
-  {
-    int x = op.isCenter ? halfSizeX + op.moves[i].first : op.moves[i].first;
-    int y = op.isCenter ? halfSizeY + op.moves[i].second : op.moves[i].second;
-    if (i % 2 == 0)
-    {
-      board.playMoveAssumeLegal(Location::getLoc(x, y, board.x_size), P_BLACK);
-    }
-    else board.playMoveAssumeLegal(Location::getLoc(x, y, board.x_size), P_WHITE);
+    int x = rand.nextUInt(board.x_size);
+    int y = board.getLegalY(x);
+    if(y<0)continue;
+    Loc loc = Location::getLoc(x, y, board.x_size);
+    board.playMoveAssumeLegal(loc,startPla);
+    startPla = getOpp(startPla);
+
   }
 }
 
@@ -1694,7 +1674,7 @@ FinishedGameData* Play::runGame(
   }
   else if (playSettings.forSelfPlay)
   {
-    initializeGameUsingBalanceRandomOpening(botB, botW, board, hist, pla, gameRand);
+   // initializeGameUsingBalanceRandomOpening(botB, botW, board, hist, pla, gameRand);
   }
 
   bool willDrawMidGame = gameRand.nextBool(0.9);
@@ -1855,7 +1835,7 @@ FinishedGameData* Play::runGame(
       }
 
       if(shouldResign)
-        hist.setWinnerByResignation(getOpp(pla));
+        hist.endGamePla(getOpp(pla));
     }
 
     int nextTurnNumber = hist.moveHistory.size();

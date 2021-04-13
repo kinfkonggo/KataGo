@@ -323,7 +323,7 @@ struct Search {
 
 private:
   static constexpr double POLICY_ILLEGAL_SELECTION_VALUE = -1e50;
-
+  double playPolicyGame(SearchThread& thread);
   double getResultUtility(double winValue, double noResultValue) const;
   double getResultUtilityFromNN(const NNOutput& nnOutput) const;
   static double getScoreStdev(double scoreMean, double scoreMeanSq);

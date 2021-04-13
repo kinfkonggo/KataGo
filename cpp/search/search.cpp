@@ -32,6 +32,10 @@ double NodeStats::getResultUtilitySum(const SearchParams& searchParams) const {
   );
 }
 
+double Search::playPolicyGame(SearchThread& thread) {
+  return 0.0;
+}
+
 double Search::getResultUtility(double winValue, double noResultValue) const {
   return (
     (2.0*winValue - 1.0 + noResultValue) * searchParams.winLossUtilityFactor +
@@ -1118,7 +1122,15 @@ double Search::getExploreSelectionValue(
       maybeApplyWideRootNoise(childUtility, nnPolicyProb, searchParams, thread, parent);
     }
   }
-
+  /*
+  if(thread!=NULL&&thread->history.moveHistory.size()!=0) {
+    Loc lastmove = thread->history.moveHistory[thread->history.moveHistory.size() - 1].loc;
+    int x_size = thread->board.x_size;
+    if(
+      (Location::getX(lastmove, x_size) == Location::getX(moveLoc, x_size)) &&
+      (Location::getY(lastmove, x_size) == Location::getY(moveLoc, x_size) + 1))
+      childUtility += 0.05;
+  }*/
   return getExploreSelectionValue(nnPolicyProb,totalChildVisits,childVisits, expectFinishMovenum,childUtility,parent.nextPla);
 }
 
@@ -1211,7 +1223,6 @@ void Search::selectBestChildToDescend(
   bool isRoot) const
 {
   assert(thread.pla == node.nextPla);
-
   double maxSelectionValue = POLICY_ILLEGAL_SELECTION_VALUE;
   bestChildIdx = -1;
   bestChildMoveLoc = Board::NULL_LOC;

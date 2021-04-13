@@ -115,6 +115,8 @@ struct Board
 
 	//Functions------------------------------------
 
+	int getLegalY(int x) const;//对于某一列x找到合法的y，若已满则返回-1
+
 	//Check if this location is on the board
 	bool isOnBoard(Loc loc) const;
 	//Is this board empty?
