@@ -1331,7 +1331,7 @@ static Loc getGameInitializationMove(
     idxChosen = gameRand.nextUInt(playSelectionValues.data(),playSelectionValues.size());
   Loc loc = locs[idxChosen];
   double p = playSelectionValues[idxChosen] / totalplaySelectionValues;
-  policyMultiplyLog += log(p);
+  policyMultiplyLog += log10(p);
   return loc;
 }
 
