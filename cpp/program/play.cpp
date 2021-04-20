@@ -99,7 +99,8 @@ static void loadOpenings()
 
 static void getRandomOpening(Rand& rand, Board& board, Player& startPla)
 {
-  int prob[] = {1, 2, 3, 4, 4, 3, 2, 1};
+  //int prob[] = {1, 2, 3, 4, 4, 3, 2, 1};
+  int prob[] = {64, 32, 16, 8, 4, 2, 1, 1};
   int n=rand.nextUInt(prob,7);
   startPla = C_BLACK;
   for(int i=0;i<n;i++) 
@@ -1311,7 +1312,7 @@ static Loc getGameInitializationMove(
     idxChosen = gameRand.nextUInt(playSelectionValues.data(),playSelectionValues.size());
   Loc loc = locs[idxChosen];
   double p = playSelectionValues[idxChosen] / totalplaySelectionValues;
-  policyMultiplyLog += log(p);
+  policyMultiplyLog += log10(p);
   return loc;
 }
 
@@ -1329,7 +1330,7 @@ static void initializeGameUsingPolicy(
 
  // pla = hist.presumedNextMovePla;
   //This gives us about 15 moves on average for 19x19.
-  double policyMultiplyLog = gameRand.nextGaussian() * 2 + 4;
+  double policyMultiplyLog = gameRand.nextGaussian() * 2 + 3;
   for(int i = 0; i<100; i++) {
     if (policyMultiplyLog < 0)return;
     Loc loc = getGameInitializationMove(botB, botW, board, hist, pla, buf, gameRand, temperature, policyMultiplyLog);
@@ -1815,7 +1816,9 @@ FinishedGameData* Play::runGame(
     //Check for draw
     if (shouldDraw)hist.endGamePla( C_EMPTY);
     //Check for resignation
-    if(playSettings.allowResignation && historicalMctsWinLossValues.size() >= playSettings.resignConsecTurns) {
+    if(
+      willDrawMidGame&&playSettings.allowResignation &&
+      historicalMctsWinLossValues.size() >= playSettings.resignConsecTurns) {
       if(playSettings.resignThreshold > 0 || std::isnan(playSettings.resignThreshold))
         throw StringError("playSettings.resignThreshold > 0 || std::isnan(playSettings.resignThreshold)");
 

@@ -46,7 +46,7 @@ rule must be 1, 2, 3
 
 //#include <afxwin.h>
 
-#define MAX_FLEN 10//Board::MAX_LEN, Normal gomoku/renju games are on 15x15 board
+#define MAX_FLEN 13//Board::MAX_LEN, Normal gomoku/renju games are on 15x15 board
 
 
 

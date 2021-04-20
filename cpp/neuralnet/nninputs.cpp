@@ -478,7 +478,7 @@ void NNInputs::fillRowV7(
   rowGlobal[0] = nextPlayer == P_BLACK ? -1 : 1;
   rowGlobal[1] = board.y_size % 2 == 0 ;
   rowGlobal[2] = board.x_size % 2 == 0 ;
-  rowGlobal[3] = (board.x_size * board.y_size) ;
+  rowGlobal[3] = (board.x_size * board.y_size) %2;
 
   rowGlobal[4] = nextPlayer == P_BLACK ? -nnInputParams.noResultUtilityForWhite : nnInputParams.noResultUtilityForWhite;
 
