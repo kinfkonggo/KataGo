@@ -2491,3 +2491,72 @@ Board Board::parseBoard(int xSize, int ySize, const string& s, char lineDelimite
   }
   return board;
 }
+
+
+
+MovePriority Board::getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const
+{
+	MovePriority MP = MP_NORMAL;
+	for (int i = 0; i < 4; i++)
+	{
+		MovePriority tmpMP = getMovePriorityOneDirectionAssumeLegal(pla, loc, isSixWin, i);
+		if (tmpMP < MP)MP = tmpMP;
+	}
+	return MP;
+}
+MovePriority Board::getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, bool isSixWin, int adjID) const
+{
+	assert(adjID >= 0 && adjID < 4);
+	Player opp = getOpp(pla);
+	short adj = adj_offsets[2*adjID];
+	bool isMyLife1, isMyLife2, isOppLife1, isOppLife2;
+	int myConNum = connectionLengthOneDirection(pla, loc, adj, isSixWin, isMyLife1) + connectionLengthOneDirection(pla, loc, -adj, isSixWin, isMyLife2) + 1;
+	int oppConNum = connectionLengthOneDirection(opp, loc, adj, isSixWin, isOppLife1) + connectionLengthOneDirection(opp, loc, -adj, isSixWin, isOppLife2) + 1;
+	if (myConNum ==8 || (myConNum > 8 && isSixWin))return MP_FIVE;
+#ifdef  RENJU
+	if ((oppConNum == 5 && opp == P_BLACK) || (oppConNum >= 5 && opp == P_WHITE))return MP_OPPOFOUR;
+#else
+	if (oppConNum == 8 || (oppConNum > 8 && isSixWin))return MP_OPPOFOUR;
+#endif //  RENJU
+
+
+	return MP_NORMAL;
+
+}
+
+int Board::connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isSixWin, bool& isLife/*有没有被堵*/)const
+{
+	Loc tmploc = loc;
+	int conNum = 0;
+	isLife = false;
+	while (1)
+	{
+		tmploc += adj;
+		if (!isOnBoard(tmploc))break;
+		if (colors[tmploc] == pla)conNum++;
+		else if (colors[tmploc] == C_EMPTY)
+		{
+			isLife = true;
+			if (!isSixWin)
+			{
+
+				tmploc += adj;
+				if (isOnBoard(tmploc) && colors[tmploc] == pla)isLife = false;
+			}
+#ifdef RENJU
+			if (pla == C_BLACK)
+			{
+
+				tmploc += adj;
+				if (isOnBoard(tmploc) && colors[tmploc] == C_BLACK)isLife = false;
+			}
+#endif
+			break;
+		}
+		else break;
+	}
+	return conNum;
+
+
+
+}

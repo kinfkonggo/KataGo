@@ -566,7 +566,21 @@ void GameInitializer::createGameSharedUnsynchronized(
     int xSize = allowedBSizes[xSizeIdx];
     int ySize = allowedBSizes[ySizeIdx];
     board = Board(xSize,ySize);
+	pla = P_BLACK;
+	if (rand.nextBool(0.9))
+	{
+		int ix, iy;
+		while (1)
+		{
+			ix = rand.nextUInt(xSize);
+			iy = rand.nextUInt(ySize);
+			if (ix == 0 || ix == xSize - 1 || iy == 0 || iy == ySize - 1)break;
+		}
+		Loc firstmove = Location::getLoc(ix, iy, xSize);
+		board.playMoveAssumeLegal(firstmove, C_BLACK);
+		pla = P_WHITE;
 
+	}
     extraBlackAndKomi = chooseExtraBlackAndKomi(
       komiMean, komiStdev, komiAllowIntegerProb,
       handicapProb, numExtraBlackFixed,
@@ -574,7 +588,6 @@ void GameInitializer::createGameSharedUnsynchronized(
     );
     rules.komi = extraBlackAndKomi.komi;
 
-    pla = P_BLACK;
     hist.clear(board,pla,rules,0);
     otherGameProps.isSgfPos = false;
     otherGameProps.isHintPos = false;
@@ -1678,34 +1691,17 @@ FinishedGameData* Play::runGame(
     else {
       //Relying on this to be idempotent, so that we can get the final territory map
       //We also do want to call this here to force-end the game if we crossed a move limit.
-      hist.endAndScoreGameNow(board,gameData->finalOwnership);
-
-	  if (board.numBlackCaptures > 0)hist.endGamePla(C_WHITE);
-	  if (board.numWhiteCaptures > 0)hist.endGamePla(C_BLACK);
-	  if (board.numWhiteCaptures > 0 && board.numBlackCaptures > 0)throw StringError("Both have captures");
+		std::fill(gameData->finalFullArea, gameData->finalFullArea + Board::MAX_ARR_SIZE, C_EMPTY);
+		std::fill(gameData->finalOwnership, gameData->finalOwnership + Board::MAX_ARR_SIZE, C_EMPTY);
+		std::fill(gameData->finalSekiAreas, gameData->finalSekiAreas + Board::MAX_ARR_SIZE, false);
 
       finalValueTargets.win = (float)ScoreValue::whiteWinsOfWinner(hist.winner, gameData->drawEquivalentWinsForWhite);
       finalValueTargets.loss = 1.0f - finalValueTargets.win;
       finalValueTargets.noResult = 0.0f;
-      finalValueTargets.score = (float)ScoreValue::whiteScoreDrawAdjust(hist.finalWhiteMinusBlackScore,gameData->drawEquivalentWinsForWhite,hist);
+      finalValueTargets.score = 0;
       finalValueTargets.hasLead = true;
-      finalValueTargets.lead = finalValueTargets.score;
+      finalValueTargets.lead = 0;
 
-      //Fill full and seki areas
-      {
-        board.calculateArea(gameData->finalFullArea, true, true, true, hist.rules.multiStoneSuicideLegal);
-
-        Color* independentLifeArea = new Color[Board::MAX_ARR_SIZE];
-        int whiteMinusBlackIndependentLifeRegionCount;
-        board.calculateIndependentLifeArea(independentLifeArea,whiteMinusBlackIndependentLifeRegionCount, false, false, hist.rules.multiStoneSuicideLegal);
-        for(int i = 0; i<Board::MAX_ARR_SIZE; i++) {
-          if(independentLifeArea[i] == C_EMPTY && (gameData->finalFullArea[i] == C_BLACK || gameData->finalFullArea[i] == C_WHITE))
-            gameData->finalSekiAreas[i] = true;
-          else
-            gameData->finalSekiAreas[i] = false;
-        }
-        delete[] independentLifeArea;
-      }
     }
     gameData->whiteValueTargetsByTurn.push_back(finalValueTargets);
 

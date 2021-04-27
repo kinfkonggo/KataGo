@@ -80,6 +80,7 @@ STRUCT_NAMED_PAIR(Loc,loc,Player,pla,Move);
 //Simple ko rule only.
 //Does not enforce player turn order.
 
+typedef char MovePriority;
 struct Board
 {
   //Initialization------------------------------
@@ -97,6 +98,13 @@ struct Board
   static const Loc NULL_LOC = 0;
   //Location used to indicate a pass move is desired.
   static const Loc PASS_LOC = 1;
+
+  static const MovePriority MP_NORMAL = 126;
+  static const MovePriority MP_FIVE = 1;
+  static const MovePriority MP_OPPOFOUR = 2;
+  static const MovePriority MP_MYLIFEFOUR = 3;
+  static const MovePriority MP_USELESS = 127;
+  static const MovePriority MP_ILLEGAL = -1;//保证小的可以覆盖大的，小的优先级更高
 
   //Zobrist Hashing------------------------------
   static bool IS_ZOBRIST_INITALIZED;
@@ -314,6 +322,13 @@ struct Board
     int& whiteMinusBlackIndependentLifeRegionCount
   ) const;
 
+public:
+  MovePriority getMovePriority(Player pla, Loc loc, bool isSixWin, bool isPassForbidded)const;
+  MovePriority getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const;
+private:
+	MovePriority getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, bool isSixWin, int adjID)const;
+	int connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isSixWin, bool& isLife/*有没有被堵*/)const;
+public:
   //static void monteCarloOwner(Player player, Board* board, int mc_counts[]);
 };
 

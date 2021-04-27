@@ -630,24 +630,12 @@ void BoardHistory::getAreaNow(const Board& board, Color area[Board::MAX_ARR_SIZE
 }
 
 void BoardHistory::endAndScoreGameNow(const Board& board, Color area[Board::MAX_ARR_SIZE]) {
-  int boardScore;
-  if(rules.scoringRule == Rules::SCORING_AREA)
-    boardScore = countAreaScoreWhiteMinusBlack(board,area);
-  else if(rules.scoringRule == Rules::SCORING_TERRITORY)
-    boardScore = countTerritoryAreaScoreWhiteMinusBlack(board,area);
-  else
-    ASSERT_UNREACHABLE;
-
-  if(hasButton) {
-    hasButton = false;
-    whiteBonusScore += (presumedNextMovePla == P_WHITE ? 0.5f : -0.5f);
-  }
-
-  setFinalScoreAndWinner(boardScore + whiteBonusScore + whiteHandicapBonusScore + rules.komi);
+	std::fill(area, area + Board::MAX_ARR_SIZE, C_EMPTY);
+  setFinalScoreAndWinner(0);
   if (board.numBlackCaptures > 0)winner = C_WHITE;
   if (board.numWhiteCaptures > 0)winner = C_BLACK;
   isScored = true;
-  isNoResult = false;
+  isNoResult = true;
   isResignation = false;
   isGameFinished = true;
   isPastNormalPhaseEnd = false;
@@ -1004,7 +992,8 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
   if(consecutiveEndingPasses >= 2 || isSpightlikeEndingPass) {
     if(rules.scoringRule == Rules::SCORING_AREA) {
       assert(encorePhase <= 0);
-      endAndScoreGameNow(board);
+	  isNoResult = true;
+	  isGameFinished = true;
     }
     else if(rules.scoringRule == Rules::SCORING_TERRITORY) {
       if(encorePhase >= 2)
@@ -1037,11 +1026,13 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
     else
       ASSERT_UNREACHABLE;
   }
-  if (board.numBlackCaptures > 0|| board.numWhiteCaptures > 0)endAndScoreGameNow(board);
-  if (board.numWhiteCaptures > 0 && board.numBlackCaptures > 0)
+  if (board.getMovePriorityAssumeLegal(movePla, moveLoc, true) == Board::MP_FIVE)
   {
-	  printDebugInfo(cout, board);
-	  //throw StringError("Both have captures");
+	  endGamePla(movePla);
+  }
+  if(numTurnsThisPhase>board.x_size*board.y_size) {
+	  isNoResult = true;
+	  isGameFinished = true;
   }
   //Break long cycles with no-result
   if(moveLoc != Board::PASS_LOC && (encorePhase > 0 || rules.koRule == Rules::KO_SIMPLE)) {
