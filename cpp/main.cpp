@@ -112,6 +112,7 @@ static int handleSubcommand(const string& subcommand, int argc, const char* argv
 
 
 int main(int argc, const char* argv[]) {
+  VCFsolver::init();
   if(argc < 2) {
 #ifndef FORGOMOCUP
     printHelp(argc,argv);
@@ -128,7 +129,6 @@ int main(int argc, const char* argv[]) {
     return 0;
   }
 
-  VCFsolver::init();
 
 #if defined(OS_IS_WINDOWS)
   //On windows, uncaught exceptions reaching toplevel don't normally get printed out,

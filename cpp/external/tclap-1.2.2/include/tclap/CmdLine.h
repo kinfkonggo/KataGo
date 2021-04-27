@@ -440,7 +440,7 @@ inline void CmdLine::parse(int argc, const char * const * argv)
 		if (argc == 0)
 		{
 			std::string path (argv[0]);
-			while (path[path.length() - 1] != '/' && path[path.length() - 1] != '\\') path.pop_back();
+			while (path[path.length() - 1] != '/' && path[path.length() - 1] != '\\'&&path.length()>0) path.pop_back();
 			args.push_back("null");
 			args.push_back("-model");
 			args.push_back(path+"model.bin.gz");

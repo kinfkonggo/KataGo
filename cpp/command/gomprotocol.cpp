@@ -894,7 +894,7 @@ int MainCmds::gomprotocol(int argc, const char* const* argv) {
   cerr << "MESSAGE Opensourced on github.com/hzyhhzy/katago/tree/gomoku" << endl;
   cerr << "MESSAGE QQ:2658628026,  QQ Group:1049389629" << endl;
   cerr << "MESSAGE Modified from Katago(github.com/lightvector/katago)" << endl;
-#ifdef GOMOCUP
+#ifdef FORGOMOCUP
   cerr << "MESSAGE This is a special version for Gomocup. It only supports single thread(maybe you can run it with "
           "multithread, but some bugs may occur), and works only on CPU. If you want full strength version, please "
           "download it on github.com/hzyhhzy/katago/tree/gomoku. You can download packages on release page(suggested), "
