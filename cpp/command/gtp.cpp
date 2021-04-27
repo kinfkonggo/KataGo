@@ -1272,7 +1272,7 @@ int MainCmds::gtp(int argc, const char* const* argv) {
         responseIsError = true;
         response = "Expected int argument for boardsize or pair of ints but got '" + Global::concat(pieces," ") + "'";
       }
-      else if(newXSize < 2 || newYSize < 2) {
+      else if(newXSize < Board::MAX_LEN || newYSize < Board::MAX_LEN) {
         responseIsError = true;
         response = "unacceptable size";
       }

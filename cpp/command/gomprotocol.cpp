@@ -24,6 +24,99 @@ static bool timeIsValid(const double& time) {
 }
 
 
+static bool getTwoRandomMove(const Board& board, Loc& whiteLoc, Loc& blackLoc, string& responseMoves) {
+  if(board.movenum != 3)
+    return false;
+  double x1, x2, x3, y1, y2, y3; 
+  int c = 0;
+  for(int x = 0; x < 15; x++)
+    for(int y = 0; y < 15; y++) {
+      Loc loc = Location::getLoc(x, y, 15);
+      if(board.colors[loc] != C_EMPTY) {
+        c++;
+        if(c == 1) {
+          x1 = x;
+          y1 = y;
+        } else if(c == 2) {
+          x2 = x;
+          y2 = y;
+        } else if(c == 3) {
+          x3 = x;
+          y3 = y;
+        }
+      }
+    }
+  if(c != 3)
+    return false;
+  double values[15][15];
+
+  for(int x = 0; x < 15; x++)
+    for(int y = 0; y < 15; y++) {
+      Loc loc = Location::getLoc(x, y, 15);
+      if((x == 0 || y == 0 || x == 15 || y == 15) && board.colors[loc] == C_EMPTY)
+        values[x][y] = -1.0 / sqrt((x - x1) * (x - x1) + (y - y1) * (y - y1)) -
+                       1.0 / sqrt((x - x2) * (x - x2) + (y - y2) * (y - y2)) -
+                       1.0 / sqrt((x - x3) * (x - x3) + (y - y3) * (y - y3));
+      else
+        values[x][y] = -1e32;
+    }
+  double bestValue;
+  int bestX, bestY;
+
+  bestValue = -1e30;
+  bestX = -1;
+  bestY = -1;
+  for(int x = 0; x < 15; x++)
+    for(int y = 0; y < 15; y++) {
+      if(values[x][y] > bestValue) {
+        bestValue = values[x][y];
+        bestX = x;
+        bestY = y;
+      }
+    }
+  values[bestX][bestY] = -1e31;
+  bestValue = -1e30;
+  bestX = -1;
+  bestY = -1;
+  for(int x = 0; x < 15; x++)
+    for(int y = 0; y < 15; y++) {
+      if(values[x][y] > bestValue) {
+        bestValue = values[x][y];
+        bestX = x;
+        bestY = y;
+      }
+    }
+  values[bestX][bestY] = -1e31;
+  bestValue = -1e30;
+  bestX = -1;
+  bestY = -1;
+  for(int x = 0; x < 15; x++)
+    for(int y = 0; y < 15; y++) {
+      if(values[x][y] > bestValue) {
+        bestValue = values[x][y];
+        bestX = x;
+        bestY = y;
+      }
+    }
+  values[bestX][bestY] = -1e31;
+  whiteLoc = Location::getLoc(bestX, bestY, 15);
+  responseMoves = to_string(bestX) + "," + to_string(bestY);
+  bestValue = -1e30;
+  bestX = -1;
+  bestY = -1;
+  for(int x = 0; x < 15; x++)
+    for(int y = 0; y < 15; y++) {
+      if(values[x][y] > bestValue) {
+        bestValue = values[x][y];
+        bestX = x;
+        bestY = y;
+      }
+    }
+  values[bestX][bestY] = -1e31;
+  blackLoc = Location::getLoc(bestX, bestY, 15);
+  responseMoves = responseMoves + " " + to_string(bestX) + "," + to_string(bestY);
+  return true;
+}
 
 
 
@@ -516,6 +609,106 @@ struct GomEngine {
     return;
   }
 
+  double searchAndGetValue(
+    Player pla,
+    Logger& logger,
+    double searchTime,
+    bool logSearchInfo,
+    string& response,
+    bool& responseIsError,
+    AnalyzeArgs args) {
+    ClockTimer timer;
+
+    response = "";
+    responseIsError = false;
+
+    nnEval->clearStats();
+    TimeControls tc;
+    tc.perMoveTime = searchTime;
+
+    // Make sure we have the right parameters, in case someone ran analysis in the meantime.
+    if(params.playoutDoublingAdvantage != staticPlayoutDoublingAdvantage) {
+      params.playoutDoublingAdvantage = staticPlayoutDoublingAdvantage;
+      bot->setParams(params);
+    }
+
+    if(params.wideRootNoise != genmoveWideRootNoise) {
+      params.wideRootNoise = genmoveWideRootNoise;
+      bot->setParams(params);
+    }
+
+    // Play faster when winning
+    double searchFactor = 1.0;
+    lastSearchFactor = searchFactor;
+    Loc moveLoc;
+    bot->setAvoidMoveUntilByLoc(args.avoidMoveUntilByLocBlack, args.avoidMoveUntilByLocWhite);
+    moveLoc = bot->genMoveSynchronous(pla, tc, searchFactor);
+
+    bool isLegal = bot->isLegalStrict(moveLoc, pla);
+    if(moveLoc == Board::NULL_LOC || !isLegal) {
+      responseIsError = true;
+      response = "genmove returned null location or illegal move";
+      //cout<< "genmove returned null location or illegal move";
+      ostringstream sout;
+      sout << "genmove null location or illegal move!?!"
+           << "\n";
+      sout << bot->getRootBoard() << "\n";
+      sout << "Pla: " << PlayerIO::playerToString(pla) << "\n";
+      sout << "MoveLoc: " << Location::toString(moveLoc, bot->getRootBoard()) << "\n";
+      logger.write(sout.str());
+      genmoveTimeSum += timer.getSeconds();
+      return 0;
+    }
+
+    ReportedSearchValues values;
+    double winLossValue;
+    {
+      values = bot->getSearch()->getRootValuesRequireSuccess();
+      winLossValue = values.winLossValue;
+    }
+
+
+    // Snapshot the time NOW - all meaningful play-related computation time is done, the rest is just
+    // output of various things.
+    double timeTaken = timer.getSeconds();
+    genmoveTimeSum += timeTaken;
+
+    // Chatting and logging ----------------------------
+
+    int64_t visits = bot->getSearch()->getRootVisits();
+    double winrate = 0.5 * (1.0 + (values.winValue - values.lossValue));
+    // Print winrate from desired perspective
+    if(perspective == P_BLACK || (perspective != P_BLACK && perspective != P_WHITE && pla == P_BLACK)) {
+      winrate = 1.0 - winrate;
+    }
+    cerr << "MESSAGE "
+         << "Visits " << visits << " Winrate " << Global::strprintf("%.2f%%", winrate * 100.0) << " Drawrate "
+         << Global::strprintf("%.2f%%", values.noResultValue * 100.0) << " Time "
+         << Global::strprintf("%.3f", timeTaken);
+    if(params.playoutDoublingAdvantage != 0.0) {
+      cerr << Global::strprintf(
+        " (PDA %.2f)",
+        bot->getSearch()->getRootPla() == getOpp(params.playoutDoublingAdvantagePla) ? -params.playoutDoublingAdvantage
+                                                                                     : params.playoutDoublingAdvantage);
+    }
+    cerr << " PV ";
+    bot->getSearch()->printPVForMove(cerr, bot->getSearch()->rootNode, moveLoc, analysisPVLen);
+    cerr << endl;
+
+    // Actual reporting of chosen move---------------------
+    int x = Location::getX(moveLoc, bot->getRootBoard().x_size);
+    int y = Location::getY(moveLoc, bot->getRootBoard().x_size);
+    response = to_string(x) + "," + to_string(y);
+
+    if(logSearchInfo) {
+      ostringstream sout;
+      PlayUtils::printGenmoveLog(sout, bot, nnEval, moveLoc, timeTaken, perspective);
+      logger.write(sout.str());
+    }
+
+    return values.winValue - values.lossValue;
+  }
+
   void clearCache() {
     bot->clearSearch();
     nnEval->clearCache();
@@ -666,6 +859,7 @@ int MainCmds::gomprotocol(int argc, const char* const* argv) {
   if(forDeterministicTesting)
     seedRand.init("forDeterministicTesting");
 
+  double swap2time = 5400;//swap2局时，只用于开局阶段计算
   const double genmoveWideRootNoise = initialParams.wideRootNoise;
   const double analysisWideRootNoise =
     cfg.contains("analysisWideRootNoise") ? cfg.getDouble("analysisWideRootNoise",0.0,5.0) : genmoveWideRootNoise;
@@ -696,6 +890,31 @@ int MainCmds::gomprotocol(int argc, const char* const* argv) {
   logger.write("Model name: "+ (engine->nnEval == NULL ? string() : engine->nnEval->getInternalModelName()));
   logger.write("GTP ready, beginning main protocol loop");
   //Also check loggingToStderr so that we don't duplicate the message from the log file
+  cerr << "MESSAGE Katagomo 2021.4.27 by HZY" << endl;
+  cerr << "MESSAGE Opensourced on github.com/hzyhhzy/katago/tree/gomoku" << endl;
+  cerr << "MESSAGE QQ:2658628026,  QQ Group:1049389629" << endl;
+  cerr << "MESSAGE Modified from Katago(github.com/lightvector/katago)" << endl;
+#ifdef GOMOCUP
+  cerr << "MESSAGE This is a special version for Gomocup. It only supports single thread(maybe you can run it with "
+          "multithread, but some bugs may occur), and works only on CPU. If you want full strength version, please "
+          "download it on github.com/hzyhhzy/katago/tree/gomoku. You can download packages on release page(suggested), "
+          "or compile it yourself"
+       << endl;
+  
+#endif
+#if RULE == FREESTYLE
+  string rulestring = "freestyle";
+#elif RULE == STANDARD
+  string rulestring = "standard";
+#elif RULE == RENJU
+  string rulestring = "renju";
+#endif
+  cerr << "MESSAGE Engine Rule: " << rulestring << endl;
+  cerr << "MESSAGE Board Size: " << MAX_FLEN << endl;
+  cerr << "MESSAGE Loaded config " << cfg.getFileName() << endl;
+  cerr << "MESSAGE Loaded model " << nnModelFile << endl;
+  cerr << "MESSAGE Model name: " + (engine->nnEval == NULL ? string() : engine->nnEval->getInternalModelName()) << endl;
+  cerr << "MESSAGE GTP ready, beginning main protocol loop" << endl;
 
   bool currentlyAnalyzing = false;
   string line;
@@ -914,6 +1133,117 @@ int MainCmds::gomprotocol(int argc, const char* const* argv) {
           }
         }
       }
+    } 
+    
+    else if(command == "SWAP2BOARD") {
+#if RULE != 1
+      throw StringError("SWAP2 is only for STANDARD rule");
+#endif
+      engine->clearCache();
+      engine->clearBoard();
+
+      string moveline;
+      vector<Move> initialStones;
+      Player p = P_BLACK;
+      while(getline(cin, moveline)) {
+        // Convert , to spaces
+        for(size_t i = 0; i < moveline.length(); i++)
+          if(moveline[i] == ',')
+            moveline[i] = ' ';
+
+        moveline = Global::trim(moveline);
+        // cout << moveline;
+        if(moveline == "DONE") {
+          bool debug = false;
+          bool playChosenMove = false;
+          int swap2num = initialStones.size();
+          if(swap2num == 0) {
+            static const string openings[10] = {
+              "5,0 6,0 6,1", 
+              "3,14 12,14 4,14", 
+              "7,0 11,0 5,0", 
+              "7,0 9,0 7,1", 
+              "1,1 2,1 3,2",
+              "7,0 5,0 6,1",
+              "1,2 0,0 2,1",
+              "0,0 0,3 3,2",
+              "8,1 9,0 10,0",
+              "7,0 6,0 8,1",
+            };
+            int choice = seedRand.nextUInt(10);
+            response = openings[choice];
+          } 
+          else if(swap2num == 3) {
+            engine->setPosition(initialStones);
+            double value = engine->searchAndGetValue(
+              p, logger, swap2time / 10, logSearchInfo, response, responseIsError, GomEngine::AnalyzeArgs());
+
+            string response1 = response;
+            if(value < -0.15) {
+              response = "SWAP";  
+              cout << "MESSAGE White winrate = " << 50 * (value + 1) << "%, So engine plays black" << endl;
+            } 
+            else if(value > 0.15) {
+              cout << "MESSAGE White winrate = " << 50 * (value + 1) << "%, So engine plays white" << endl;
+            }  
+            else {
+              cout << "MESSAGE White winrate = " << 50 * (value + 1) << "%, So randomly plays 2 moves" << endl;
+              Loc blackLoc, whiteLoc;
+              string random2response;
+              getTwoRandomMove(engine->bot->getRootBoard(), whiteLoc, blackLoc, random2response);
+
+              bool suc1 = engine->play(whiteLoc, C_WHITE);
+              bool suc2 = engine->play(blackLoc, C_BLACK);
+              if(!suc1 || !suc2) {
+                cout << "DEBUG unknown error" << endl;
+                response = "SWAP";
+              }
+              double value2 = engine->searchAndGetValue(
+                p, logger, swap2time / 20, logSearchInfo, response, responseIsError, GomEngine::AnalyzeArgs());
+              if(value2 > -0.25 && value2 < 0.25) {
+                cout << "MESSAGE After these two moves, white winrate = " << 50 * (value2 + 1)
+                     << "%, So engine plays these two moves" << endl;
+                response = random2response;
+              } else {
+                if(value < 0)
+                  response = "SWAP"; 
+                else {
+                  cout << "MESSAGE After these two moves, white winrate = " << 50 * (value + 1)
+                       << "%, So not play these two moves" << endl;
+                  response = response1;
+                }  
+              }
+            }
+          }
+
+          else if(swap2num == 5) {
+            engine->setPosition(initialStones);
+            double value = engine->searchAndGetValue(
+              p, logger, swap2time / 10, logSearchInfo, response, responseIsError, GomEngine::AnalyzeArgs());
+            if(value < 0) {
+              cout << "MESSAGE White winrate = " << 50 * (value + 1) << "%, So engine plays black" << endl;
+              response = "SWAP";
+            } else {
+              cout << "MESSAGE White winrate = " << 50 * (value + 1) << "%, So engine plays white" << endl;
+            }
+          }
+          break;
+
+        } 
+        else {
+          stringstream ss(moveline);
+          int x, y;
+          ss >> x >> y;
+          if(x < 0 || x >= Board::MAX_LEN || y < 0 || y >= Board::MAX_LEN) {
+            responseIsError = true;
+            response = "Move Outside Board";
+          } else {
+            Loc loc = Location::getLoc(x, y, Board::MAX_LEN);
+            initialStones.push_back(Move(loc, p));
+            p = getOpp(p);
+          }
+        }
+      }
     }
     /*
     else if(command == "play") {
@@ -975,7 +1305,16 @@ int MainCmds::gomprotocol(int argc, const char* const* argv) {
 
       }
     }
-    
+
+    else if(command == "setswap2time") {
+      float newSwap2Time = 5400;
+      if(pieces.size() != 1 || !Global::tryStringToFloat(pieces[0], newSwap2Time) || newSwap2Time <= 1) {
+        responseIsError = true;
+        response = "Expected single float argument for setSwap2Time but got '" + Global::concat(pieces, " ") + "'";
+      } else {
+        swap2time = newSwap2Time;
+      }
+    }
 
     /*
     else if(command == "genmove" || command == "genmove_debug" || command == "search_debug") {

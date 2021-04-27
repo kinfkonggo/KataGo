@@ -8,12 +8,13 @@ const Hash128 VCFsolver::zob_plaWhite = Hash128(0xb6f9e465597a77eeULL, 0xf1d583d
 const Hash128 VCFsolver::zob_plaBlack = Hash128(0x853E097C279EBF4EULL, 0xE3153DEF9E14A62CULL);
 Hash128 VCFsolver::zob_board[2][sz][sz]; 
 #ifdef FORGOMOCUP
-VCFHashTable VCFsolver::hashtable(20,2);
+VCFHashTable VCFsolver::hashtable(20, 2);
+uint64_t VCFsolver::MAXNODE = 50000;
 #else
 VCFHashTable VCFsolver::hashtable(26, 20);
+uint64_t VCFsolver::MAXNODE = 300000;
 #endif
 
-uint64_t VCFsolver::MAXNODE = 300000;
 
 uint64_t VCFsolver::totalAborted;
 uint64_t VCFsolver::totalSolved;
