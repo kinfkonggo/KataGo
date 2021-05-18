@@ -993,7 +993,7 @@ int32_t VCFsolver::solveIter(bool isRoot)
   {
 
     auto threeEntry = threes[threeID];
-    uint16_t pos1 = threeEntry & 0xFF, pos2 = (threeEntry >> 16) & 0xFF;
+    uint16_t pos1 = threeEntry & 0xFFFF, pos2 = (threeEntry >> 16) & 0xFFFF;
     threeEntry = threeEntry >> 32;
     int t = threeEntry/(sz*sz);
     threeEntry = threeEntry % (sz * sz);
