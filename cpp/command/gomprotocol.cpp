@@ -566,7 +566,7 @@ struct GomEngine {
       if(perspective == P_BLACK || (perspective != P_BLACK && perspective != P_WHITE && pla == P_BLACK)) {
         winrate = 1.0 - winrate;
       }
-      cerr << "MESSAGE "
+      cout << "MESSAGE "
         << "Visits " << visits
         << " Winrate " << Global::strprintf("%.2f%%", winrate * 100.0)
         << " Drawrate " << Global::strprintf("%.2f%%", values.noResultValue * 100.0)
@@ -577,9 +577,9 @@ struct GomEngine {
           bot->getSearch()->getRootPla() == getOpp(params.playoutDoublingAdvantagePla) ?
           -params.playoutDoublingAdvantage : params.playoutDoublingAdvantage);
       }
-      cerr << " PV ";
+      cout << " PV ";
       bot->getSearch()->printPVForMove(cerr,bot->getSearch()->rootNode, moveLoc, analysisPVLen);
-      cerr << endl;
+      cout << endl;
 
     if(logSearchInfo) {
       ostringstream sout;
@@ -681,7 +681,7 @@ struct GomEngine {
     if(perspective == P_BLACK || (perspective != P_BLACK && perspective != P_WHITE && pla == P_BLACK)) {
       winrate = 1.0 - winrate;
     }
-    cerr << "MESSAGE "
+    cout << "MESSAGE "
          << "Visits " << visits << " Winrate " << Global::strprintf("%.2f%%", winrate * 100.0) << " Drawrate "
          << Global::strprintf("%.2f%%", values.noResultValue * 100.0) << " Time "
          << Global::strprintf("%.3f", timeTaken);
@@ -691,9 +691,9 @@ struct GomEngine {
         bot->getSearch()->getRootPla() == getOpp(params.playoutDoublingAdvantagePla) ? -params.playoutDoublingAdvantage
                                                                                      : params.playoutDoublingAdvantage);
     }
-    cerr << " PV ";
+    cout << " PV ";
     bot->getSearch()->printPVForMove(cerr, bot->getSearch()->rootNode, moveLoc, analysisPVLen);
-    cerr << endl;
+    cout << endl;
 
     // Actual reporting of chosen move---------------------
     int x = Location::getX(moveLoc, bot->getRootBoard().x_size);
@@ -890,12 +890,12 @@ int MainCmds::gomprotocol(int argc, const char* const* argv) {
   logger.write("Model name: "+ (engine->nnEval == NULL ? string() : engine->nnEval->getInternalModelName()));
   logger.write("GTP ready, beginning main protocol loop");
   //Also check loggingToStderr so that we don't duplicate the message from the log file
-  cerr << "MESSAGE Katagomo 2021.4.27 by HZY" << endl;
-  cerr << "MESSAGE Opensourced on github.com/hzyhhzy/katago/tree/gomoku" << endl;
-  cerr << "MESSAGE QQ:2658628026,  QQ Group:1049389629" << endl;
-  cerr << "MESSAGE Modified from Katago(github.com/lightvector/katago)" << endl;
+  cout << "MESSAGE Katagomo 2021.4.27 by HZY" << endl;
+  cout << "MESSAGE Opensourced on github.com/hzyhhzy/katago/tree/gomoku" << endl;
+  cout << "MESSAGE QQ:2658628026,  QQ Group:1049389629" << endl;
+  cout << "MESSAGE Modified from Katago(github.com/lightvector/katago)" << endl;
 #ifdef FORGOMOCUP
-  cerr << "MESSAGE This is a special version for Gomocup. It only supports single thread(maybe you can run it with "
+  cout << "MESSAGE This is a special version for Gomocup. It only supports single thread(maybe you can run it with "
           "multithread, but some bugs may occur), and works only on CPU. If you want full strength version, please "
           "download it on github.com/hzyhhzy/katago/tree/gomoku. You can download packages on release page(suggested), "
           "or compile it yourself"
@@ -909,12 +909,12 @@ int MainCmds::gomprotocol(int argc, const char* const* argv) {
 #elif RULE == RENJU
   string rulestring = "renju";
 #endif
-  cerr << "MESSAGE Engine Rule: " << rulestring << endl;
-  cerr << "MESSAGE Board Size: " << MAX_FLEN << endl;
-  cerr << "MESSAGE Loaded config " << cfg.getFileName() << endl;
-  cerr << "MESSAGE Loaded model " << nnModelFile << endl;
-  cerr << "MESSAGE Model name: " + (engine->nnEval == NULL ? string() : engine->nnEval->getInternalModelName()) << endl;
-  cerr << "MESSAGE GTP ready, beginning main protocol loop" << endl;
+  cout << "MESSAGE Engine Rule: " << rulestring << endl;
+  cout << "MESSAGE Board Size: " << MAX_FLEN << endl;
+  cout << "MESSAGE Loaded config " << cfg.getFileName() << endl;
+  cout << "MESSAGE Loaded model " << nnModelFile << endl;
+  cout << "MESSAGE Model name: " + (engine->nnEval == NULL ? string() : engine->nnEval->getInternalModelName()) << endl;
+  cout << "MESSAGE GTP ready, beginning main protocol loop" << endl;
 
   bool currentlyAnalyzing = false;
   string line;
