@@ -18,35 +18,10 @@
 #include <string>
 #include <vector>
 
-//#define FORGOMOCUP
-
- //options
-#define FORBIDDEN_FEATURE
-//#define NOVCF
-#define USE_VCF_FEATURE_IF_USE_VCF
-//#define CHANGE_FORBIDDEN_POLICY
-//#define USE_HISTORY
-//#define FORGOMOCUP//‘⁄ global.h¿Ô
+#include "config.h"
 
 
 
-#define FREESTYLE 0//freestyle rule, 6 is win
-#define STANDARD 1//standard rule, 6 is not win
-#define RENJU 2//renju mode
-#define RULE 2
-
-#if (RULE<0 || RULE>2)
-rule must be 1, 2, 3
-#endif
-
-
-//#endif // _MSC_VER > 1000
-// ForbiddenPointFinder.h : header file
-//
-
-//#include <afxwin.h>
-
-#define MAX_FLEN 15//Board::MAX_LEN, Normal gomoku/renju games are on 15x15 board
 
 
 
