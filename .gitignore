@@ -7,6 +7,7 @@ __pycache__
 
 tmp*.txt
 
+cpp/core/config.h
 cpp/build
 cpp/build_cuda
 cpp/build_opencl
