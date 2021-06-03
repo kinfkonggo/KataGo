@@ -1,11 +1,13 @@
 import logging
 import math
 import traceback
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_eager_execution()
 import numpy as np
 
 from board import Board
-
+import os
+os.environ["CUDA_VISIBLE_DEVICES"]="2,3"
 #Feature extraction functions-------------------------------------------------------------------
 
 class Model:
@@ -117,15 +119,15 @@ class Model:
 
   def assert_batched_shape(self,name,tensor,shape):
     if (len(tensor.shape) != len(shape)+1 or
-        [int(tensor.shape[i+1].value) for i in range(len(shape))] != [int(x) for x in shape]):
+        [int(tensor.shape[i+1]) for i in range(len(shape))] != [int(x) for x in shape]):
       raise Exception("%s should have shape %s after a batch dimension but instead it had shape %s" % (
-        name, str(shape), str([str(x.value) for x in tensor.shape])))
+        name, str(shape), str([str(x) for x in tensor.shape])))
 
   def assert_shape(self,name,tensor,shape):
     if (len(tensor.shape) != len(shape) or
-        [int(x.value) for x in tensor.shape] != [int(x) for x in shape]):
+        [int(x) for x in tensor.shape] != [int(x) for x in shape]):
       raise Exception("%s should have shape %s but instead it had shape %s" % (
-        name, str(shape), str([str(x.value) for x in tensor.shape])))
+        name, str(shape), str([str(x) for x in tensor.shape])))
 
   def xy_to_tensor_pos(self,x,y):
     return y * self.pos_len + x
@@ -507,27 +509,27 @@ class Model:
 
   def batchnorm_and_mask(self,name,tensor,mask,mask_sum,use_gamma_in_fixup=False):
     if self.use_fixup:
-      self.batch_norms[name] = (tensor.shape[-1].value,1e-20,True,use_gamma_in_fixup,self.use_fixup)
+      self.batch_norms[name] = (tensor.shape[-1],1e-20,True,use_gamma_in_fixup,self.use_fixup)
       if use_gamma_in_fixup:
-        gamma = self.weight_variable_init_constant(name+"/gamma", [tensor.shape[3].value], 1.0)
-        beta = self.weight_variable_init_constant(name+"/beta", [tensor.shape[3].value], 0.0, reg="tiny")
+        gamma = self.weight_variable_init_constant(name+"/gamma", [tensor.shape[3]], 1.0)
+        beta = self.weight_variable_init_constant(name+"/beta", [tensor.shape[3]], 0.0, reg="tiny")
         return (tensor * gamma + beta) * mask
       else:
-        beta = self.weight_variable_init_constant(name+"/beta", [tensor.shape[3].value], 0.0, reg="tiny")
+        beta = self.weight_variable_init_constant(name+"/beta", [tensor.shape[3]], 0.0, reg="tiny")
         return (tensor + beta) * mask
 
     epsilon = 0.001
     has_bias = True
     has_scale = False
-    self.batch_norms[name] = (tensor.shape[-1].value,epsilon,has_bias,has_scale,self.use_fixup)
+    self.batch_norms[name] = (tensor.shape[-1],epsilon,has_bias,has_scale,self.use_fixup)
 
-    num_channels = tensor.shape[3].value
+    num_channels = tensor.shape[3]
     collections = [tf.compat.v1.GraphKeys.GLOBAL_VARIABLES,tf.compat.v1.GraphKeys.MODEL_VARIABLES,tf.compat.v1.GraphKeys.MOVING_AVERAGE_VARIABLES]
 
     #Define variables to keep track of the mean and variance
     moving_mean = tf.compat.v1.get_variable(initializer=tf.zeros([num_channels]),name=(name+"/moving_mean"),trainable=False,collections=collections)
     moving_var = tf.compat.v1.get_variable(initializer=tf.ones([num_channels]),name=(name+"/moving_variance"),trainable=False,collections=collections)
-    beta = self.weight_variable_init_constant(name+"/beta", [tensor.shape[3].value], 0.0, reg=False)
+    beta = self.weight_variable_init_constant(name+"/beta", [tensor.shape[3]], 0.0, reg=False)
 
     #This is the mean, computed only over exactly the areas of the mask, weighting each spot equally,
     #even across different elements in the batch that might have different board sizes.
@@ -555,7 +557,7 @@ class Model:
   #   epsilon = 0.001
   #   has_bias = True
   #   has_scale = False
-  #   self.batch_norms[name] = (tensor.shape[-1].value,epsilon,has_bias,has_scale)
+  #   self.batch_norms[name] = (tensor.shape[-1],epsilon,has_bias,has_scale)
   #   return tf.layers.batch_normalization(
   #     tensor,
   #     axis=-1, #Because channels are our last axis, -1 refers to that via wacky python indexing
@@ -647,19 +649,19 @@ class Model:
 
   def relu(self, name, layer):
     assert(len(layer.shape) == 4)
-    #num_channels = layer.shape[3].value
+    #num_channels = layer.shape[3]
     #alphas = self.weight_variable_init_constant(name+"/relu",[1,1,1,num_channels],constant=0.0)
     return tf.nn.relu(layer)
 
   def relu_spatial1d(self, name, layer):
     assert(len(layer.shape) == 3)
-    #num_channels = layer.shape[1].value
+    #num_channels = layer.shape[1]
     #alphas = self.weight_variable_init_constant(name+"/relu",[1,num_channels],constant=0.0)
     return tf.nn.relu(layer)
 
   def relu_non_spatial(self, name, layer):
     assert(len(layer.shape) == 2)
-    #num_channels = layer.shape[1].value
+    #num_channels = layer.shape[1]
     #alphas = self.weight_variable_init_constant(name+"/relu",[1,num_channels],constant=0.0)
     return tf.nn.relu(layer)
 
@@ -1481,7 +1483,7 @@ class Metrics:
         return tf.sqrt(tf.reduce_mean(devs_squared, axis=axis, keepdims=keepdims))
 
       self.activated_prop_by_layer = dict([
-        (name,tf.reduce_mean(tf.count_nonzero(layer,axis=[1,2])/layer.shape[1].value/layer.shape[2].value, axis=0)) for (name,layer) in model.outputs_by_layer
+        (name,tf.reduce_mean(tf.count_nonzero(layer,axis=[1,2])/layer.shape[1]/layer.shape[2], axis=0)) for (name,layer) in model.outputs_by_layer
       ])
       self.mean_output_by_layer = dict([
         (name,tf.reduce_mean(layer,axis=[0,1,2])) for (name,layer) in model.outputs_by_layer
@@ -1504,7 +1506,7 @@ class ModelUtils:
       shape = variable.get_shape()
       variable_parameters = 1
       for dim in shape:
-        variable_parameters *= dim.value
+        variable_parameters *= dim
       total_parameters += variable_parameters
       logf("Model variable: %s, %d parameters" % (variable.name,variable_parameters))
 
@@ -1522,7 +1524,8 @@ class ModelUtils:
       l2_coeff_value = 0.000006
     else:
       l2_coeff_value = 0.00003
-
+    if 'l2' in model_config:
+      l2_coeff_value=model_config['l2']
     placeholders = {}
 
     binchwp = features["binchwp"]

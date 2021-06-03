@@ -9,7 +9,8 @@ import json
 import datetime
 import struct
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_eager_execution()
 import numpy as np
 
 from model import Model, ModelUtils

@@ -24,17 +24,17 @@ shift
 
 #------------------------------------------------------------------------------
 
-mkdir -p "$BASEDIR"/tfsavedmodels_toexport
-mkdir -p "$BASEDIR"/tfsavedmodels_toexport_extra
-mkdir -p "$BASEDIR"/modelstobetested
-mkdir -p "$BASEDIR"/models_extra
-mkdir -p "$BASEDIR"/models
+mkdir -p "$BASEDIR\\tst"
+mkdir -p "$BASEDIR\\tste"
+mkdir -p "$BASEDIR\\modelstobetested"
+mkdir -p "$BASEDIR\\models_extra"
+mkdir -p "$BASEDIR\\models"
 
 function exportStuff() {
     FROMDIR="$1"
     TODIR="$2"
 
-    for FILEPATH in $(find "$BASEDIR"/"$FROMDIR"/ -mindepth 1 -maxdepth 1)
+    for FILEPATH in $(find "$BASEDIR\\$FROMDIR\\" -mindepth 1 -maxdepth 1)
     do
         #Make sure to skip tmp directories that are transiently there by the tensorflow training,
         #they are probably in the process of being written
@@ -48,11 +48,11 @@ function exportStuff() {
             echo "Found model to export:" "$FILEPATH"
             NAME="$(basename "$FILEPATH")"
 
-            SRC="$BASEDIR"/"$FROMDIR"/"$NAME"
-            TMPDST="$BASEDIR"/"$FROMDIR"/"$NAME".exported
-            TARGET="$BASEDIR"/"$TODIR"/"$NAME"
+            SRC="$BASEDIR\\$FROMDIR\\$NAME"
+            TMPDST="$BASEDIR\\$FROMDIR\\$NAME".exported
+            TARGET="$BASEDIR\\$TODIR\\$NAME"
 
-            if [ -d "$BASEDIR"/modelstobetested/"$NAME" ] || [ -d "$BASEDIR"/rejectedmodels/"$NAME" ] || [ -d "$BASEDIR"/models/"$NAME" ] || [ -d "$BASEDIR"/models_extra/"$NAME" ]
+            if [ -d "$BASEDIR\\"modelstobetested"\\$NAME" ] || [ -d "$BASEDIR\\"rejectedmodels"\\$NAME" ] || [ -d "$BASEDIR\\"models"\\$NAME" ] || [ -d "$BASEDIR\\"models_extra"\\$NAME" ]
             then
                 echo "Model with same name aleady exists, so skipping:" "$SRC"
             else
@@ -61,7 +61,7 @@ function exportStuff() {
 
                 set -x
                 python ./export_model.py \
-                        -saved-model-dir "$SRC"/saved_model \
+                        -saved-model-dir "$SRC\\"saved_model \
                         -export-dir "$TMPDST" \
                         -model-name "$NAMEPREFIX""-""$NAME" \
                         -name-scope "swa_model" \
@@ -69,25 +69,25 @@ function exportStuff() {
                         -for-cuda
                 set +x
 
-                cp "$SRC"/model.config.json "$TMPDST"/
-                cp "$SRC"/trainhistory.json "$TMPDST"/
-                mv "$SRC"/*saved_model* "$TMPDST"/
+                cp "$SRC\\"model.config.json "$TMPDST\\"
+                cp "$SRC\\"trainhistory.json "$TMPDST\\"
+                mv "$SRC\\"saved_model "$TMPDST\\"
 
                 rm -r "$SRC"
-                gzip "$TMPDST"/model.bin
+                gzip "$TMPDST\\"model.bin
 
-                mkdir -p d:/katago/m/"$NAMEPREFIX"/
-                cp $TMPDST/model.bin.gz d:/katago/m/"$NAMEPREFIX"/
+                mkdir -p m"\\$NAMEPREFIX"
+                cp $TMPDST"\\"model.bin.gz m"\\$NAMEPREFIX\\"
                 
                 #Make a bunch of the directories that selfplay will need so that there isn't a race on the selfplay
                 #machines to concurrently make it, since sometimes concurrent making of the same directory can corrupt
                 #a filesystem
                 if [ "$TODIR" != "models_extra" ]
                 then
-                    mkdir -p "$BASEDIR"/selfplay/"$NAME"
-                    mkdir -p "$BASEDIR"/selfplay/"$NAME"/sgfs
-                    mkdir -p "$BASEDIR"/selfplay/"$NAME"/tdata
-                    mkdir -p "$BASEDIR"/selfplay/"$NAME"/vdata
+                    mkdir -p "$BASEDIR\\"selfplay"\\$NAME\\"
+                    mkdir -p "$BASEDIR\\"selfplay"\\$NAME\\"sgfs
+                    mkdir -p "$BASEDIR\\"selfplay"\\$NAME\\"tdata
+                    mkdir -p "$BASEDIR\\"selfplay"\\$NAME\\"vdata
                 fi
 
                 #Sleep a little to allow some tolerance on the filesystem
@@ -102,11 +102,11 @@ function exportStuff() {
 
 if [ "$USEGATING" -eq 0 ]
 then
-    exportStuff "tfsavedmodels_toexport" "models"
+    exportStuff "tst" "models"
 else
-    exportStuff "tfsavedmodels_toexport" "modelstobetested"
+    exportStuff "tst" "modelstobetested"
 fi
-exportStuff "tfsavedmodels_toexport_extra" "models_extra"
+exportStuff "tste" "models_extra"
 
 exit 0
 }

@@ -28,8 +28,6 @@ shift
 EXPORTMODE="$1"
 shift
 
-GITROOTDIR="$(git rev-parse --show-toplevel)"
-
 #------------------------------------------------------------------------------
 set -x
 
@@ -37,15 +35,15 @@ mkdir -p "$BASEDIR"/train/"$TRAININGNAME"
 
 if [ "$EXPORTMODE" == "main" ]
 then
-    EXPORT_SUBDIR=tfsavedmodels_toexport
+    EXPORT_SUBDIR=tst
     EXTRAFLAG=""
 elif [ "$EXPORTMODE" == "extra" ]
 then
-    EXPORT_SUBDIR=tfsavedmodels_toexport_extra
+    EXPORT_SUBDIR=tste
     EXTRAFLAG=""
 elif [ "$EXPORTMODE" == "trainonly" ]
 then
-    EXPORT_SUBDIR=tfsavedmodels_toexport_extra
+    EXPORT_SUBDIR=tste
     EXTRAFLAG="-no-export"
 else
     echo "EXPORTMODE was not 'main' or 'extra' or 'trainonly', run with no arguments for usage"
@@ -53,9 +51,9 @@ else
 fi
 
 time python train.py \
-     -traindir "$BASEDIR"/train/"$TRAININGNAME" \
-     -datadir "$BASEDIR"/shuffleddata/current/ \
-     -exportdir "$BASEDIR"/"$EXPORT_SUBDIR" \
+     -traindir "$BASEDIR\\train\\$TRAININGNAME" \
+     -datadir "$BASEDIR\\shuffleddata\\current\\" \
+     -exportdir "$BASEDIR\\$EXPORT_SUBDIR" \
      -exportprefix "$TRAININGNAME" \
      -pos-len 15 \
      -samples-per-epoch 1000000\
@@ -64,7 +62,7 @@ time python train.py \
      -gpu-memory-frac 0.7 \
      -model-kind "$MODELKIND" \
      -sub-epochs 1 \
-     -swa-sub-epoch-scale 8 \
+     -swa-sub-epoch-scale 1 \
      $EXTRAFLAG \
      "$@" \
      2>&1 | tee -a "$BASEDIR"/train/"$TRAININGNAME"/stdout.txt

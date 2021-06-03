@@ -13,7 +13,8 @@ import datetime
 import gc
 import shutil
 import glob
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_eager_execution()
 import numpy as np
 import itertools
 
@@ -22,8 +23,8 @@ from board import Board
 from model import Model, Target_vars, Metrics, ModelUtils
 import modelconfigs
 import tfrecordio
-
-os.environ["CUDA_VISIBLE_DEVICES"]="0,1"
+import os
+os.environ["CUDA_VISIBLE_DEVICES"]="2,3"
 #Command and args-------------------------------------------------------------------
 
 description = """
@@ -148,7 +149,7 @@ if swa_sub_epoch_scale is not None:
         placeholder = tf.compat.v1.placeholder(variable.dtype,variable.shape)
         assign_ops.append(tf.compat.v1.assign(variable,placeholder))
         swa_assign_placeholders[variable.name] = placeholder
-        swa_wvalues[variable.name] = np.zeros([elt.value for elt in variable.shape])
+        swa_wvalues[variable.name] = np.zeros([elt for elt in variable.shape])
     swa_assign_op = tf.group(*assign_ops)
   trainlog("Build SWA graph for SWA update and saving, %d variables" % len(swa_assign_placeholders))
 
