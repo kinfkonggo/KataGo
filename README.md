@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ***Updated on 2021.4.5***
 
 I finally decide to upload the source code, cpp code (the major part) was uploaded just now, others will be uploaded later.
@@ -7,7 +6,6 @@ I finally decide to upload the source code, cpp code (the major part) was upload
 
 =======
 ***Updated on 2021.4.27***  
->>>>>>> 17d6700be16eaed634fb22b302250032366074f7
 
 Now ***Gomoku/Renju*** code is uploaded in "Gomoku" branch.  
 Some other games are also uploaded.  
