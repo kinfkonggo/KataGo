@@ -2512,11 +2512,11 @@ MovePriority Board::getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, 
 	bool isMyLife1, isMyLife2, isOppLife1, isOppLife2;
 	int myConNum = connectionLengthOneDirection(pla, loc, adj, isSixWin, isMyLife1) + connectionLengthOneDirection(pla, loc, -adj, isSixWin, isMyLife2) + 1;
 	int oppConNum = connectionLengthOneDirection(opp, loc, adj, isSixWin, isOppLife1) + connectionLengthOneDirection(opp, loc, -adj, isSixWin, isOppLife2) + 1;
-	if (myConNum ==9 || (myConNum > 9 && isSixWin))return MP_FIVE;
+	if (myConNum ==8 || (myConNum > 8 && isSixWin))return MP_FIVE;
 #ifdef  RENJU
 	if ((oppConNum == 5 && opp == P_BLACK) || (oppConNum >= 5 && opp == P_WHITE))return MP_OPPOFOUR;
 #else
-	if (oppConNum == 9 || (oppConNum > 9 && isSixWin))return MP_OPPOFOUR;
+	if (oppConNum == 8 || (oppConNum > 8 && isSixWin))return MP_OPPOFOUR;
 #endif //  RENJU
 
 
