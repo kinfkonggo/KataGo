@@ -4,6 +4,12 @@
 
 using namespace std;
 
+static float boardScoreWeight(int x, int y, int x_size, int y_size)
+{
+  float weight = std::max(1.0, x_size / 6.0);
+  float w=std::min(std::min(x+1,x_size-x),std::min(y+1,y_size-y));//金字塔形的目数权重
+  return w * weight;
+}
 static Hash128 getKoHash(const Rules& rules, const Board& board, Player pla) {
   if(rules.koRule == Rules::KO_SITUATIONAL)
     return board.pos_hash ^ Board::ZOBRIST_PLAYER_HASH[pla] ;
@@ -358,13 +364,11 @@ int BoardHistory::countAreaScoreWhiteMinusBlack(const Board& board, Color area[B
     for(int x = 0; x<board.x_size; x++) {
       Loc loc = Location::getLoc(x,y,board.x_size);
       if(area[loc] == C_WHITE)
-        score += 1;
+        score += boardScoreWeight(x,y,board.x_size,board.y_size);
       else if(area[loc] == C_BLACK)
-        score -= 1;
+        score -= boardScoreWeight(x,y,board.x_size,board.y_size);
     }
   }
-  score += CAPTURE_BONUS * (board.numBlackCaptures - board.numWhiteCaptures);
-  score = score * SCORE_SCALE;
   return score;
 }
 

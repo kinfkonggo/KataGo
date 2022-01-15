@@ -1083,7 +1083,7 @@ void NNInputs::fillRowV7(
     selfKomi = bArea+1.0f;
   if(selfKomi < -bArea-1.0f)
     selfKomi = -bArea-1.0f;
-  rowGlobal[5] = SCORE_SCALE*(selfKomi+CAPTURE_BONUS*captureDiff)/20.0f;
+  rowGlobal[5] =selfKomi/20.0f;
 
   //Ko rule
   if(hist.rules.koRule == Rules::KO_POSITIONAL) {
