@@ -333,6 +333,7 @@ int BoardHistory::countAreaScoreWhiteMinusBlack(const Board& board, Color area[B
     bool nonPassAliveStones = true;
     bool safeBigTerritories = true;
     bool unsafeBigTerritories = true;
+    static_assert(CAPTURE_BONUS >= 0,"CAPTURE_BONUS<0需要写个tromp taylor规则的点目");
     board.calculateArea(
       area,
       nonPassAliveStones,safeBigTerritories,unsafeBigTerritories,rules.multiStoneSuicideLegal
