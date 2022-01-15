@@ -1075,13 +1075,15 @@ void NNInputs::fillRowV7(
 
   //Komi and any score adjustments
   float selfKomi = hist.currentSelfKomi(nextPlayer,nnInputParams.drawEquivalentWinsForWhite);
+  int captureDiff = board.numBlackCaptures - board.numWhiteCaptures;
+  if (nextPlayer == P_BLACK)captureDiff = -captureDiff;
   float bArea = (float)(xSize * ySize);
   //Bound komi just in case
   if(selfKomi > bArea+1.0f)
     selfKomi = bArea+1.0f;
   if(selfKomi < -bArea-1.0f)
     selfKomi = -bArea-1.0f;
-  rowGlobal[5] = selfKomi/20.0f;
+  rowGlobal[5] = SCORE_SCALE*(selfKomi+CAPTURE_BONUS*captureDiff)/20.0f;
 
   //Ko rule
   if(hist.rules.koRule == Rules::KO_POSITIONAL) {

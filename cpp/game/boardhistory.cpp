@@ -363,7 +363,8 @@ int BoardHistory::countAreaScoreWhiteMinusBlack(const Board& board, Color area[B
         score -= 1;
     }
   }
-
+  score += CAPTURE_BONUS * (board.numBlackCaptures - board.numWhiteCaptures);
+  score = score * SCORE_SCALE;
   return score;
 }
 

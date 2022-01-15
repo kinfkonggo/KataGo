@@ -12,8 +12,20 @@
 #include "../external/nlohmann_json/json.hpp"
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 9
+#define COMPILE_MAX_BOARD_LEN 13
 #endif
+
+//  CAPTURE_BONUS 吃对方一个子加几目
+//  CAPTURE_BONUS = 2 一子千金
+//  CAPTURE_BONUS = -1 谁先没地方下谁输的规则
+static const float CAPTURE_BONUS = 2;
+
+//防止训练神经网络的时候梯度爆炸
+static const float SCORE_SCALE =1.0/(
+  CAPTURE_BONUS > 1 ? CAPTURE_BONUS :
+  CAPTURE_BONUS < -1 ? -CAPTURE_BONUS :
+  1);
+
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
 

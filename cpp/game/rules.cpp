@@ -202,7 +202,7 @@ Rules Rules::updateRules(const string& k, const string& v, Rules oldRules) {
 static Rules parseRulesHelper(const string& sOrig, bool allowKomi) {
   Rules rules;
   string lowercased = Global::trim(Global::toLower(sOrig));
-  if(lowercased == "chinese") {
+  if(lowercased == "chinese"||lowercased == "tromptaylor") {
     rules.taxRule = Rules::TAX_NONE;
     rules.multiStoneSuicideLegal = false;
     rules.hasButton = false;
@@ -369,20 +369,6 @@ bool Rules::tryParseRulesWithoutKomi(const string& sOrig, Rules& buf, float komi
 }
 
 string Rules::toStringNoKomiMaybeNice() const {
-  if(equalsIgnoringKomi(parseRulesHelper("TrompTaylor",false)))
-    return "TrompTaylor";
-  if(equalsIgnoringKomi(parseRulesHelper("Japanese",false)))
-    return "Japanese";
-  if(equalsIgnoringKomi(parseRulesHelper("Chinese",false)))
-    return "Chinese";
-  if(equalsIgnoringKomi(parseRulesHelper("Chinese-OGS",false)))
-    return "Chinese-OGS";
-  if(equalsIgnoringKomi(parseRulesHelper("AGA",false)))
-    return "AGA";
-  if(equalsIgnoringKomi(parseRulesHelper("StoneScoring",false)))
-    return "StoneScoring";
-  if(equalsIgnoringKomi(parseRulesHelper("NewZealand",false)))
-    return "NewZealand";
   return toStringNoKomi();
 }
 
