@@ -6,9 +6,9 @@ using namespace std;
 
 static float boardScoreWeight(int x, int y, int x_size, int y_size)
 {
-  float weight = std::max(1.0, x_size / 6.0);
+  //static float weight = 1.0/std::max(1.0, COMPILE_MAX_BOARD_LEN / 6.0);
   float w=std::min(std::min(x+1,x_size-x),std::min(y+1,y_size-y));//金字塔形的目数权重
-  return w * weight;
+  return 0.85+w*0.05;
 }
 static Hash128 getKoHash(const Rules& rules, const Board& board, Player pla) {
   if(rules.koRule == Rules::KO_SITUATIONAL)
@@ -333,8 +333,8 @@ float BoardHistory::currentSelfKomi(Player pla, double drawEquivalentWinsForWhit
   }
 }
 
-int BoardHistory::countAreaScoreWhiteMinusBlack(const Board& board, Color area[Board::MAX_ARR_SIZE]) const {
-  int score = 0;
+float BoardHistory::countAreaScoreWhiteMinusBlack(const Board& board, Color area[Board::MAX_ARR_SIZE]) const {
+  float score = 0;
   if(rules.taxRule == Rules::TAX_NONE) {
     bool nonPassAliveStones = true;
     bool safeBigTerritories = true;
@@ -387,9 +387,8 @@ void BoardHistory::getAreaNow(const Board& board, Color area[Board::MAX_ARR_SIZE
 }
 
 void BoardHistory::endAndScoreGameNow(const Board& board, Color area[Board::MAX_ARR_SIZE]) {
-  int boardScore;
+  float boardScore;
     boardScore = countAreaScoreWhiteMinusBlack(board,area);
-
   if(hasButton) {
     hasButton = false;
     whiteBonusScore += (presumedNextMovePla == P_WHITE ? 0.5f : -0.5f);
