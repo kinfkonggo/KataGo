@@ -690,7 +690,6 @@ Rules Setup::loadSingleRules(
     if(cfg.contains("koRule")) throw StringError("Cannot both specify 'rules' and individual rules like koRule");
     if(cfg.contains("multiStoneSuicideLegal")) throw StringError("Cannot both specify 'rules' and individual rules like multiStoneSuicideLegal");
     if(cfg.contains("hasButton")) throw StringError("Cannot both specify 'rules' and individual rules like hasButton");
-    if(cfg.contains("taxRule")) throw StringError("Cannot both specify 'rules' and individual rules like taxRule");
     if(cfg.contains("friendlyPassOk")) throw StringError("Cannot both specify 'rules' and individual rules like friendlyPassOk");
 
     rules = Rules::parseRules(cfg.getString("rules"));
@@ -706,13 +705,6 @@ Rules Setup::loadSingleRules(
     rules.hasButton = hasButton;
     rules.komi = komi;
 
-    if(cfg.contains("taxRule")) {
-      string taxRule = cfg.getString("taxRule", Rules::taxRuleStrings());
-      rules.taxRule = Rules::parseTaxRule(taxRule);
-    }
-    else {
-      rules.taxRule =  Rules::TAX_NONE;
-    }
 
  
     if(cfg.contains("friendlyPassOk")) {
@@ -759,7 +751,7 @@ bool Setup::loadDefaultBoardXYSize(
 vector<pair<set<string>,set<string>>> Setup::getMutexKeySets() {
   vector<pair<set<string>,set<string>>> mutexKeySets = {
     std::make_pair<set<string>,set<string>>(
-    {"rules"},{"koRule","multiStoneSuicideLegal","taxRule","hasButton","friendlyPassOk"}
+    {"rules"},{"koRule","multiStoneSuicideLegal","hasButton","friendlyPassOk"}
     ),
   };
   return mutexKeySets;

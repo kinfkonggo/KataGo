@@ -1727,17 +1727,24 @@ void Board::calculateArea(
   bool unsafeBigTerritories,
   bool isMultiStoneSuicideLegal
 ) const {
-  std::fill(result,result+MAX_ARR_SIZE,C_EMPTY);
-  calculateAreaForPla(P_BLACK,safeBigTerritories,unsafeBigTerritories,isMultiStoneSuicideLegal,result);
-  calculateAreaForPla(P_WHITE,safeBigTerritories,unsafeBigTerritories,isMultiStoneSuicideLegal,result);
+  if (CAPTURE_BONUS < 0)
+  {
+    calculateTTArea(result);
+  }
+  else
+  {
+    std::fill(result, result + MAX_ARR_SIZE, C_EMPTY);
+    calculateAreaForPla(P_BLACK, safeBigTerritories, unsafeBigTerritories, isMultiStoneSuicideLegal, result);
+    calculateAreaForPla(P_WHITE, safeBigTerritories, unsafeBigTerritories, isMultiStoneSuicideLegal, result);
 
-  //TODO can we merge this in to calculate area for pla?
-  if(nonPassAliveStones) {
-    for(int y = 0; y < y_size; y++) {
-      for(int x = 0; x < x_size; x++) {
-        Loc loc = Location::getLoc(x,y,x_size);
-        if(result[loc] == C_EMPTY)
-          result[loc] = colors[loc];
+    //TODO can we merge this in to calculate area for pla?
+    if (nonPassAliveStones) {
+      for (int y = 0; y < y_size; y++) {
+        for (int x = 0; x < x_size; x++) {
+          Loc loc = Location::getLoc(x, y, x_size);
+          if (result[loc] == C_EMPTY)
+            result[loc] = colors[loc];
+        }
       }
     }
   }
@@ -2093,6 +2100,32 @@ void Board::calculateAreaForPla(
         } while (cur != head);
       }
     }
+  }
+}
+
+void Board::calculateTTAreaForPlaIter(Player pla, Loc loc, bool* result) const
+{
+  if (colors[loc] != C_EMPTY&&colors[loc] != pla)return;
+  if (result[loc])return;
+  result[loc] = true;
+  for (int i = 0; i < 4; i++)calculateTTAreaForPlaIter(pla, loc + adj_offsets[i], result);//ÏàÁÚ4¸öµã
+}
+
+void Board::calculateTTArea(Color* result) const
+{
+  bool resultB[MAX_ARR_SIZE], resultW[MAX_ARR_SIZE];
+  std::fill(result,result+MAX_ARR_SIZE,C_EMPTY);
+  std::fill(resultB,resultB+MAX_ARR_SIZE,false);
+  std::fill(resultW,resultW+MAX_ARR_SIZE,false);
+  for (Loc loc = 0; loc < MAX_ARR_SIZE; loc++)
+  {
+    if (colors[loc] == C_WHITE)calculateTTAreaForPlaIter(C_WHITE, loc, resultW);
+    if (colors[loc] == C_BLACK)calculateTTAreaForPlaIter(C_BLACK, loc, resultB);
+  }
+  for (Loc loc = 0; loc < MAX_ARR_SIZE; loc++)
+  {
+    if (resultW[loc] && (!resultB[loc]))result[loc] = C_WHITE;
+    else if (resultB[loc] && (!resultW[loc]))result[loc] = C_BLACK;
   }
 }
 

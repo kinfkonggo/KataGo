@@ -43,8 +43,6 @@ $$KO_RULE
 
 $$SCORING_RULE
 
-$$TAX_RULE
-
 $$MULTI_STONE_SUICIDE
 
 $$BUTTON
@@ -223,10 +221,6 @@ if(rules.koRule == Rules::KO_POSITIONAL)  replace("$$KO_RULE", "koRule = POSITIO
   else { ASSERT_UNREACHABLE; }
 
 
-  if(rules.taxRule == Rules::TAX_NONE)      replace("$$TAX_RULE", "taxRule = NONE  # options: NONE, SEKI, ALL");
-  else if(rules.taxRule == Rules::TAX_SEKI) replace("$$TAX_RULE", "taxRule = SEKI  # options: NONE, SEKI, ALL");
-  else if(rules.taxRule == Rules::TAX_ALL)  replace("$$TAX_RULE", "taxRule = ALL  # options: NONE, SEKI, ALL");
-  else { ASSERT_UNREACHABLE; }
 
   if(rules.multiStoneSuicideLegal) replace("$$MULTI_STONE_SUICIDE", "multiStoneSuicideLegal = true");
   else                             replace("$$MULTI_STONE_SUICIDE", "multiStoneSuicideLegal = false");

@@ -16,8 +16,8 @@ using namespace std;
 InitialPosition::InitialPosition()
   :board(),hist(),pla(C_EMPTY)
 {}
-InitialPosition::InitialPosition(const Board& b, const BoardHistory& h, Player p, bool plainFork, bool sekiFork, bool hintFork)
-  :board(b),hist(h),pla(p),isPlainFork(plainFork),isSekiFork(sekiFork),isHintFork(hintFork)
+InitialPosition::InitialPosition(const Board& b, const BoardHistory& h, Player p, bool plainFork, bool hintFork)
+  :board(b),hist(h),pla(p),isPlainFork(plainFork),isHintFork(hintFork)
 {}
 InitialPosition::~InitialPosition()
 {}
@@ -27,9 +27,6 @@ ForkData::~ForkData() {
   for(int i = 0; i<forks.size(); i++)
     delete forks[i];
   forks.clear();
-  for(int i = 0; i<sekiForks.size(); i++)
-    delete sekiForks[i];
-  sekiForks.clear();
 }
 
 void ForkData::add(const InitialPosition* pos) {
@@ -45,31 +42,6 @@ const InitialPosition* ForkData::get(Rand& rand) {
   const InitialPosition* pos = forks[r];
   forks[r] = forks[last];
   forks.resize(forks.size()-1);
-  return pos;
-}
-
-void ForkData::addSeki(const InitialPosition* pos, Rand& rand) {
-  std::unique_lock<std::mutex> lock(mutex);
-  if(sekiForks.size() >= 1000) {
-    int r = rand.nextUInt(sekiForks.size());
-    const InitialPosition* oldPos = sekiForks[r];
-    sekiForks[r] = pos;
-    lock.unlock();
-    delete oldPos;
-  }
-  else {
-    sekiForks.push_back(pos);
-  }
-}
-const InitialPosition* ForkData::getSeki(Rand& rand) {
-  std::lock_guard<std::mutex> lock(mutex);
-  if(sekiForks.size() <= 0)
-    return NULL;
-  int r = rand.nextUInt(sekiForks.size());
-  int last = sekiForks.size()-1;
-  const InitialPosition* pos = sekiForks[r];
-  sekiForks[r] = sekiForks[last];
-  sekiForks.resize(sekiForks.size()-1);
   return pos;
 }
 
@@ -90,19 +62,14 @@ GameInitializer::GameInitializer(ConfigParser& cfg, Logger& logger, const string
 void GameInitializer::initShared(ConfigParser& cfg, Logger& logger) {
 
   allowedKoRuleStrs = cfg.getStrings("koRules", Rules::koRuleStrings());
-  allowedTaxRuleStrs = cfg.getStrings("taxRules", Rules::taxRuleStrings());
   allowedMultiStoneSuicideLegals = cfg.getBools("multiStoneSuicideLegals");
   allowedButtons = cfg.getBools("hasButtons");
 
   for(size_t i = 0; i < allowedKoRuleStrs.size(); i++)
     allowedKoRules.push_back(Rules::parseKoRule(allowedKoRuleStrs[i]));
-  for(size_t i = 0; i < allowedTaxRuleStrs.size(); i++)
-    allowedTaxRules.push_back(Rules::parseTaxRule(allowedTaxRuleStrs[i]));
 
   if(allowedKoRules.size() <= 0)
     throw IOError("koRules must have at least one value in " + cfg.getFileName());
-  if(allowedTaxRules.size() <= 0)
-    throw IOError("taxRules must have at least one value in " + cfg.getFileName());
   if(allowedMultiStoneSuicideLegals.size() <= 0)
     throw IOError("multiStoneSuicideLegals must have at least one value in " + cfg.getFileName());
   if(allowedButtons.size() <= 0)
@@ -345,13 +312,6 @@ void GameInitializer::createGame(
   }
 }
 
-Rules GameInitializer::randomizeTaxRules(Rules rules, Rand& randToUse) const {
-  rules.taxRule = allowedTaxRules[randToUse.nextUInt(allowedTaxRules.size())];
-
-    rules.hasButton = allowedButtons[randToUse.nextUInt(allowedButtons.size())];
-
-  return rules;
-}
 
 bool GameInitializer::isAllowedBSize(int xSize, int ySize) {
   if(!contains(allowedBSizes,xSize))
@@ -387,7 +347,6 @@ Rules GameInitializer::createRules() {
 Rules GameInitializer::createRulesUnsynchronized() {
   Rules rules;
   rules.koRule = allowedKoRules[rand.nextUInt(allowedKoRules.size())];
-  rules.taxRule = allowedTaxRules[rand.nextUInt(allowedTaxRules.size())];
   rules.multiStoneSuicideLegal = allowedMultiStoneSuicideLegals[rand.nextUInt(allowedMultiStoneSuicideLegals.size())];
 
     rules.hasButton = allowedButtons[rand.nextUInt(allowedButtons.size())];
@@ -1591,17 +1550,28 @@ FinishedGameData* Play::runGame(
       //Fill full and seki areas
       {
         board.calculateArea(gameData->finalFullArea, true, true, true, hist.rules.multiStoneSuicideLegal);
-
-        Color* independentLifeArea = new Color[Board::MAX_ARR_SIZE];
-        int whiteMinusBlackIndependentLifeRegionCount;
-        board.calculateIndependentLifeArea(independentLifeArea,whiteMinusBlackIndependentLifeRegionCount, false, false, hist.rules.multiStoneSuicideLegal);
-        for(int i = 0; i<Board::MAX_ARR_SIZE; i++) {
-          if(independentLifeArea[i] == C_EMPTY && (gameData->finalFullArea[i] == C_BLACK || gameData->finalFullArea[i] == C_WHITE))
-            gameData->finalSekiAreas[i] = true;
-          else
-            gameData->finalSekiAreas[i] = false;
+        if (CAPTURE_BONUS < 0)
+        { 
+          for (int i = 0; i < Board::MAX_ARR_SIZE; i++) {
+            if (gameData->finalFullArea[i] == C_EMPTY)
+              gameData->finalSekiAreas[i] = true;
+            else
+              gameData->finalSekiAreas[i] = false;
+          }
         }
-        delete[] independentLifeArea;
+        else
+        {
+          Color* independentLifeArea = new Color[Board::MAX_ARR_SIZE];
+          int whiteMinusBlackIndependentLifeRegionCount;
+          board.calculateIndependentLifeArea(independentLifeArea, whiteMinusBlackIndependentLifeRegionCount, false, false, hist.rules.multiStoneSuicideLegal);
+          for (int i = 0; i < Board::MAX_ARR_SIZE; i++) {
+            if (independentLifeArea[i] == C_EMPTY && (gameData->finalFullArea[i] == C_BLACK || gameData->finalFullArea[i] == C_WHITE))
+              gameData->finalSekiAreas[i] = true;
+            else
+              gameData->finalSekiAreas[i] = false;
+          }
+          delete[] independentLifeArea;
+        }
       }
     }
     gameData->whiteValueTargetsByTurn.push_back(finalValueTargets);
@@ -1614,7 +1584,7 @@ FinishedGameData* Play::runGame(
 
     assert(gameData->finalWhiteScoring == NULL);
     gameData->finalWhiteScoring = new float[Board::MAX_ARR_SIZE];
-    NNInputs::fillScoring(board,gameData->finalOwnership,hist.rules.taxRule == Rules::TAX_ALL,gameData->finalWhiteScoring);
+    NNInputs::fillScoring(board,gameData->finalOwnership,gameData->finalWhiteScoring);
 
     gameData->hasFullData = true;
 
@@ -2011,50 +1981,9 @@ void Play::maybeForkGame(
   //If the game is over now, don't actually do anything
   if(hist.isGameFinished)
     return;
-  forkData->add(new InitialPosition(board,hist,pla,true,false,false));
+  forkData->add(new InitialPosition(board,hist,pla,true,false));
 }
 
-
-void Play::maybeSekiForkGame(
-  const FinishedGameData* finishedGameData,
-  ForkData* forkData,
-  const PlaySettings& playSettings,
-  const GameInitializer* gameInit,
-  Rand& gameRand
-) {
-  if(forkData == NULL)
-    return;
-  if(playSettings.sekiForkHackProb <= 0)
-    return;
-
-  //If there are any unowned spots, consider forking the last bit of the game, with random rules and even score
-  //Don't fork games starting in second encore though
-  const BoardHistory& endHist = finishedGameData->endHist;
-  if(endHist.isGameFinished && endHist.isScored  && hasUnownedSpot(finishedGameData)) {
-
-    for(int i = 0; i<2; i++) {
-      //Pick a random move to fork from near the end of the game
-      int moveIdx = (int)floor(endHist.moveHistory.size() * (1.0 - 0.10 * gameRand.nextExponential()) - 1.0);
-      if(moveIdx < 0)
-        moveIdx = 0;
-      if(moveIdx > endHist.moveHistory.size())
-        moveIdx = endHist.moveHistory.size();
-
-      //Randomly permute the rules
-      Rules rules = finishedGameData->startHist.rules;
-      rules = gameInit->randomizeTaxRules(rules,gameRand);
-
-      Board board;
-      Player pla;
-      BoardHistory hist;
-      replayGameUpToMove(finishedGameData, moveIdx, rules, board, hist, pla);
-      //Just in case if somehow the game is over now, don't actually do anything
-      if(hist.isGameFinished)
-        continue;
-      forkData->addSeki(new InitialPosition(board,hist,pla,false,true,false),gameRand);
-    }
-  }
-}
 
 void Play::maybeHintForkGame(
   const FinishedGameData* finishedGameData,
@@ -2090,7 +2019,7 @@ void Play::maybeHintForkGame(
   //If the game is over now, don't actually do anything
   if(hist.isGameFinished)
     return;
-  forkData->add(new InitialPosition(board,hist,pla,false,false,true));
+  forkData->add(new InitialPosition(board,hist,pla,false,true));
 }
 
 
@@ -2147,15 +2076,8 @@ FinishedGameData* GameRunner::runGame(
   Rand gameRand(seed + ":" + "forGameRand");
 
   const InitialPosition* initialPosition = NULL;
-  bool usedSekiForkHackPosition = false;
   if(forkData != NULL) {
     initialPosition = forkData->get(gameRand);
-
-    if(initialPosition == NULL && playSettings.sekiForkHackProb > 0 && gameRand.nextBool(playSettings.sekiForkHackProb)) {
-      initialPosition = forkData->getSeki(gameRand);
-      if(initialPosition != NULL)
-        usedSekiForkHackPosition = true;
-    }
   }
 
   Board board;
@@ -2246,9 +2168,6 @@ FinishedGameData* GameRunner::runGame(
   assert(finishedGameData != NULL);
 
   Play::maybeForkGame(finishedGameData, forkData, playSettings, gameRand, botB);
-  if(!usedSekiForkHackPosition) {
-    Play::maybeSekiForkGame(finishedGameData, forkData, playSettings, gameInit, gameRand);
-  }
   Play::maybeHintForkGame(finishedGameData, forkData, otherGameProps);
 
   if(botW != botB)

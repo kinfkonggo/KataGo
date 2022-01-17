@@ -13,10 +13,6 @@ struct Rules {
   int koRule;
 
 
-  static const int TAX_NONE = 0;
-  static const int TAX_SEKI = 1;
-  static const int TAX_ALL = 2;
-  int taxRule;
 
   bool multiStoneSuicideLegal;
   bool hasButton;
@@ -35,7 +31,6 @@ struct Rules {
   Rules();
   Rules(
     int koRule,
-    int taxRule,
     bool multiStoneSuicideLegal,
     bool hasButton,
     bool friendlyPassOk,
@@ -52,11 +47,8 @@ struct Rules {
   static Rules getTrompTaylorish();
 
   static std::set<std::string> koRuleStrings();
-  static std::set<std::string> taxRuleStrings();
   static int parseKoRule(const std::string& s);
-  static int parseTaxRule(const std::string& s);
   static std::string writeKoRule(int koRule);
-  static std::string writeTaxRule(int taxRule);
 
   static bool komiIsIntOrHalfInt(float komi);
 
@@ -79,7 +71,6 @@ struct Rules {
   nlohmann::json toJsonNoKomiMaybeOmitStuff() const;
 
   static const Hash128 ZOBRIST_KO_RULE_HASH[4];
-  static const Hash128 ZOBRIST_TAX_RULE_HASH[3];
   static const Hash128 ZOBRIST_MULTI_STONE_SUICIDE_HASH;
   static const Hash128 ZOBRIST_BUTTON_HASH;
 

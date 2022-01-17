@@ -329,31 +329,13 @@ float BoardHistory::currentSelfKomi(Player pla, double drawEquivalentWinsForWhit
 
 int BoardHistory::countAreaScoreWhiteMinusBlack(const Board& board, Color area[Board::MAX_ARR_SIZE]) const {
   int score = 0;
-  if(rules.taxRule == Rules::TAX_NONE) {
     bool nonPassAliveStones = true;
     bool safeBigTerritories = true;
     bool unsafeBigTerritories = true;
-    static_assert(CAPTURE_BONUS >= 0,"CAPTURE_BONUS<0需要写个tromp taylor规则的点目");
     board.calculateArea(
       area,
       nonPassAliveStones,safeBigTerritories,unsafeBigTerritories,rules.multiStoneSuicideLegal
     );
-  }
-  else if(rules.taxRule == Rules::TAX_SEKI || rules.taxRule == Rules::TAX_ALL) {
-    bool keepTerritories = false;
-    bool keepStones = true;
-    int whiteMinusBlackIndependentLifeRegionCount = 0;
-    board.calculateIndependentLifeArea(
-      area,whiteMinusBlackIndependentLifeRegionCount,
-      keepTerritories,
-      keepStones,
-      rules.multiStoneSuicideLegal
-    );
-    if(rules.taxRule == Rules::TAX_ALL)
-      score -= 2 * whiteMinusBlackIndependentLifeRegionCount;
-  }
-  else
-    ASSERT_UNREACHABLE;
 
   for(int y = 0; y<board.y_size; y++) {
     for(int x = 0; x<board.x_size; x++) {
@@ -405,6 +387,7 @@ void BoardHistory::endAndScoreGameNow(const Board& board) {
 }
 
 void BoardHistory::endGameIfAllPassAlive(const Board& board) {
+  if (CAPTURE_BONUS < 0)return;
   int boardScore = 0;
   bool nonPassAliveStones = false;
   bool safeBigTerritories = false;
@@ -428,9 +411,7 @@ void BoardHistory::endGameIfAllPassAlive(const Board& board) {
   }
 
   //In the case that we have a group tax, rescore normally to actually count the group tax
-  if(rules.taxRule == Rules::TAX_ALL)
-    endAndScoreGameNow(board);
-  else {
+ 
     if(hasButton) {
       hasButton = false;
       whiteBonusScore += (presumedNextMovePla == P_WHITE ? 0.5f : -0.5f);
@@ -440,7 +421,6 @@ void BoardHistory::endGameIfAllPassAlive(const Board& board) {
     isNoResult = false;
     isResignation = false;
     isGameFinished = true;
-  }
 }
 
 void BoardHistory::setWinnerByResignation(Player pla) {
@@ -637,7 +617,6 @@ Hash128 BoardHistory::getSituationRulesAndKoHash(const Board& board, const Board
 
   //Fold in the ko, scoring, and suicide rules
   hash ^= Rules::ZOBRIST_KO_RULE_HASH[hist.rules.koRule];
-  hash ^= Rules::ZOBRIST_TAX_RULE_HASH[hist.rules.taxRule];
   if(hist.rules.multiStoneSuicideLegal)
     hash ^= Rules::ZOBRIST_MULTI_STONE_SUICIDE_HASH;
   if(hist.hasButton)

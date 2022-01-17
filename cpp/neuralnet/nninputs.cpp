@@ -231,10 +231,8 @@ double ScoreValue::getScoreStdev(double scoreMean, double scoreMeanSq) {
 void NNInputs::fillScoring(
   const Board& board,
   const Color* area,
-  bool groupTax,
   float* scoring
 ) {
-  if(!groupTax) {
     std::fill(scoring, scoring + Board::MAX_ARR_SIZE, 0.0f);
     for(int y = 0; y<board.y_size; y++) {
       for(int x = 0; x<board.x_size; x++) {
@@ -250,62 +248,7 @@ void NNInputs::fillScoring(
         }
       }
     }
-  }
-  else {
-    bool visited[Board::MAX_ARR_SIZE];
-    Loc queue[Board::MAX_ARR_SIZE];
-
-    std::fill(visited, visited + Board::MAX_ARR_SIZE, false);
-    std::fill(scoring, scoring + Board::MAX_ARR_SIZE, 0.0f);
-    for(int y = 0; y<board.y_size; y++) {
-      for(int x = 0; x<board.x_size; x++) {
-        Loc loc = Location::getLoc(x,y,board.x_size);
-        if(visited[loc])
-          continue;
-        Color areaColor = area[loc];
-        if(areaColor == P_BLACK || areaColor == P_WHITE) {
-          float fullValue = areaColor == P_WHITE ? 1.0f : -1.0f;
-          int queueHead = 0;
-          int queueTail = 1;
-          queue[0] = loc;
-          visited[loc] = true;
-
-          //First, count how many empty or opp locations there are
-          int territoryCount = 0;
-          while(queueHead < queueTail) {
-            Loc next = queue[queueHead];
-            queueHead++;
-            if(board.colors[next] != areaColor)
-              territoryCount++;
-            //Push adjacent locations on to queue
-            for(int i = 0; i<4; i++) {
-              Loc adj = next + board.adj_offsets[i];
-              if(area[adj] == areaColor && !visited[adj]) {
-                queue[queueTail] = adj;
-                queueTail++;
-                visited[adj] = true;
-              }
-            }
-          }
-
-          //Then, actually fill values
-          float territoryValue = territoryCount <= 2 ? 0.0f : fullValue * (territoryCount - 2.0f) / territoryCount;
-          for(int j = 0; j<queueTail; j++) {
-            Loc next = queue[j];
-            queueHead++;
-            if(board.colors[next] != areaColor)
-              scoring[next] = territoryValue;
-            else
-              scoring[next] = fullValue;
-          }
-        }
-        else {
-          assert(areaColor == C_EMPTY);
-          scoring[loc] = 0;
-        }
-      }
-    }
-  }
+  
 }
 
 
@@ -1032,30 +975,13 @@ void NNInputs::fillRowV7(
 
   //Features 18,19 - current territory, not counting group tax
   Color area[Board::MAX_ARR_SIZE];
-  bool hasAreaFeature = false;
-  if( hist.rules.taxRule == Rules::TAX_NONE) {
-    hasAreaFeature = true;
+  bool hasAreaFeature = CAPTURE_BONUS>=0;
+
+  if(hasAreaFeature) {
     bool nonPassAliveStones = true;
     bool safeBigTerritories = true;
     bool unsafeBigTerritories = true;
     board.calculateArea(area,nonPassAliveStones,safeBigTerritories,unsafeBigTerritories,hist.rules.multiStoneSuicideLegal);
-  }
-  else {
-    bool keepTerritories = false;
-    bool keepStones = false;
-    int whiteMinusBlackIndependentLifeRegionCount = 0;
-      hasAreaFeature = true;
-      keepTerritories = false;
-      keepStones = true;
-      board.calculateIndependentLifeArea(
-        area,whiteMinusBlackIndependentLifeRegionCount,
-        keepTerritories,
-        keepStones,
-        hist.rules.multiStoneSuicideLegal
-      );
-  }
-
-  if(hasAreaFeature) {
     for(int y = 0; y<ySize; y++) {
       for(int x = 0; x<xSize; x++) {
         Loc loc = Location::getLoc(x,y,xSize);
@@ -1100,17 +1026,6 @@ void NNInputs::fillRowV7(
   //Suicide
   if(hist.rules.multiStoneSuicideLegal)
     rowGlobal[8] = 1.0f;
-
-  //Tax
-  if(hist.rules.taxRule == Rules::TAX_NONE) {}
-  else if(hist.rules.taxRule == Rules::TAX_SEKI)
-    rowGlobal[10] = 1.0f;
-  else if(hist.rules.taxRule == Rules::TAX_ALL) {
-    rowGlobal[10] = 1.0f;
-    rowGlobal[11] = 1.0f;
-  }
-  else
-    ASSERT_UNREACHABLE;
 
 
   //Does a pass end the current phase given the ruleset and history?

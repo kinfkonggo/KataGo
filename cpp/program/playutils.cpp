@@ -923,11 +923,9 @@ void PlayUtils::printGenmoveLog(ostream& out, const AsyncBot* bot, const NNEvalu
 
 Rules PlayUtils::genRandomRules(Rand& rand) {
   vector<int> allowedKoRules = { Rules::KO_POSITIONAL, Rules::KO_SITUATIONAL };
-  vector<int> allowedTaxRules = { Rules::TAX_NONE, Rules::TAX_SEKI, Rules::TAX_ALL };
 
   Rules rules;
   rules.koRule = allowedKoRules[rand.nextUInt(allowedKoRules.size())];
-  rules.taxRule = allowedTaxRules[rand.nextUInt(allowedTaxRules.size())];
   rules.multiStoneSuicideLegal = rand.nextBool(0.5);
 
   rules.hasButton = rand.nextBool(0.5);

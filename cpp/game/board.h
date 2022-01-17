@@ -12,13 +12,13 @@
 #include "../external/nlohmann_json/json.hpp"
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 13
+#define COMPILE_MAX_BOARD_LEN 9
 #endif
 
 //  CAPTURE_BONUS 吃对方一个子加几目
 //  CAPTURE_BONUS = 2 一子千金
 //  CAPTURE_BONUS = -1 谁先没地方下谁输的规则
-const int CAPTURE_BONUS = 2;
+const int CAPTURE_BONUS = -1;
 
 //防止训练神经网络的时候梯度爆炸
 const float SCORE_SCALE =1.0/(
@@ -349,6 +349,16 @@ struct Board
     bool safeBigTerritories,
     bool unsafeBigTerritories,
     bool isMultiStoneSuicideLegal,
+    Color* result
+  ) const;
+
+  void calculateTTAreaForPlaIter(
+    Player pla,
+    Loc loc,
+    bool* result
+  ) const;
+
+  void calculateTTArea(
     Color* result
   ) const;
 
