@@ -33,7 +33,6 @@ int MainCmds::evalsgf(const vector<string>& args) {
   bool printPolicy;
   bool printLogPolicy;
   bool printDirichletShape;
-  bool printScoreNow;
   bool printRootEndingBonus;
   bool printLead;
   bool printAvgShorttermError;
@@ -92,7 +91,6 @@ int MainCmds::evalsgf(const vector<string>& args) {
     cmd.add(printPolicyArg);
     cmd.add(printLogPolicyArg);
     cmd.add(printDirichletShapeArg);
-    cmd.add(printScoreNowArg);
     cmd.add(printRootEndingBonusArg);
     cmd.add(printLeadArg);
     cmd.add(printAvgShorttermErrorArg);
@@ -119,7 +117,6 @@ int MainCmds::evalsgf(const vector<string>& args) {
     printPolicy = printPolicyArg.getValue();
     printLogPolicy = printLogPolicyArg.getValue();
     printDirichletShape = printDirichletShapeArg.getValue();
-    printScoreNow = printScoreNowArg.getValue();
     printRootEndingBonus = printRootEndingBonusArg.getValue();
     printLead = printLeadArg.getValue();
     printAvgShorttermError = printAvgShorttermErrorArg.getValue();
@@ -417,26 +414,6 @@ int MainCmds::evalsgf(const vector<string>& args) {
     }
   }
 
-  if(printScoreNow) {
-    sout << "Score now (ROOT position):\n";
-    Board copy(board);
-    BoardHistory copyHist(hist);
-    Color area[Board::MAX_ARR_SIZE];
-    copyHist.endAndScoreGameNow(copy,area);
-
-    for(int y = 0; y<copy.y_size; y++) {
-      for(int x = 0; x<copy.x_size; x++) {
-        Loc l = Location::getLoc(x,y,copy.x_size);
-        sout << PlayerIO::colorToChar(area[l]);
-      }
-      sout << endl;
-    }
-    sout << endl;
-
-    sout << "Komi: " << copyHist.rules.komi << endl;
-    sout << "WBonus: " << copyHist.whiteBonusScore << endl;
-    sout << "Final: "; WriteSgf::printGameResult(sout, copyHist); sout << endl;
-  }
 
   if(printRootEndingBonus) {
     sout << "Ending bonus (ROOT position)\n";

@@ -973,43 +973,13 @@ void NNInputs::fillRowV7(
   };
   iterLadders(prevPrevBoard, nnXLen, addPrevPrevLadderFeature);
 
-  //Features 18,19 - current territory, not counting group tax
-  Color area[Board::MAX_ARR_SIZE];
-  bool hasAreaFeature = CAPTURE_BONUS>=0;
-
-  if(hasAreaFeature) {
-    bool nonPassAliveStones = true;
-    bool safeBigTerritories = true;
-    bool unsafeBigTerritories = true;
-    board.calculateArea(area,nonPassAliveStones,safeBigTerritories,unsafeBigTerritories,hist.rules.multiStoneSuicideLegal);
-    for(int y = 0; y<ySize; y++) {
-      for(int x = 0; x<xSize; x++) {
-        Loc loc = Location::getLoc(x,y,xSize);
-        int pos = NNPos::locToPos(loc,xSize,nnXLen,nnYLen);
-        if(area[loc] == pla)
-          setRowBin(rowBin,pos,18, 1.0f, posStride, featureStride);
-        else if(area[loc] == opp)
-          setRowBin(rowBin,pos,19, 1.0f, posStride, featureStride);
-      }
-    }
-  }
-
-
 
   //Global features.
   //The first 5 of them were set already above to flag which of the past 5 moves were passes.
 
   //Komi and any score adjustments
-  float selfKomi = hist.currentSelfKomi(nextPlayer,nnInputParams.drawEquivalentWinsForWhite);
-  int captureDiff = board.numBlackCaptures - board.numWhiteCaptures;
-  if (nextPlayer == P_BLACK)captureDiff = -captureDiff;
-  float bArea = (float)(xSize * ySize);
-  //Bound komi just in case
-  if(selfKomi > bArea+1.0f)
-    selfKomi = bArea+1.0f;
-  if(selfKomi < -bArea-1.0f)
-    selfKomi = -bArea-1.0f;
-  rowGlobal[5] = SCORE_SCALE*(selfKomi+CAPTURE_BONUS*captureDiff)/20.0f;
+  
+  rowGlobal[5] = nextPlayer == C_BLACK ? 1.0 : -1.0;
 
   //Ko rule
   if(hist.rules.koRule == Rules::KO_POSITIONAL) {
@@ -1072,39 +1042,5 @@ void NNInputs::fillRowV7(
   //since komi is extra valuable when it turns losses into draws into wins, peaking at the komi value where you could draw + 0.5.
   //It's downsloping around the komi value where you can't draw, since the marginal komi there is nearly useless, not causing you to win
   //more games except in case of odd-dame seki.
-
-    bool boardAreaIsEven = (xSize*ySize) % 2 == 0;
-
-    //What is the parity of the komi values that can produce jigos?
-    bool drawableKomisAreEven = boardAreaIsEven;
-
-    //Find the difference between the komi viewed from our perspective and the nearest drawable komi below it.
-    float komiFloor;
-    if(drawableKomisAreEven)
-      komiFloor = floor(selfKomi / 2.0f) * 2.0f;
-    else
-      komiFloor = floor((selfKomi-1.0f) / 2.0f) * 2.0f + 1.0f;
-
-    //Cap just in case we have floating point weirdness
-    float delta = selfKomi - komiFloor;
-    assert(delta >= -0.0001f);
-    assert(delta <= 2.0001f);
-    if(delta < 0.0f)
-      delta = 0.0f;
-    if(delta > 2.0f)
-      delta = 2.0f;
-
-    //Create the triangle wave based on the difference
-    float wave;
-    if(delta < 0.5f)
-      wave = delta;
-    else if(delta < 1.5f)
-      wave = 1.0f-delta;
-    else
-      wave = delta-2.0f;
-
-    //NOTE: If ever changing which feature this is, must also update index in model.py where we multiply it into the scorebelief parity vector
-    rowGlobal[18] = wave;
-  
 
 }

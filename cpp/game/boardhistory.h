@@ -114,9 +114,7 @@ struct BoardHistory {
   //Slightly expensive, check if the entire game is all pass-alive-territory, and if so, declare the game finished
   void endGameIfAllPassAlive(const Board& board);
   //Score the board as-is. If the game is already finished, and is NOT a no-result, then this should be idempotent.
-  void endAndScoreGameNow(const Board& board);
-  void endAndScoreGameNow(const Board& board, Color area[Board::MAX_ARR_SIZE]);
-  void getAreaNow(const Board& board, Color area[Board::MAX_ARR_SIZE]) const;
+  void endGameNow(Color winner1);
 
   void setWinnerByResignation(Player pla);
 

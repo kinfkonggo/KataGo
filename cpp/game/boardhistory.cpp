@@ -346,8 +346,6 @@ int BoardHistory::countAreaScoreWhiteMinusBlack(const Board& board, Color area[B
         score -= 1;
     }
   }
-  score += CAPTURE_BONUS * (board.numBlackCaptures - board.numWhiteCaptures);
-  score = score * SCORE_SCALE;
   return score;
 }
 
@@ -361,33 +359,19 @@ void BoardHistory::setFinalScoreAndWinner(float score) {
     winner = C_EMPTY;
 }
 
-void BoardHistory::getAreaNow(const Board& board, Color area[Board::MAX_ARR_SIZE]) const {
-    countAreaScoreWhiteMinusBlack(board,area);
-}
-
-void BoardHistory::endAndScoreGameNow(const Board& board, Color area[Board::MAX_ARR_SIZE]) {
-  int boardScore;
-    boardScore = countAreaScoreWhiteMinusBlack(board,area);
-
-  if(hasButton) {
-    hasButton = false;
-    whiteBonusScore += (presumedNextMovePla == P_WHITE ? 0.5f : -0.5f);
-  }
-
-  setFinalScoreAndWinner(boardScore + whiteBonusScore + rules.komi);
+void BoardHistory::endGameNow(Color winner1)
+{
+  finalWhiteMinusBlackScore = 0;
+  winner = winner1;
   isScored = true;
   isNoResult = false;
   isResignation = false;
   isGameFinished = true;
 }
 
-void BoardHistory::endAndScoreGameNow(const Board& board) {
-  Color area[Board::MAX_ARR_SIZE];
-  endAndScoreGameNow(board,area);
-}
 
 void BoardHistory::endGameIfAllPassAlive(const Board& board) {
-  if (CAPTURE_BONUS < 0)return;
+  return;
   int boardScore = 0;
   bool nonPassAliveStones = false;
   bool safeBigTerritories = false;
@@ -552,8 +536,9 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
   
 
   //Phase transitions and game end
+    if(board.numBlackCaptures>0)endGameNow(C_WHITE);
   if(consecutiveEndingPasses >= 2) {
-      endAndScoreGameNow(board);
+      endGameNow(C_BLACK);
   }
 
 

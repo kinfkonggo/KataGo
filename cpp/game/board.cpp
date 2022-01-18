@@ -1727,12 +1727,6 @@ void Board::calculateArea(
   bool unsafeBigTerritories,
   bool isMultiStoneSuicideLegal
 ) const {
-  if (CAPTURE_BONUS < 0)
-  {
-    calculateTTArea(result);
-  }
-  else
-  {
     std::fill(result, result + MAX_ARR_SIZE, C_EMPTY);
     calculateAreaForPla(P_BLACK, safeBigTerritories, unsafeBigTerritories, isMultiStoneSuicideLegal, result);
     calculateAreaForPla(P_WHITE, safeBigTerritories, unsafeBigTerritories, isMultiStoneSuicideLegal, result);
@@ -1748,7 +1742,7 @@ void Board::calculateArea(
       }
     }
   }
-}
+
 
 void Board::calculateIndependentLifeArea(
   Color* result,
