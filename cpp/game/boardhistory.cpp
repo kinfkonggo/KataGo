@@ -339,17 +339,7 @@ int BoardHistory::countAreaScoreWhiteMinusBlack(const Board& board, Color area[B
     );
   }
   else if(rules.taxRule == Rules::TAX_SEKI || rules.taxRule == Rules::TAX_ALL) {
-    bool keepTerritories = false;
-    bool keepStones = true;
-    int whiteMinusBlackIndependentLifeRegionCount = 0;
-    board.calculateIndependentLifeArea(
-      area,whiteMinusBlackIndependentLifeRegionCount,
-      keepTerritories,
-      keepStones,
-      rules.multiStoneSuicideLegal
-    );
-    if(rules.taxRule == Rules::TAX_ALL)
-      score -= 2 * whiteMinusBlackIndependentLifeRegionCount;
+    std::cout << "Tax Rule is not supported";
   }
   else
     ASSERT_UNREACHABLE;

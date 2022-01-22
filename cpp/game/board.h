@@ -166,10 +166,6 @@ struct Board
   int getChainSize(Loc loc) const;
   //Gets the number of liberties of the chain at loc. Precondition: location must be black or white.
   int getNumLiberties(Loc loc) const;
-  //Returns the number of liberties a new stone placed here would have, or max if it would be >= max.
-  int getNumLibertiesAfterPlay(Loc loc, Player pla, int max) const;
-  //Returns a fast lower and upper bound on the number of liberties a new stone placed here would have
-  void getBoundNumLibertiesAfterPlay(Loc loc, Player pla, int& lowerBound, int& upperBound) const;
   //Gets the number of empty spaces directly adjacent to this location
   int getNumImmediateLiberties(Loc loc) const;
 
@@ -185,13 +181,10 @@ struct Board
   bool isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const;
   //Check if this location is on the board
   bool isOnBoard(Loc loc) const;
-  //Check if this location contains a simple eye for the specified player.
-  bool isSimpleEye(Loc loc, Player pla) const;
   //Check if a move at this location would be a capture of an opponent group.
   bool wouldBeCapture(Loc loc, Player pla) const;
   //Check if a move at this location would be a capture in a simple ko mouth.
   bool wouldBeKoCapture(Loc loc, Player pla) const;
-  Loc getKoCaptureLoc(Loc loc, Player pla) const;
   //Check if this location is adjacent to stones of the specified color
   bool isAdjacentToPla(Loc loc, Player pla) const;
   bool isAdjacentOrDiagonalToPla(Loc loc, Player pla) const;
@@ -243,10 +236,6 @@ struct Board
   //Get a random legal move that does not fill a simple eye.
   /* Loc getRandomMCLegal(Player pla); */
 
-  //Check if the given stone is in unescapable atari or can be put into unescapable atari.
-  //WILL perform a mutable search - may alter the linked lists or heads, etc.
-  bool searchIsLadderCaptured(Loc loc, bool defenderFirst, std::vector<Loc>& buf);
-  bool searchIsLadderCapturedAttackerFirst2Libs(Loc loc, std::vector<Loc>& buf, std::vector<Loc>& workingMoves);
 
   //If a point is a pass-alive stone or pass-alive territory for a color, mark it that color.
   //If nonPassAliveStones, also marks non-pass-alive stones that are not part of the opposing pass-alive territory.
@@ -262,20 +251,6 @@ struct Board
     bool isMultiStoneSuicideLegal
   ) const;
 
-
-  //Calculates the area (including non pass alive stones, safe and unsafe big territories)
-  //However, strips out any "seki" regions.
-  //Seki regions are that are adjacent to any remaining empty regions.
-  //If keepTerritories, then keeps the surrounded territories in seki regions, only strips points for stones.
-  //If keepStones, then keeps the stones, only strips points for surrounded territories.
-  //whiteMinusBlackIndependentLifeRegionCount - multiply this by two for a group tax.
-  void calculateIndependentLifeArea(
-    Color* result,
-    int& whiteMinusBlackIndependentLifeRegionCount,
-    bool keepTerritories,
-    bool keepStones,
-    bool isMultiStoneSuicideLegal
-  ) const;
 
   //Run some basic sanity checks on the board state, throws an exception if not consistent, for testing/debugging
   void checkConsistency() const;
@@ -314,7 +289,6 @@ struct Board
 
   private:
   void init(int xS, int yS);
-  int countHeuristicConnectionLibertiesX2(Loc loc, Player pla) const;
   bool isLibertyOf(Loc loc, Loc head) const;
   void mergeChains(Loc loc1, Loc loc2);
   int removeChain(Loc loc);
@@ -329,8 +303,6 @@ struct Board
   friend std::ostream& operator<<(std::ostream& out, const Board& board);
 
   int findLiberties(Loc loc, std::vector<Loc>& buf, int bufStart, int bufIdx) const;
-  int findLibertyGainingCaptures(Loc loc, std::vector<Loc>& buf, int bufStart, int bufIdx) const;
-  bool hasLibertyGainingCaptures(Loc loc) const;
 
   void calculateAreaForPla(
     Player pla,
@@ -342,11 +314,6 @@ struct Board
 
   bool isAdjacentToPlaHead(Player pla, Loc loc, Loc plaHead) const;
 
-  void calculateIndependentLifeAreaHelper(
-    const Color* basicArea,
-    Color* result,
-    int& whiteMinusBlackIndependentLifeRegionCount
-  ) const;
 
   bool countEmptyHelper(bool* emptyCounted, Loc initialLoc, int& count, int bound) const;
 
