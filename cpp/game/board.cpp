@@ -1184,9 +1184,27 @@ void Board::calculateArea(
   bool unsafeBigTerritories,
   bool isMultiStoneSuicideLegal
 ) const {
+  Color resultB[MAX_ARR_SIZE], resultW[MAX_ARR_SIZE];
   std::fill(result,result+MAX_ARR_SIZE,C_EMPTY);
-  calculateAreaForPla(P_BLACK,safeBigTerritories,unsafeBigTerritories,isMultiStoneSuicideLegal,result);
-  calculateAreaForPla(P_WHITE,safeBigTerritories,unsafeBigTerritories,isMultiStoneSuicideLegal,result);
+  std::fill(resultB,resultB+MAX_ARR_SIZE,C_EMPTY);
+  std::fill(resultW,resultW+MAX_ARR_SIZE,C_EMPTY);
+  calculateAreaForPla(P_BLACK,safeBigTerritories,unsafeBigTerritories,isMultiStoneSuicideLegal,resultB);
+  calculateAreaForPla(P_WHITE,safeBigTerritories,unsafeBigTerritories,isMultiStoneSuicideLegal,resultW);
+
+
+  for(int y = 0; y < y_size; y++) {
+    for(int x = 0; x < x_size; x++) {
+      Loc loc = Location::getLoc(x,y,x_size);
+      if (resultB[loc] == C_EMPTY && resultW[loc] == C_EMPTY)
+        result[loc] = C_EMPTY;
+      else if(resultB[loc] == C_BLACK && resultW[loc] == C_EMPTY)
+        result[loc] = C_BLACK;
+      else if(resultW[loc] == C_WHITE && resultB[loc] == C_EMPTY )
+        result[loc] = C_WHITE;
+      else//Ë«»î
+        result[loc] = colors[loc];
+    }
+  }
 
   //TODO can we merge this in to calculate area for pla?
   if(nonPassAliveStones) {

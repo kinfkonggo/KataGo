@@ -202,11 +202,18 @@ Rules Rules::updateRules(const string& k, const string& v, Rules oldRules) {
 static Rules parseRulesHelper(const string& sOrig, bool allowKomi) {
   Rules rules;
   string lowercased = Global::trim(Global::toLower(sOrig));
-  if(lowercased == "chinese") {
+  if(lowercased == "tromptaylor"||lowercased == "tromp-taylor") {
     rules.taxRule = Rules::TAX_NONE;
     rules.multiStoneSuicideLegal = false;
     rules.hasButton = false;
-    rules.friendlyPassOk = true;
+    rules.friendlyPassOk = false;
+    rules.komi = 7.5;
+  }
+  else if(lowercased == "chinese") {
+    rules.taxRule = Rules::TAX_NONE;
+    rules.multiStoneSuicideLegal = false;
+    rules.hasButton = false;
+    rules.friendlyPassOk = false;
     rules.komi = 7.5;
   }
   else if(sOrig.length() > 0 && sOrig[0] == '{') {
