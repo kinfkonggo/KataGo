@@ -1,5 +1,5 @@
 ***Engine based on Katago TensorRT+GraphSearch***   
-Waiting...    
+# 删掉了日韩规则的katago，让代码简洁一些，用于进一步修改    
    
 TODO:   
 先做改动小的，再做改动大的   
