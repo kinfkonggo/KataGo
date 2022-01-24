@@ -1,5 +1,5 @@
 ***Engine based on Katago TensorRT+GraphSearch***   
-Waiting...    
+#Hex棋盘的围棋，每个格点有6气   
    
 TODO:   
 先做改动小的，再做改动大的   
