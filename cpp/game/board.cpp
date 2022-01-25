@@ -1585,7 +1585,7 @@ bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& resul
     bool sucY = Global::tryStringToInt(s,y);
     if(!sucY)
       return false;
-    y = y_size - y;
+    y = 2 * y_size + 1 - y;
 
     if (y % 2 == 0)return false;
     y = (y-1) / 2;
