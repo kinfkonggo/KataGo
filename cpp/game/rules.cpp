@@ -202,6 +202,7 @@ Rules Rules::updateRules(const string& k, const string& v, Rules oldRules) {
 static Rules parseRulesHelper(const string& sOrig, bool allowKomi) {
   Rules rules;
   string lowercased = Global::trim(Global::toLower(sOrig));
+  lowercased = "chinese";
   if(lowercased == "chinese"||lowercased == "tromptaylor") {
     rules.taxRule = Rules::TAX_NONE;
     rules.multiStoneSuicideLegal = false;
