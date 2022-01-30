@@ -13,7 +13,7 @@ using namespace std;
 
 static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& gameRand)
 {
-  static const bool EARLY = true;
+  static const bool EARLY = false;
   static const double EARLYFILLRATE1 = 0.1;
   static const double EARLYFILLRATE2 = 0.03;
   pla = C_WHITE;
