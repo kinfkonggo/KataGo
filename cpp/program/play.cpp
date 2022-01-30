@@ -32,7 +32,7 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
   }
   else //指定开局
   {
-    const int numOpenings = 5;
+    const int numOpenings = 6;
     std::string openingStrs[] = {
       ". . . . . . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . . . . . "
@@ -42,9 +42,9 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
       ". . . . . . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . . . . . "
-      ". . . . . . . . . . . . . . . . . . . "
-      ". . x x . . . . . x . . . . . x x . . "
-      ". . . . . . . . . . . . . . . . . . . "
+      ". . . . . . . . . x . . . . . . . . . "
+      ". . x x . . . . x . x . . . . x x . . "
+      ". . . . . . . . . x . . . . . . . . . "
       ". . . . . . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . . . . . "
@@ -95,6 +95,26 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
       "x x x x x x x x x x x x x x x x x x x "
       ,
       "x x x x x x x x x x x x x x x x x x x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x . . . . . . . . . . . . . . . . . x "
+      "x x x x x x x x x x x x x x x x x x x "
+      ,
+      "x x x x x x x x x x x x x x x x x x x "
       "x x x x x x x x x x x x x x x x x x x "
       "x x x x x x x x x x x x x x x x x x x "
       "x x x x x x x x x x x x x x x x x x x "
@@ -106,8 +126,8 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
       "x x x x x x x x x x x x x x x x x x x "
       "x x x . x x x x x x x x x x x . x x x "
       "x x x x x x x x x x x x x x x x x x x "
-      ". . . . . . . . . . . . . . . . . . . "
-      ". . . . . . . . . . . . . . . . . . . "
+      "x x x x x x x x x x x x x x x x x x x "
+      "x x x x x x x x x x x x x x x x x x x "
       ". . . . . . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . . . . . "
