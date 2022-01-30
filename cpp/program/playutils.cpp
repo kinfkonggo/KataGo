@@ -68,7 +68,7 @@ static float roundKomiWithLinearProb(float komi, Rand& rand) {
 //Also ignores allowInteger
 void PlayUtils::setKomiWithoutNoise(const ExtraBlackAndKomi& extraBlackAndKomi, BoardHistory& hist) {
   float komi = extraBlackAndKomi.komiMean;
-  komi = roundAndClipKomi(komi, hist.getRecentBoard(0), false);
+  komi = roundAndClipKomi(komi, hist.getRecentBoard(0), true);
   assert(Rules::komiIsIntOrHalfInt(komi));
   hist.setKomi(komi);
 }
@@ -78,7 +78,7 @@ void PlayUtils::setKomiWithNoise(const ExtraBlackAndKomi& extraBlackAndKomi, Boa
   if(extraBlackAndKomi.komiStdev > 0)
     komi += extraBlackAndKomi.komiStdev * (float)rand.nextGaussianTruncated(3.0);
   komi = roundKomiWithLinearProb(komi,rand);
-  komi = roundAndClipKomi(komi, hist.getRecentBoard(0), false);
+  komi = roundAndClipKomi(komi, hist.getRecentBoard(0), true);
   assert(Rules::komiIsIntOrHalfInt(komi));
   if(!extraBlackAndKomi.allowInteger && komi == (int)komi)
     komi += rand.nextBool(0.5) ? (-0.5f) : (0.5f);
@@ -247,7 +247,7 @@ double PlayUtils::getHackedLCBForWinrate(const Search* search, const AnalysisDat
 
 float PlayUtils::roundAndClipKomi(double unrounded, const Board& board, bool looseClipping) {
   //Just in case, make sure komi is reasonable
-  float range = looseClipping ? 40.0f + board.x_size * board.y_size : 40.0f + 0.5f * board.x_size * board.y_size;
+  float range = looseClipping ? 40.0f + board.x_size * board.y_size : 0.0f +  board.x_size * board.y_size;
   if(unrounded < -range)
     unrounded = -range;
   if(unrounded > range)
