@@ -14,12 +14,14 @@ using namespace std;
 static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& gameRand)
 {
   static const bool EARLY = true;
+  static const double EARLYFILLRATE1 = 0.15;
+  static const double EARLYFILLRATE2 = 0.07;
   pla = C_WHITE;
 
   if (gameRand.nextBool(0.3))//黑棋乱撒
   {
     double fillRate = gameRand.nextExponential() * 0.1;//平均填36个子
-    if (EARLY)fillRate = gameRand.nextGaussianTruncated(3)*0.05+0.151;
+    if (EARLY)fillRate = gameRand.nextGaussianTruncated(3)*EARLYFILLRATE1/3+EARLYFILLRATE1+0.0001;
     if (fillRate > 0.9)fillRate = 0.9;
     for (int y = 0; y < board.y_size; y++)
       for (int x = 0; x < board.x_size; x++)
@@ -145,7 +147,8 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
     double fillRate = gameRand.nextDouble();
     fillRate = fillRate * fillRate * fillRate * fillRate * fillRate;
     fillRate = fillRate * 15 / 361.0;
-    if (EARLY)fillRate = gameRand.nextGaussianTruncated(3)*0.04+0.121;
+    if (EARLY)fillRate = gameRand.nextExponential()*EARLYFILLRATE2;
+    if (fillRate > 0.9)fillRate = 0.9;
     Color color = gameRand.nextBool(0.5) ? C_BLACK : C_WHITE;
     if (EARLY && gameRand.nextBool(0.9))color = C_BLACK;
     for (int y = 0; y < board.y_size; y++)
