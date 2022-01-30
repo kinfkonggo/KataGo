@@ -145,8 +145,9 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
     double fillRate = gameRand.nextDouble();
     fillRate = fillRate * fillRate * fillRate * fillRate * fillRate;
     fillRate = fillRate * 15 / 361.0;
-    if (EARLY)fillRate = gameRand.nextGaussianTruncated(3)*0.05+0.151;
+    if (EARLY)fillRate = gameRand.nextGaussianTruncated(3)*0.04+0.121;
     Color color = gameRand.nextBool(0.5) ? C_BLACK : C_WHITE;
+    if (EARLY && gameRand.nextBool(0.9))color = C_BLACK;
     for (int y = 0; y < board.y_size; y++)
       for (int x = 0; x < board.x_size; x++)
       {
