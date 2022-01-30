@@ -501,7 +501,6 @@ Board SymmetryHelpers::getSymBoard(const Board& board, int symmetry) {
     transpose ? board.y_size : board.x_size,
     transpose ? board.x_size : board.y_size
   );
-  Loc symKoLoc = Board::NULL_LOC;
   for(int y = 0; y<board.y_size; y++) {
     for(int x = 0; x<board.x_size; x++) {
       Loc loc = Location::getLoc(x,y,board.x_size);
@@ -511,13 +510,8 @@ Board SymmetryHelpers::getSymBoard(const Board& board, int symmetry) {
         std::swap(symX,symY);
       Loc symLoc = Location::getLoc(symX,symY,symBoard.x_size);
       symBoard.setStone(symLoc,board.colors[loc]);
-      if(loc == board.ko_loc)
-        symKoLoc = symLoc;
     }
   }
-  //Set only at the end because otherwise setStone clears it.
-  if(symKoLoc != Board::NULL_LOC)
-    symBoard.setSimpleKoLoc(symKoLoc);
   return symBoard;
 }
 
@@ -534,9 +528,6 @@ void SymmetryHelpers::markDuplicateMoveLocs(
   validSymmetries.reserve(SymmetryHelpers::NUM_SYMMETRIES);
   validSymmetries.push_back(0);
 
-  //The board should never be considered symmetric if any moves are banned by ko or superko
-  if(board.ko_loc != Board::NULL_LOC)
-    return;
 
   //If board has different sizes of x and y, we will not search symmetries involved with transpose.
   int symmetrySearchUpperBound = board.x_size == board.y_size ? SymmetryHelpers::NUM_SYMMETRIES : SymmetryHelpers::NUM_SYMMETRIES_WITHOUT_TRANSPOSE;
@@ -604,60 +595,6 @@ void SymmetryHelpers::markDuplicateMoveLocs(
 
 static void setRowBin(float* rowBin, int pos, int feature, float value, int posStride, int featureStride) {
   rowBin[pos * posStride + feature * featureStride] = value;
-}
-
-//Calls f on each location that is part of an inescapable atari, or a group that can be put into inescapable atari
-static void iterLadders(const Board& board, int nnXLen, std::function<void(Loc,int,const vector<Loc>&)> f) {
-  int xSize = board.x_size;
-  int ySize = board.y_size;
-
-  Loc chainHeadsSolved[Board::MAX_PLAY_SIZE];
-  bool chainHeadsSolvedValue[Board::MAX_PLAY_SIZE];
-  int numChainHeadsSolved = 0;
-  Board copy(board);
-  vector<Loc> buf;
-  vector<Loc> workingMoves;
-
-  for(int y = 0; y<ySize; y++) {
-    for(int x = 0; x<xSize; x++) {
-      int pos = NNPos::xyToPos(x,y,nnXLen);
-      Loc loc = Location::getLoc(x,y,xSize);
-      Color stone = board.colors[loc];
-      if(stone == P_BLACK || stone == P_WHITE) {
-        int libs = board.getNumLiberties(loc);
-        if(libs == 1 || libs == 2) {
-          bool alreadySolved = false;
-          Loc head = board.chain_head[loc];
-          for(int i = 0; i<numChainHeadsSolved; i++) {
-            if(chainHeadsSolved[i] == head) {
-              alreadySolved = true;
-              if(chainHeadsSolvedValue[i]) {
-                workingMoves.clear();
-                f(loc,pos,workingMoves);
-              }
-              break;
-            }
-          }
-          if(!alreadySolved) {
-            //Perform search on copy so as not to mess up tracking of solved heads
-            bool laddered;
-            if(libs == 1)
-              laddered = copy.searchIsLadderCaptured(loc,true,buf);
-            else {
-              workingMoves.clear();
-              laddered = copy.searchIsLadderCapturedAttackerFirst2Libs(loc,buf,workingMoves);
-            }
-
-            chainHeadsSolved[numChainHeadsSolved] = head;
-            chainHeadsSolvedValue[numChainHeadsSolved] = laddered;
-            numChainHeadsSolved++;
-            if(laddered)
-              f(loc,pos,workingMoves);
-          }
-        }
-      }
-    }
-  }
 }
 
 //Currently does NOT depend on history (except for marking ko-illegal spots)
@@ -742,20 +679,9 @@ void NNInputs::fillRowV7(
       else if(stone == opp)
         setRowBin(rowBin,pos,2, 1.0f, posStride, featureStride);
 
-      if(stone == pla || stone == opp) {
-        int libs = board.getNumLiberties(loc);
-        if(libs == 1) setRowBin(rowBin,pos,3, 1.0f, posStride, featureStride);
-        else if(libs == 2) setRowBin(rowBin,pos,4, 1.0f, posStride, featureStride);
-        else if(libs == 3) setRowBin(rowBin,pos,5, 1.0f, posStride, featureStride);
-      }
     }
   }
 
-  //Feature 6 - ko-ban locations, including possibly superko.
-    if(board.ko_loc != Board::NULL_LOC) {
-      int pos = NNPos::locToPos(board.ko_loc,xSize,nnXLen,nnYLen);
-      setRowBin(rowBin,pos,6, 1.0f, posStride, featureStride);
-    }
   
   //Hide history from the net if a pass would end things and we're behaving as if a pass won't.
   //Or if the game is in fact over right now!
@@ -788,82 +714,9 @@ void NNInputs::fillRowV7(
     }
   }
 
-  //Ladder features 14,15,16,17
-  auto addLadderFeature = [&board,xSize,nnXLen,nnYLen,posStride,featureStride,rowBin,opp](Loc loc, int pos, const vector<Loc>& workingMoves){
-    assert(board.colors[loc] == P_BLACK || board.colors[loc] == P_WHITE);
-    assert(pos >= 0 && pos < NNPos::MAX_BOARD_AREA);
-    setRowBin(rowBin,pos,14, 1.0f, posStride, featureStride);
-    if(board.colors[loc] == opp && board.getNumLiberties(loc) > 1) {
-      for(size_t j = 0; j < workingMoves.size(); j++) {
-        int workingPos = NNPos::locToPos(workingMoves[j],xSize,nnXLen,nnYLen);
-        setRowBin(rowBin,workingPos,17, 1.0f, posStride, featureStride);
-      }
-    }
-  };
-
-  iterLadders(board, nnXLen, addLadderFeature);
-
-  const Board& prevBoard = hideHistory ? board : hist.getRecentBoard(1);
-  auto addPrevLadderFeature = [&prevBoard,posStride,featureStride,rowBin](Loc loc, int pos, const vector<Loc>& workingMoves){
-    (void)workingMoves;
-    (void)loc;
-    assert(prevBoard.colors[loc] == P_BLACK || prevBoard.colors[loc] == P_WHITE);
-    assert(pos >= 0 && pos < NNPos::MAX_BOARD_AREA);
-    setRowBin(rowBin,pos,15, 1.0f, posStride, featureStride);
-  };
-  iterLadders(prevBoard, nnXLen, addPrevLadderFeature);
-
-  const Board& prevPrevBoard = hideHistory ? board : hist.getRecentBoard(2);
-  auto addPrevPrevLadderFeature = [&prevPrevBoard,posStride,featureStride,rowBin](Loc loc, int pos, const vector<Loc>& workingMoves){
-    (void)workingMoves;
-    (void)loc;
-    assert(prevPrevBoard.colors[loc] == P_BLACK || prevPrevBoard.colors[loc] == P_WHITE);
-    assert(pos >= 0 && pos < NNPos::MAX_BOARD_AREA);
-    setRowBin(rowBin,pos,16, 1.0f, posStride, featureStride);
-  };
-  iterLadders(prevPrevBoard, nnXLen, addPrevPrevLadderFeature);
-
 
   //Global features.
-  //The first 5 of them were set already above to flag which of the past 5 moves were passes.
-
-  //Komi and any score adjustments
-  float selfKomi = hist.currentSelfKomi(nextPlayer,nnInputParams.drawEquivalentWinsForWhite);
-  float bArea = (float)(xSize * ySize);
-  //Bound komi just in case
-  if(selfKomi > bArea+1.0f)
-    selfKomi = bArea+1.0f;
-  if(selfKomi < -bArea-1.0f)
-    selfKomi = -bArea-1.0f;
-
-  int passDiff = board.numBlackPasses - board.numWhitePasses;
-  if (nextPlayer == C_BLACK)passDiff = -passDiff;
-  rowGlobal[2] = (selfKomi+passDiff)/20.0f;
-
-  int myRemainCaptures = CAPTURES_TO_WIN-( nextPlayer == C_BLACK ? board.numBlackCaptures : board.numWhiteCaptures);
-  int oppRemainCaptures = CAPTURES_TO_WIN-(nextPlayer == C_WHITE ? board.numBlackCaptures : board.numWhiteCaptures);
-  if (myRemainCaptures <= 0)std::cout << "myRemainCaptures" << myRemainCaptures;
-  if (oppRemainCaptures <= 0)std::cout << "oppRemainCaptures" << oppRemainCaptures;
-  rowGlobal[3] = myRemainCaptures/float(CAPTURES_TO_WIN);
-  rowGlobal[4] = myRemainCaptures >= 2;
-  rowGlobal[5] = myRemainCaptures >= 3;
-  rowGlobal[6] = myRemainCaptures >= 4;
-  rowGlobal[7] = myRemainCaptures >= 5;
-  rowGlobal[8] = oppRemainCaptures/float(CAPTURES_TO_WIN);
-  rowGlobal[9] = oppRemainCaptures >= 2;
-  rowGlobal[10] = oppRemainCaptures >= 3;
-  rowGlobal[11] = oppRemainCaptures >= 4;
-  rowGlobal[12] = oppRemainCaptures >= 5;
-
-  //whether I can pass
-  int myPasses = nextPlayer == C_BLACK ? board.numBlackPasses : board.numWhitePasses;
-  if (ANTI_CAPTURE)
-  {
-    rowGlobal[14] =nextPlayer == C_BLACK ?1.0:0.0;
-    rowGlobal[13] = selfKomi > myPasses;
-  }
-  else
-    rowGlobal[13] = nextPlayer == C_BLACK ? selfKomi >= myPasses : selfKomi >= myPasses + 1;
+  //The first 2 of them were set already above to flag which of the past 5 moves were passes.
 
   //Tax
   if(hist.rules.taxRule == Rules::TAX_NONE) {}
@@ -886,7 +739,6 @@ void NNInputs::fillRowV7(
   }
 
 
-    rowGlobal[18] = (xSize*ySize) % 2;
   
 
 }

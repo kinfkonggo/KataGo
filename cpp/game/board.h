@@ -187,7 +187,6 @@ struct Board
   void removeSingleStone(Loc loc);
 
   friend std::ostream& operator<<(std::ostream& out, const Board& board);
-  bool countEmptyHelper(bool* emptyCounted, Loc initialLoc, int& count, int bound) const;
 
   //static void monteCarloOwner(Player player, Board* board, int mc_counts[]);
 };

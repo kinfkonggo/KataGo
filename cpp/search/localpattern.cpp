@@ -8,8 +8,7 @@ LocalPatternHasher::LocalPatternHasher()
   : xSize(),
     ySize(),
     zobristLocalPattern(),
-    zobristPla(),
-    zobristAtari()
+    zobristPla()
 {}
 
 
@@ -20,7 +19,6 @@ void LocalPatternHasher::init(int x, int y, Rand& rand) {
   assert(ySize > 0 && ySize % 2 == 1);
   zobristLocalPattern.resize(NUM_BOARD_COLORS * xSize * ySize);
   zobristPla.resize(NUM_BOARD_COLORS);
-  zobristAtari.resize(xSize * ySize);
 
   for(int i = 0; i<NUM_BOARD_COLORS; i++) {
     for(int dy = 0; dy<ySize; dy++) {
@@ -35,13 +33,6 @@ void LocalPatternHasher::init(int x, int y, Rand& rand) {
     uint64_t h0 = rand.nextUInt64();
     uint64_t h1 = rand.nextUInt64();
     zobristPla[i] = Hash128(h0,h1);
-  }
-  for(int dy = 0; dy<ySize; dy++) {
-    for(int dx = 0; dx<xSize; dx++) {
-      uint64_t h0 = rand.nextUInt64();
-      uint64_t h1 = rand.nextUInt64();
-      zobristAtari[dy*xSize + dx] = Hash128(h0,h1);
-    }
   }
 }
 
@@ -75,8 +66,6 @@ Hash128 LocalPatternHasher::getHash(const Board& board, Loc loc, Player pla) con
         int x2 = dx + xCenter;
         int xy2 = y2 * xSize + x2;
         hash ^= zobristLocalPattern[(int)board.colors[loc2] * xSize * ySize + xy2];
-        if((board.colors[loc2] == P_BLACK || board.colors[loc2] == P_WHITE) && board.getNumLiberties(loc2) == 1)
-          hash ^= zobristAtari[xy2];
       }
     }
   }
@@ -132,8 +121,6 @@ Hash128 LocalPatternHasher::getHashWithSym(const Board& board, Loc loc, Player p
           symColor = (int)board.colors[loc2];
 
         hash ^= zobristLocalPattern[symColor * xSize * ySize + symXY2];
-        if((board.colors[loc2] == P_BLACK || board.colors[loc2] == P_WHITE) && board.getNumLiberties(loc2) == 1)
-          hash ^= zobristAtari[symXY2];
       }
     }
   }
