@@ -18,6 +18,29 @@ static Hash128 getKoHashAfterMove(const Rules& rules, Hash128 posHashAfterMove, 
 }
 
 
+static bool maybeFinishGame(Board& board)
+{
+  Color area[Board::MAX_ARR_SIZE];
+  board.calculateArea(area, false, false, false, false);
+  bool foundEmpty = false;
+  for(int y=0;y<board.y_size;y++)
+    for (int x = 0; x < board.x_size; x++)
+    {
+      Loc loc = Location::getLoc(x, y, board.x_size);
+      if (area[loc] == C_WHITE)
+      {
+        return true;
+      }
+      else if (area[loc] == C_EMPTY)
+      {
+        foundEmpty = true;
+      }
+    }
+  if(!foundEmpty)
+    return true;
+  return false;
+}
+
 BoardHistory::BoardHistory()
   :rules(),
    moveHistory(),
@@ -573,9 +596,12 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
   if(consecutiveEndingPasses >= 2) {
       endAndScoreGameNow(board);
   }
-
+  else if(maybeFinishGame(board)){
+    endAndScoreGameNow(board);
+  }
 
 }
+
 
 
 bool BoardHistory::hasBlackPassOrWhiteFirst() const {
