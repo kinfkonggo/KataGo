@@ -2,7 +2,7 @@
 
 Hash128 GraphHash::getStateHash(const BoardHistory& hist, Player nextPlayer, double drawEquivalentWinsForWhite) {
   const Board& board = hist.getRecentBoard(0);
-  Hash128 hash = BoardHistory::getSituationRulesAndKoHash(board, hist, nextPlayer, drawEquivalentWinsForWhite);
+  Hash128 hash = BoardHistory::getSituationRulesHash(board, hist, nextPlayer, drawEquivalentWinsForWhite);
 
   // Fold in whether the game is over or not
   if(hist.isGameFinished)

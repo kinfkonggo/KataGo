@@ -288,7 +288,7 @@ void BoardHistory::maybeFinishGame(Board& board)
 }
 
 
-Hash128 BoardHistory::getSituationRulesAndKoHash(const Board& board, const BoardHistory& hist, Player nextPlayer, double drawEquivalentWinsForWhite) {
+Hash128 BoardHistory::getSituationRulesHash(const Board& board, const BoardHistory& hist, Player nextPlayer, double drawEquivalentWinsForWhite) {
   int xSize = board.x_size;
   int ySize = board.y_size;
 

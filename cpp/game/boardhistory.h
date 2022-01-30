@@ -103,7 +103,7 @@ struct BoardHistory {
 
 
   //Compute a hash that takes into account the full situation, the rules, discretized komi, and any immediate ko prohibitions.
-  static Hash128 getSituationRulesAndKoHash(const Board& board, const BoardHistory& hist, Player nextPlayer, double drawEquivalentWinsForWhite);
+  static Hash128 getSituationRulesHash(const Board& board, const BoardHistory& hist, Player nextPlayer, double drawEquivalentWinsForWhite);
 
 private:
 };

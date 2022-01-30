@@ -19,7 +19,6 @@ struct InitialPosition {
   BoardHistory hist;
   Player pla;
   bool isPlainFork;
-  bool isSekiFork;
   bool isHintFork;
 
   InitialPosition();
@@ -31,14 +30,11 @@ struct InitialPosition {
 struct ForkData {
   std::mutex mutex;
   std::vector<const InitialPosition*> forks;
-  std::vector<const InitialPosition*> sekiForks;
   ~ForkData();
 
   void add(const InitialPosition* pos);
   const InitialPosition* get(Rand& rand);
 
-  void addSeki(const InitialPosition* pos, Rand& rand);
-  const InitialPosition* getSeki(Rand& rand);
 };
 
 struct ExtraBlackAndKomi {
