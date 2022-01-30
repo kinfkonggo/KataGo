@@ -1614,7 +1614,7 @@ bool Search::getAnalysisJson(
     Hash128 symHash;
     for(int symmetry = 0; symmetry < SymmetryHelpers::NUM_SYMMETRIES; symmetry++) {
       Board symBoard = SymmetryHelpers::getSymBoard(board,symmetry);
-      Hash128 hash = symBoard.getSitHashWithSimpleKo(rootPla);
+      Hash128 hash = symBoard.getSitHash(rootPla);
       if(symmetry == 0) {
         thisHash = hash;
         symHash = hash;

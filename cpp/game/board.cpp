@@ -22,13 +22,7 @@ Hash128 Board::ZOBRIST_SIZE_X_HASH[MAX_LEN+1];
 Hash128 Board::ZOBRIST_SIZE_Y_HASH[MAX_LEN+1];
 Hash128 Board::ZOBRIST_BOARD_HASH[MAX_ARR_SIZE][4];
 Hash128 Board::ZOBRIST_PLAYER_HASH[4];
-Hash128 Board::ZOBRIST_KO_LOC_HASH[MAX_ARR_SIZE];
-Hash128 Board::ZOBRIST_KO_MARK_HASH[MAX_ARR_SIZE][4];
 Hash128 Board::ZOBRIST_BOARD_HASH2[MAX_ARR_SIZE][4];
-Hash128 Board::ZOBRIST_CAPTURE_B_HASH[2*MAX_ARR_SIZE];
-Hash128 Board::ZOBRIST_CAPTURE_W_HASH[2*MAX_ARR_SIZE];
-Hash128 Board::ZOBRIST_PASSNUM_B_HASH[2*MAX_ARR_SIZE];
-Hash128 Board::ZOBRIST_PASSNUM_W_HASH[2*MAX_ARR_SIZE];
 const Hash128 Board::ZOBRIST_GAME_IS_OVER = //Based on sha256 hash of Board::ZOBRIST_GAME_IS_OVER
   Hash128(0xb6f9e465597a77eeULL, 0xf1d583d960a4ce7fULL);
 
@@ -116,18 +110,8 @@ Board::Board(const Board& other)
   y_size = other.y_size;
 
   memcpy(colors, other.colors, sizeof(Color)*MAX_ARR_SIZE);
-  memcpy(chain_data, other.chain_data, sizeof(ChainData)*MAX_ARR_SIZE);
-  memcpy(chain_head, other.chain_head, sizeof(Loc)*MAX_ARR_SIZE);
-  memcpy(next_in_chain, other.next_in_chain, sizeof(Loc)*MAX_ARR_SIZE);
 
-  ko_loc = other.ko_loc;
-  // empty_list = other.empty_list;
   pos_hash = other.pos_hash;
-  numBlackCaptures = other.numBlackCaptures;
-  numWhiteCaptures = other.numWhiteCaptures;
-  numBlackPasses = other.numBlackPasses;
-  numWhitePasses = other.numWhitePasses;
-
   memcpy(adj_offsets, other.adj_offsets, sizeof(short)*8);
 }
 
@@ -153,13 +137,7 @@ void Board::init(int xS, int yS)
     }
   }
 
-  ko_loc = NULL_LOC;
   pos_hash = ZOBRIST_SIZE_X_HASH[x_size] ^ ZOBRIST_SIZE_Y_HASH[y_size];
-  numBlackCaptures = 0;
-  numWhiteCaptures = 0;
-  numBlackPasses = 0;
-  numWhitePasses = 0;
-
   Location::getAdjacentOffsets(adj_offsets,x_size);
 }
 
@@ -186,25 +164,9 @@ void Board::initHash()
       else
         ZOBRIST_BOARD_HASH[i][j] = nextHash();
 
-      if(j == C_EMPTY || j == C_WALL)
-        ZOBRIST_KO_MARK_HASH[i][j] = Hash128();
-      else
-        ZOBRIST_KO_MARK_HASH[i][j] = nextHash();
     }
-    ZOBRIST_KO_LOC_HASH[i] = nextHash();
   }
 
-  for(int i=0;i<2*MAX_ARR_SIZE;i++)
-  {
-    ZOBRIST_CAPTURE_B_HASH[i]=nextHash();
-    ZOBRIST_CAPTURE_W_HASH[i]=nextHash();
-    ZOBRIST_PASSNUM_B_HASH[i]=nextHash();
-    ZOBRIST_PASSNUM_W_HASH[i]=nextHash();
-  }
-  ZOBRIST_CAPTURE_B_HASH[0]=Hash128();
-  ZOBRIST_CAPTURE_W_HASH[0]=Hash128();
-  ZOBRIST_PASSNUM_B_HASH[0]=Hash128();
-  ZOBRIST_PASSNUM_W_HASH[0]=Hash128();
 
 
   //Reseed the random number generator so that these size hashes are also
@@ -228,213 +190,10 @@ void Board::initHash()
   IS_ZOBRIST_INITALIZED = true;
 }
 
-Hash128 Board::getSitHashWithSimpleKo(Player pla) const {
+Hash128 Board::getSitHash(Player pla) const {
   Hash128 h = pos_hash;
-  if(ko_loc != Board::NULL_LOC)
-    h = h ^ Board::ZOBRIST_KO_LOC_HASH[ko_loc];
   h ^= Board::ZOBRIST_PLAYER_HASH[pla];
   return h;
-}
-
-void Board::clearSimpleKoLoc() {
-  ko_loc = NULL_LOC;
-}
-void Board::setSimpleKoLoc(Loc loc) {
-  ko_loc = loc;
-}
-
-
-//Gets the number of stones of the chain at loc. Precondition: location must be black or white.
-int Board::getChainSize(Loc loc) const
-{
-  return chain_data[chain_head[loc]].num_locs;
-}
-
-//Gets the number of liberties of the chain at loc. Assertion: location must be black or white.
-int Board::getNumLiberties(Loc loc) const
-{
-  return chain_data[chain_head[loc]].num_liberties;
-}
-
-//Check if moving here would be a self-capture
-bool Board::isSuicide(Loc loc, Player pla) const
-{
-  if(loc == PASS_LOC)
-    return false;
-
-  Player opp = getOpp(pla);
-  FOREACHADJ(
-    Loc adj = loc + ADJOFFSET;
-
-    if(colors[adj] == C_EMPTY)
-      return false;
-    else if(colors[adj] == pla)
-    {
-      if(getNumLiberties(adj) > 1)
-        return false;
-    }
-    else if(colors[adj] == opp)
-    {
-      if(getNumLiberties(adj) == 1)
-        return false;
-    }
-  );
-
-  return true;
-}
-
-//Check if moving here is would be an illegal self-capture
-bool Board::isIllegalSuicide(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
-{
-  Player opp = getOpp(pla);
-  FOREACHADJ(
-    Loc adj = loc + ADJOFFSET;
-
-    if(colors[adj] == C_EMPTY)
-      return false;
-    else if(colors[adj] == pla)
-    {
-      if(isMultiStoneSuicideLegal || getNumLiberties(adj) > 1)
-        return false;
-    }
-    else if(colors[adj] == opp)
-    {
-      if(getNumLiberties(adj) == 1)
-        return false;
-    }
-  );
-
-  return true;
-}
-
-//Returns a fast lower bound on the number of liberties a new stone placed here would have
-void Board::getBoundNumLibertiesAfterPlay(Loc loc, Player pla, int& lowerBound, int& upperBound) const
-{
-  Player opp = getOpp(pla);
-
-  int numImmediateLibs = 0; //empty spaces adjacent
-  int numCaps = 0; //number of adjacent directions in which we will capture
-  int potentialLibsFromCaps = 0; //Total number of stones we're capturing (possibly with multiplicity)
-  int numConnectionLibs = 0; //Sum over friendly groups connected to of their libs-1
-  int maxConnectionLibs = 0; //Max over friendly groups connected to of their libs-1
-
-  for(int i = 0; i < 4; i++) {
-    Loc adj = loc + adj_offsets[i];
-    if(colors[adj] == C_EMPTY) {
-      numImmediateLibs++;
-    }
-    else if(colors[adj] == opp) {
-      int libs = chain_data[chain_head[adj]].num_liberties;
-      if(libs == 1) {
-        numCaps++;
-        potentialLibsFromCaps += chain_data[chain_head[adj]].num_locs;
-      }
-    }
-    else if(colors[adj] == pla) {
-      int libs = chain_data[chain_head[adj]].num_liberties;
-      int connLibs = libs-1;
-      numConnectionLibs += connLibs;
-      if(connLibs > maxConnectionLibs)
-        maxConnectionLibs = connLibs;
-    }
-  }
-
-  lowerBound = numCaps + (maxConnectionLibs > numImmediateLibs ? maxConnectionLibs : numImmediateLibs);
-  upperBound = numImmediateLibs + potentialLibsFromCaps + numConnectionLibs;
-}
-
-
-//Returns the number of liberties a new stone placed here would have, or max if it would be >= max.
-int Board::getNumLibertiesAfterPlay(Loc loc, Player pla, int max) const
-{
-  Player opp = getOpp(pla);
-
-  int numLibs = 0;
-  Loc libs[MAX_PLAY_SIZE];
-  int numCapturedGroups = 0;
-  Loc capturedGroupHeads[4];
-
-  //First, count immediate liberties and groups that would be captured
-  for(int i = 0; i < 4; i++) {
-    Loc adj = loc + adj_offsets[i];
-    if(colors[adj] == C_EMPTY) {
-      libs[numLibs++] = adj;
-      if(numLibs >= max)
-        return max;
-    }
-    else if(colors[adj] == opp && getNumLiberties(adj) == 1) {
-      libs[numLibs++] = adj;
-      if(numLibs >= max)
-        return max;
-
-      Loc head = chain_head[adj];
-      bool alreadyFound = false;
-      for(int j = 0; j<numCapturedGroups; j++) {
-        if(capturedGroupHeads[j] == head)
-        {alreadyFound = true; break;}
-      }
-      if(!alreadyFound)
-        capturedGroupHeads[numCapturedGroups++] = head;
-    }
-  }
-
-  auto wouldBeEmpty = [numCapturedGroups,&capturedGroupHeads,this,opp](Loc lc) {
-    if(this->colors[lc] == C_EMPTY)
-      return true;
-    if(this->colors[lc] == opp) {
-      for(int i = 0; i<numCapturedGroups; i++)
-        if(capturedGroupHeads[i] == this->chain_head[lc])
-          return true;
-    }
-    return false;
-  };
-
-  //Next, walk through all stones of all surrounding groups we would connect with and count liberties, avoiding overlap.
-  int numConnectingGroups = 0;
-  Loc connectingGroupHeads[4];
-  for(int i = 0; i<4; i++) {
-    Loc adj = loc + adj_offsets[i];
-    if(colors[adj] == pla) {
-      Loc head = chain_head[adj];
-      bool alreadyFound = false;
-      for(int j = 0; j<numConnectingGroups; j++) {
-        if(connectingGroupHeads[j] == head)
-        {alreadyFound = true; break;}
-      }
-      if(!alreadyFound) {
-        connectingGroupHeads[numConnectingGroups++] = head;
-
-        Loc cur = adj;
-        do
-        {
-          for(int k = 0; k < 4; k++) {
-            Loc possibleLib = cur + adj_offsets[k];
-            if(possibleLib != loc && wouldBeEmpty(possibleLib)) {
-              bool alreadyCounted = false;
-              for(int l = 0; l<numLibs; l++) {
-                if(libs[l] == possibleLib)
-                {alreadyCounted = true; break;}
-              }
-              if(!alreadyCounted) {
-                libs[numLibs++] = possibleLib;
-                if(numLibs >= max)
-                  return max;
-              }
-            }
-          }
-
-          cur = next_in_chain[cur];
-        } while (cur != adj);
-      }
-    }
-  }
-  return numLibs;
-}
-
-//Check if moving here is illegal due to simple ko
-bool Board::isKoBanned(Loc loc) const
-{
-  return loc == ko_loc;
 }
 
 bool Board::isOnBoard(Loc loc) const {
@@ -449,9 +208,7 @@ bool Board::isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
   return loc == PASS_LOC || (
     loc >= 0 &&
     loc < MAX_ARR_SIZE &&
-    (colors[loc] == C_EMPTY) &&
-    !isKoBanned(loc) &&
-    !isIllegalSuicide(loc, pla, isMultiStoneSuicideLegal)
+    (colors[loc] == C_EMPTY)
   );
 }
 
@@ -502,132 +259,6 @@ bool Board::isSimpleEye(Loc loc, Player pla) const
   return true;
 }
 
-bool Board::wouldBeCapture(Loc loc, Player pla) const {
-  if(colors[loc] != C_EMPTY)
-    return false;
-  Player opp = getOpp(pla);
-  FOREACHADJ(
-    Loc adj = loc + ADJOFFSET;
-    if(colors[adj] == opp)
-    {
-      if(getNumLiberties(adj) == 1)
-        return true;
-    }
-  );
-
-  return false;
-}
-
-
-bool Board::wouldBeKoCapture(Loc loc, Player pla) const {
-  if(colors[loc] != C_EMPTY)
-    return false;
-  //Check that surounding points are are all opponent owned and exactly one of them is capturable
-  Player opp = getOpp(pla);
-  Loc oppCapturableLoc = NULL_LOC;
-  for(int i = 0; i < 4; i++)
-  {
-    Loc adj = loc + adj_offsets[i];
-    if(colors[adj] != C_WALL && colors[adj] != opp)
-      return false;
-    if(colors[adj] == opp && getNumLiberties(adj) == 1) {
-      if(oppCapturableLoc != NULL_LOC)
-        return false;
-      oppCapturableLoc = adj;
-    }
-  }
-  if(oppCapturableLoc == NULL_LOC)
-    return false;
-
-  //Check that the capturable loc has exactly one stone
-  if(chain_data[chain_head[oppCapturableLoc]].num_locs != 1)
-    return false;
-  return true;
-}
-
-Loc Board::getKoCaptureLoc(Loc loc, Player pla) const {
-  if(colors[loc] != C_EMPTY)
-    return NULL_LOC;
-  //Check that surounding points are are all opponent owned and exactly one of them is capturable
-  Player opp = getOpp(pla);
-  Loc oppCapturableLoc = NULL_LOC;
-  for(int i = 0; i < 4; i++)
-  {
-    Loc adj = loc + adj_offsets[i];
-    if(colors[adj] != C_WALL && colors[adj] != opp)
-      return NULL_LOC;
-    if(colors[adj] == opp && getNumLiberties(adj) == 1) {
-      if(oppCapturableLoc != NULL_LOC)
-        return NULL_LOC;
-      oppCapturableLoc = adj;
-    }
-  }
-  if(oppCapturableLoc == NULL_LOC)
-    return NULL_LOC;
-
-  //Check that the capturable loc has exactly one stone
-  if(chain_data[chain_head[oppCapturableLoc]].num_locs != 1)
-    return NULL_LOC;
-  return oppCapturableLoc;
-}
-
-bool Board::isAdjacentToPla(Loc loc, Player pla) const {
-  FOREACHADJ(
-    Loc adj = loc + ADJOFFSET;
-    if(colors[adj] == pla)
-      return true;
-  );
-  return false;
-}
-
-bool Board::isAdjacentOrDiagonalToPla(Loc loc, Player pla) const {
-  for(int i = 0; i<8; i++) {
-    Loc adj = loc + adj_offsets[i];
-    if(colors[adj] == pla)
-      return true;
-  }
-  return false;
-}
-
-bool Board::isAdjacentToChain(Loc loc, Loc chain) const {
-  if(colors[chain] == C_EMPTY)
-    return false;
-  FOREACHADJ(
-    Loc adj = loc + ADJOFFSET;
-    if(colors[adj] == colors[chain] && chain_head[adj] == chain_head[chain])
-      return true;
-  );
-  return false;
-}
-
-
-//Does this connect two pla distinct groups that are not both pass-alive and not within opponent pass-alive area either?
-bool Board::isNonPassAliveSelfConnection(Loc loc, Player pla, Color* passAliveArea) const {
-  if(colors[loc] != C_EMPTY || passAliveArea[loc] == pla)
-    return false;
-
-  Loc nonPassAliveAdjHead = NULL_LOC;
-  for(int i = 0; i < 4; i++)
-  {
-    Loc adj = loc + adj_offsets[i];
-    if(colors[adj] == pla && passAliveArea[adj] == C_EMPTY) {
-      nonPassAliveAdjHead = chain_head[adj];
-      break;
-    }
-  }
-
-  if(nonPassAliveAdjHead == NULL_LOC)
-    return false;
-
-  for(int i = 0; i < 4; i++)
-  {
-    Loc adj = loc + adj_offsets[i];
-    if(colors[adj] == pla && chain_head[adj] != nonPassAliveAdjHead)
-      return true;
-  }
-
-  return false;
-}
 
 bool Board::isEmpty() const {
   for(int y = 0; y < y_size; y++) {
