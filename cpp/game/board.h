@@ -13,7 +13,7 @@
 
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 9
+#define COMPILE_MAX_BOARD_LEN 15
 #endif
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
@@ -32,6 +32,17 @@ static constexpr Color C_BLACK = 1;
 static constexpr Color C_WHITE = 2;
 static constexpr Color C_WALL = 3;
 static constexpr int NUM_BOARD_COLORS = 4;
+
+
+typedef char MovePriority;
+static const MovePriority MP_NORMAL = 126;
+static const MovePriority MP_FIVE = 1;
+static const MovePriority MP_OPPOFOUR = 2;
+static const MovePriority MP_MYLIFEFOUR = 3;
+static const MovePriority MP_VCF = 4;
+static const MovePriority MP_USELESS = 127;
+static const MovePriority MP_ILLEGAL = -1;
+
 
 static inline Color getOpp(Color c)
 {return c ^ 3;}
@@ -128,7 +139,14 @@ struct Board
   Board& operator=(const Board&) = default;
 
   bool isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const;
-  //Check if this location is on the board
+
+  MovePriority getMovePriority(Player pla, Loc loc, bool isSixWin, bool isPassForbidded)const;
+  MovePriority getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const;
+private:
+  MovePriority getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, bool isSixWin, int adjID)const;
+  int connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isSixWin, bool& isLife)const;
+public:
+
   bool isOnBoard(Loc loc) const;
   //Is this board empty?
   bool isEmpty() const;

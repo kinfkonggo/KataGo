@@ -226,6 +226,7 @@ void BoardHistory::setWinner(Player pla)
   isResignation = false;
   winner = pla;
   finalWhiteMinusBlackScore = 0.0f;
+  if (pla == C_EMPTY)isNoResult = true;
 }
 
 
@@ -283,8 +284,12 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
 
 void BoardHistory::maybeFinishGame(Board& board,Player lastPla,Loc lastLoc)
 {
-  //TODO
-  static_assert(false,"写胜负判定规则");
+  if (lastLoc == Board::PASS_LOC)
+  {
+    setWinner(getOpp(lastPla));
+  }
+  if (board.getMovePriority(lastPla, lastLoc, true, false) == MP_FIVE)setWinner(lastPla);
+  if (board.numStonesOnBoard() >= board.x_size * board.y_size)setWinner(C_EMPTY);
 }
 
 
