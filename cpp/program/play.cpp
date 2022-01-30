@@ -17,7 +17,7 @@ InitialPosition::InitialPosition()
   :board(),hist(),pla(C_EMPTY)
 {}
 InitialPosition::InitialPosition(const Board& b, const BoardHistory& h, Player p, bool plainFork, bool sekiFork, bool hintFork)
-  :board(b),hist(h),pla(p),isPlainFork(plainFork),isSekiFork(sekiFork),isHintFork(hintFork)
+  :board(b),hist(h),pla(p),isPlainFork(plainFork),isHintFork(hintFork)
 {}
 InitialPosition::~InitialPosition()
 {}
@@ -27,9 +27,6 @@ ForkData::~ForkData() {
   for(int i = 0; i<forks.size(); i++)
     delete forks[i];
   forks.clear();
-  for(int i = 0; i<sekiForks.size(); i++)
-    delete sekiForks[i];
-  sekiForks.clear();
 }
 
 void ForkData::add(const InitialPosition* pos) {
@@ -48,30 +45,6 @@ const InitialPosition* ForkData::get(Rand& rand) {
   return pos;
 }
 
-void ForkData::addSeki(const InitialPosition* pos, Rand& rand) {
-  std::unique_lock<std::mutex> lock(mutex);
-  if(sekiForks.size() >= 1000) {
-    int r = rand.nextUInt(sekiForks.size());
-    const InitialPosition* oldPos = sekiForks[r];
-    sekiForks[r] = pos;
-    lock.unlock();
-    delete oldPos;
-  }
-  else {
-    sekiForks.push_back(pos);
-  }
-}
-const InitialPosition* ForkData::getSeki(Rand& rand) {
-  std::lock_guard<std::mutex> lock(mutex);
-  if(sekiForks.size() <= 0)
-    return NULL;
-  int r = rand.nextUInt(sekiForks.size());
-  int last = sekiForks.size()-1;
-  const InitialPosition* pos = sekiForks[r];
-  sekiForks[r] = sekiForks[last];
-  sekiForks.resize(sekiForks.size()-1);
-  return pos;
-}
 
 //------------------------------------------------------------------------------------------------
 
@@ -1939,46 +1912,6 @@ void Play::maybeForkGame(
 }
 
 
-void Play::maybeSekiForkGame(
-  const FinishedGameData* finishedGameData,
-  ForkData* forkData,
-  const PlaySettings& playSettings,
-  const GameInitializer* gameInit,
-  Rand& gameRand
-) {
-  if(forkData == NULL)
-    return;
-  if(playSettings.sekiForkHackProb <= 0)
-    return;
-
-  //If there are any unowned spots, consider forking the last bit of the game, with random rules and even score
-  //Don't fork games starting in second encore though
-  const BoardHistory& endHist = finishedGameData->endHist;
-  if(endHist.isGameFinished && endHist.isScored  && hasUnownedSpot(finishedGameData)) {
-
-    for(int i = 0; i<2; i++) {
-      //Pick a random move to fork from near the end of the game
-      int moveIdx = (int)floor(endHist.moveHistory.size() * (1.0 - 0.10 * gameRand.nextExponential()) - 1.0);
-      if(moveIdx < 0)
-        moveIdx = 0;
-      if(moveIdx > endHist.moveHistory.size())
-        moveIdx = endHist.moveHistory.size();
-
-      //Randomly permute the rules
-      Rules rules = finishedGameData->startHist.rules;
-      rules = gameInit->randomizeTaxRules(rules,gameRand);
-
-      Board board;
-      Player pla;
-      BoardHistory hist;
-      replayGameUpToMove(finishedGameData, moveIdx, rules, board, hist, pla);
-      //Just in case if somehow the game is over now, don't actually do anything
-      if(hist.isGameFinished)
-        continue;
-      forkData->addSeki(new InitialPosition(board,hist,pla,false,true,false),gameRand);
-    }
-  }
-}
 
 void Play::maybeHintForkGame(
   const FinishedGameData* finishedGameData,
@@ -2071,15 +2004,9 @@ FinishedGameData* GameRunner::runGame(
   Rand gameRand(seed + ":" + "forGameRand");
 
   const InitialPosition* initialPosition = NULL;
-  bool usedSekiForkHackPosition = false;
   if(forkData != NULL) {
     initialPosition = forkData->get(gameRand);
 
-    if(initialPosition == NULL && playSettings.sekiForkHackProb > 0 && gameRand.nextBool(playSettings.sekiForkHackProb)) {
-      initialPosition = forkData->getSeki(gameRand);
-      if(initialPosition != NULL)
-        usedSekiForkHackPosition = true;
-    }
   }
 
   Board board;
@@ -2170,9 +2097,6 @@ FinishedGameData* GameRunner::runGame(
   assert(finishedGameData != NULL);
 
   Play::maybeForkGame(finishedGameData, forkData, playSettings, gameRand, botB);
-  if(!usedSekiForkHackPosition) {
-    Play::maybeSekiForkGame(finishedGameData, forkData, playSettings, gameInit, gameRand);
-  }
   Play::maybeHintForkGame(finishedGameData, forkData, otherGameProps);
 
   if(botW != botB)

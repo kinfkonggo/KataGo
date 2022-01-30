@@ -177,8 +177,6 @@ add_executable(katago
   neuralnet/nneval.cpp
   neuralnet/desc.cpp
   ${NEURALNET_BACKEND_SOURCES}
-  book/book.cpp
-  book/bookcssjs.cpp
   search/timecontrols.cpp
   search/searchparams.cpp
   search/mutexpool.cpp
@@ -215,7 +213,6 @@ add_executable(katago
   command/contribute.cpp
   command/evalsgf.cpp
   command/gatekeeper.cpp
-  command/genbook.cpp
   command/gtp.cpp
   command/match.cpp
   command/matchauto.cpp

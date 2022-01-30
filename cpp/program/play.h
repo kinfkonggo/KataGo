@@ -268,13 +268,6 @@ namespace Play {
     Search* bot
   );
 
-  void maybeSekiForkGame(
-    const FinishedGameData* finishedGameData,
-    ForkData* forkData,
-    const PlaySettings& playSettings,
-    const GameInitializer* gameInit,
-    Rand& gameRand
-  );
 
   void maybeHintForkGame(
     const FinishedGameData* finishedGameData,

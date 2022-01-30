@@ -87,7 +87,7 @@ struct BoardHistory {
   //This allows for robustness when this code is being used for analysis or with external data sources.
   //preventEncore artifically prevents any move from entering or advancing the encore phase when using territory scoring.
   void makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player movePla);
-  void maybeFinishGame(Board& board);
+  void maybeFinishGame(Board& board,Player lastPla,Loc lastLoc);
   //Make a move with legality checking, but be mostly tolerant and allow moves that can still be handled but that may not technically
   //be legal. This is intended for reading moves from SGFs and such where maybe we're getting moves that were played in a different
   //ruleset than ours. Returns true if successful, false if was illegal even unter tolerant rules.

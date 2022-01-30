@@ -278,10 +278,10 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
   moveHistory.push_back(Move(moveLoc,movePla));
   presumedNextMovePla = getOpp(movePla);
 
-  maybeFinishGame(board);
+  maybeFinishGame(board,movePla,moveLoc);
 }
 
-void BoardHistory::maybeFinishGame(Board& board)
+void BoardHistory::maybeFinishGame(Board& board,Player lastPla,Loc lastLoc)
 {
   //TODO
   static_assert(false,"写胜负判定规则");

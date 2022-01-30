@@ -331,7 +331,6 @@ struct Search {
   std::tuple<std::vector<double>,std::vector<double>> getAverageAndStandardDeviationTreeOwnership(double minWeight, const SearchNode* node = NULL) const;
 
   std::pair<double,double> getAverageShorttermWLAndScoreError(const SearchNode* node = NULL) const;
-  bool getSharpScore(const SearchNode* node, double& ret) const;
 
   //Get ownership map as json
   nlohmann::json getJsonOwnershipMap(
@@ -594,7 +593,6 @@ private:
     std::string& prefix, int64_t origVisits, int depth, const AnalysisData& data, Player perspective
   ) const;
 
-  double getSharpScoreHelper(const SearchNode* node, double policyProbsBuf[NNPos::MAX_NN_POLICY_SIZE]) const;
 
   std::pair<double,double> getAverageShorttermWLAndScoreErrorHelper(const SearchNode* node) const;
 
