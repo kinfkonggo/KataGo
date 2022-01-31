@@ -702,7 +702,6 @@ void GameInitializer::createGameSharedUnsynchronized(
       hist.rules.komi, komiStdev, komiAllowIntegerProb,
       komiBigStdevProb, komiBigStdev, sqrt(board.x_size*board.y_size), rand
     );
-    assert(extraBlackAndKomi.extraBlack == 0);
     PlayUtils::setKomiWithNoise(extraBlackAndKomi, hist, rand);
     otherGameProps.isSgfPos = false;
     otherGameProps.isHintPos = false;

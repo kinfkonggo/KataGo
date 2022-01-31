@@ -931,6 +931,7 @@ Rules PlayUtils::genRandomRules(Rand& rand) {
   rules.multiStoneSuicideLegal = rand.nextBool(0.5);
 
   rules.hasButton = rand.nextBool(0.5);
+  return rules;
 }
 
 Loc PlayUtils::maybeCleanupBeforePass(
