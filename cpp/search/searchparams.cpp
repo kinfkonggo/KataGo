@@ -55,12 +55,9 @@ SearchParams::SearchParams()
    lcbStdevs(4.0),
    minVisitPropForLCB(0.05),
    useNonBuggyLcb(false),
-   rootEndingBonusPoints(0.0),
-   rootPruneUselessMoves(false),
    wideRootNoise(0.0),
    playoutDoublingAdvantage(0.0),
    playoutDoublingAdvantagePla(C_EMPTY),
-   avoidRepeatedPatternUtility(0.0),
    nnPolicyTemperature(1.0f),
    antiMirror(false),
    subtreeValueBiasFactor(0.0),
@@ -77,8 +74,6 @@ SearchParams::SearchParams()
    maxPlayoutsPondering(((int64_t)1) << 50),
    maxTimePondering(1.0e20),
    lagBuffer(0.0),
-   searchFactorAfterOnePass(1.0),
-   searchFactorAfterTwoPass(1.0),
    treeReuseCarryOverTimeFactor(0.0),
    overallocateTimeFactor(1.0),
    midgameTimeFactor(1.0),
@@ -107,8 +102,6 @@ SearchParams SearchParams::forTestsV1() {
   params.useLcbForSelection = true;
   params.lcbStdevs = 5;
   params.minVisitPropForLCB = 0.15;
-  params.rootEndingBonusPoints = 0.5;
-  params.rootPruneUselessMoves = true;
   params.useNonBuggyLcb = true;
   return params;
 }

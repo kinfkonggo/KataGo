@@ -5,25 +5,10 @@
 
 using namespace std;
 
-static int getDefaultMaxExtraBlack(double sqrtBoardArea) {
-  if(sqrtBoardArea <= 10.00001)
-    return 0;
-  if(sqrtBoardArea <= 14.00001)
-    return 1;
-  if(sqrtBoardArea <= 16.00001)
-    return 2;
-  if(sqrtBoardArea <= 17.00001)
-    return 3;
-  if(sqrtBoardArea <= 18.00001)
-    return 4;
-  return 5;
-}
-
-ExtraBlackAndKomi PlayUtils::chooseExtraBlackAndKomi(
+ExtraBlackAndKomi PlayUtils::chooseKomi(
   float base, float stdev, double allowIntegerProb, 
   double bigStdevProb, float bigStdev, double sqrtBoardArea, Rand& rand
 ) {
-  int extraBlack = 0;
   float komi = base;
 
   float stdevToUse = 0.0f;
@@ -201,7 +186,7 @@ Loc PlayUtils::getGameInitializationMove(
 //and add entropy
 void PlayUtils::initializeGameUsingPolicy(
   Search* botB, Search* botW, Board& board, BoardHistory& hist, Player& pla,
-  Rand& gameRand, bool doEndGameIfAllPassAlive,
+  Rand& gameRand,
   double proportionOfBoardArea, double temperature
 ) {
   NNResultBuf buf;
@@ -263,8 +248,6 @@ static SearchParams getNoiselessParams(SearchParams oldParams, int64_t numVisits
   newParams.rootFpuLossProp = newParams.fpuLossProp;
   newParams.rootDesiredPerChildVisitsCoeff = 0.0;
   newParams.rootNumSymmetriesToSample = 1;
-  newParams.searchFactorAfterOnePass = 1.0;
-  newParams.searchFactorAfterTwoPass = 1.0;
   if(newParams.numThreads > (numVisits+7)/8)
     newParams.numThreads = (numVisits+7)/8;
   return newParams;

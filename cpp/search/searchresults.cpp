@@ -211,23 +211,23 @@ bool Search::getPlaySelectionValues(
     if(nnOutput == NULL || &node != rootNode || !allowDirectPolicyMoves)
       return false;
 
-      for(int movePos = 0; movePos<policySize; movePos++) {
-        Loc moveLoc = NNPos::posToLoc(movePos,rootBoard.x_size,rootBoard.y_size,nnXLen,nnYLen);
-        const float* policyProbs = nnOutput->getPolicyProbsMaybeNoised();
-        double policyProb = policyProbs[movePos];
-        if(!rootHistory.isLegal(rootBoard,moveLoc,rootPla) || policyProb < 0 )
+    for (int movePos = 0; movePos < policySize; movePos++) {
+      Loc moveLoc = NNPos::posToLoc(movePos, rootBoard.x_size, rootBoard.y_size, nnXLen, nnYLen);
+      const float* policyProbs = nnOutput->getPolicyProbsMaybeNoised();
+      double policyProb = policyProbs[movePos];
+      if (!rootHistory.isLegal(rootBoard, moveLoc, rootPla) || policyProb < 0)
+        continue;
+      const std::vector<int>& avoidMoveUntilByLoc = rootPla == P_BLACK ? avoidMoveUntilByLocBlack : avoidMoveUntilByLocWhite;
+      if (avoidMoveUntilByLoc.size() > 0) {
+        assert(avoidMoveUntilByLoc.size() >= Board::MAX_ARR_SIZE);
+        int untilDepth = avoidMoveUntilByLoc[moveLoc];
+        if (untilDepth > 0)
           continue;
-        const std::vector<int>& avoidMoveUntilByLoc = rootPla == P_BLACK ? avoidMoveUntilByLocBlack : avoidMoveUntilByLocWhite;
-        if(avoidMoveUntilByLoc.size() > 0) {
-          assert(avoidMoveUntilByLoc.size() >= Board::MAX_ARR_SIZE);
-          int untilDepth = avoidMoveUntilByLoc[moveLoc];
-          if(untilDepth > 0)
-            continue;
-        }
-        locs.push_back(moveLoc);
-        playSelectionValues.push_back(policyProb);
-        numChildren++;
       }
+      locs.push_back(moveLoc);
+      playSelectionValues.push_back(policyProb);
+      numChildren++;
+    }
   }
 
   //Might happen absurdly rarely if we both have no children and don't properly have an nnOutput
@@ -362,7 +362,6 @@ bool Search::getNodeValues(const SearchNode* node, ReportedSearchValues& values)
   }
 
   values = ReportedSearchValues(
-    *this,
     winLossValueAvg,
     noResultValueAvg,
     scoreMeanAvg,
@@ -1376,7 +1375,6 @@ bool Search::getAnalysisJson(
   static constexpr int OUTPUT_PRECISION = 8;
 
   const Board& board = rootBoard;
-  const BoardHistory& hist = rootHistory;
   bool duplicateForSymmetries = true;
   getAnalysisData(buf, minMoves, false, analysisPVLen, duplicateForSymmetries);
 
@@ -1617,7 +1615,6 @@ bool Search::getPrunedNodeValues(const SearchNode* nodePtr, ReportedSearchValues
     weightSum += weight;
   }
   values = ReportedSearchValues(
-    *this,
     winLossValueSum / weightSum,
     noResultValueSum / weightSum,
     scoreMeanSum / weightSum,

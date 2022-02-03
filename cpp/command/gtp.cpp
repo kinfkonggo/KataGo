@@ -6,7 +6,6 @@
 #include "../core/makedir.h"
 #include "../dataio/sgf.h"
 #include "../search/asyncbot.h"
-#include "../search/patternbonustable.h"
 #include "../program/setup.h"
 #include "../program/playutils.h"
 #include "../program/play.h"
@@ -152,20 +151,6 @@ static int parseByoYomiPeriods(const vector<string>& args, int argIdx) {
 }
 
 
-static double getBoardSizeScaling(const Board& board) {
-  return pow(19.0 * 19.0 / (double)(board.x_size * board.y_size), 0.75);
-}
-
-static bool noWhiteStonesOnBoard(const Board& board) {
-  for(int y = 0; y < board.y_size; y++) {
-    for(int x = 0; x < board.x_size; x++) {
-      Loc loc = Location::getLoc(x,y,board.x_size);
-      if(board.colors[loc] == P_WHITE)
-        return false;
-    }
-  }
-  return true;
-}
 
 static bool shouldResign(
   const Board& board,
@@ -213,7 +198,6 @@ struct GTPEngine {
   const double dynamicPlayoutDoublingAdvantageCapPerOppLead;
   double staticPlayoutDoublingAdvantage;
   bool staticPDATakesPrecedence;
-  double normalAvoidRepeatedPatternUtility;
 
   double genmoveWideRootNoise;
   double analysisWideRootNoise;
@@ -239,7 +223,6 @@ struct GTPEngine {
   vector<double> recentWinLossValues;
   double lastSearchFactor;
   double desiredDynamicPDAForWhite;
-  std::unique_ptr<PatternBonusTable> patternBonusTable;
 
   Player perspective;
 
@@ -248,18 +231,15 @@ struct GTPEngine {
   GTPEngine(
     const string& modelFile, SearchParams initialParams, Rules initialRules,
     double dynamicPDACapPerOppLead, double staticPDA, bool staticPDAPrecedence,
-    double normAvoidRepeatedPatternUtility, 
     double genmoveWRN, double analysisWRN,
     bool genmoveAntiMir, bool analysisAntiMir,
-    Player persp, int pvLen,
-    std::unique_ptr<PatternBonusTable>&& pbTable
+    Player persp, int pvLen
   )
     :nnModelFile(modelFile),
      analysisPVLen(pvLen),
      dynamicPlayoutDoublingAdvantageCapPerOppLead(dynamicPDACapPerOppLead),
      staticPlayoutDoublingAdvantage(staticPDA),
      staticPDATakesPrecedence(staticPDAPrecedence),
-     normalAvoidRepeatedPatternUtility(normAvoidRepeatedPatternUtility),
      genmoveWideRootNoise(genmoveWRN),
      analysisWideRootNoise(analysisWRN),
      genmoveAntiMirror(genmoveAntiMir),
@@ -276,7 +256,6 @@ struct GTPEngine {
      recentWinLossValues(),
      lastSearchFactor(1.0),
      desiredDynamicPDAForWhite(0.0),
-     patternBonusTable(std::move(pbTable)),
      perspective(persp),
      genmoveTimeSum(0.0)
   {
@@ -358,7 +337,6 @@ struct GTPEngine {
       searchRandSeed = Global::uint64ToString(seedRand.nextUInt64());
 
     bot = new AsyncBot(params, nnEval, &logger, searchRandSeed);
-    bot->setCopyOfExternalPatternBonusTable(patternBonusTable);
 
     Board board(boardXSize,boardYSize);
     Player pla = P_BLACK;
@@ -699,7 +677,7 @@ struct GTPEngine {
   void genMove(
     Player pla,
     Logger& logger, double searchFactorWhenWinningThreshold, double searchFactorWhenWinning,
-    enabled_t cleanupBeforePass, enabled_t friendlyPass, bool ogsChatToStderr,
+    bool ogsChatToStderr,
     bool allowResignation, double resignThreshold, int resignConsecTurns, double resignMinScoreDifference,
     bool logSearchInfo, bool debug, bool playChosenMove,
     string& response, bool& responseIsError, bool& maybeStartPondering,
@@ -743,13 +721,6 @@ struct GTPEngine {
       bot->setParams(params);
     }
 
-    {
-      double avoidRepeatedPatternUtility = normalAvoidRepeatedPatternUtility;
-      if(params.avoidRepeatedPatternUtility != avoidRepeatedPatternUtility) {
-        params.avoidRepeatedPatternUtility = avoidRepeatedPatternUtility;
-        bot->setParams(params);
-      }
-    }
 
     //Play faster when winning
     double searchFactor = PlayUtils::getSearchFactor(searchFactorWhenWinningThreshold,searchFactorWhenWinning,params,recentWinLossValues,pla);
@@ -1242,11 +1213,6 @@ int MainCmds::gtp(const vector<string>& args) {
 
   const bool ponderingEnabled = cfg.getBool("ponderingEnabled");
 
-  const enabled_t cleanupBeforePass = cfg.contains("cleanupBeforePass") ? cfg.getEnabled("cleanupBeforePass") : enabled_t::Auto;
-  const enabled_t friendlyPass = cfg.contains("friendlyPass") ? cfg.getEnabled("friendlyPass") : enabled_t::Auto;
-  if(cleanupBeforePass == enabled_t::True && friendlyPass == enabled_t::True)
-    throw StringError("Cannot specify both cleanupBeforePass = true and friendlyPass = true at the same time");
-
   const bool allowResignation = cfg.contains("allowResignation") ? cfg.getBool("allowResignation") : false;
   const double resignThreshold = cfg.contains("allowResignation") ? cfg.getDouble("resignThreshold",-1.0,0.0) : -1.0; //Threshold on [-1,1], regardless of winLossUtilityFactor
   const int resignConsecTurns = cfg.contains("resignConsecTurns") ? cfg.getInt("resignConsecTurns",1,100) : 3;
@@ -1262,7 +1228,6 @@ int MainCmds::gtp(const vector<string>& args) {
     cfg.contains("dynamicPlayoutDoublingAdvantageCapPerOppLead") ? cfg.getDouble("dynamicPlayoutDoublingAdvantageCapPerOppLead",0.0,0.5) : 0.045;
   double staticPlayoutDoublingAdvantage = initialParams.playoutDoublingAdvantage;
   const bool staticPDATakesPrecedence = cfg.contains("playoutDoublingAdvantage") && !cfg.contains("dynamicPlayoutDoublingAdvantageCapPerOppLead");
-  const double normalAvoidRepeatedPatternUtility = initialParams.avoidRepeatedPatternUtility;
 
   int defaultBoardXSize = -1;
   int defaultBoardYSize = -1;
@@ -1281,12 +1246,6 @@ int MainCmds::gtp(const vector<string>& args) {
   const bool genmoveAntiMirror =
     cfg.contains("genmoveAntiMirror") ? cfg.getBool("genmoveAntiMirror") : cfg.contains("antiMirror") ? cfg.getBool("antiMirror") : true;
 
-  std::unique_ptr<PatternBonusTable> patternBonusTable = nullptr;
-  {
-    std::vector<std::unique_ptr<PatternBonusTable>> tables = Setup::loadAvoidSgfPatternBonusTables(cfg,logger);
-    assert(tables.size() == 1);
-    patternBonusTable = std::move(tables[0]);
-  }
 
   Player perspective = Setup::parseReportAnalysisWinrates(cfg,C_EMPTY);
 
@@ -1294,11 +1253,9 @@ int MainCmds::gtp(const vector<string>& args) {
     nnModelFile,initialParams,initialRules,
     dynamicPlayoutDoublingAdvantageCapPerOppLead,
     staticPlayoutDoublingAdvantage,staticPDATakesPrecedence,
-    normalAvoidRepeatedPatternUtility,
     genmoveWideRootNoise,analysisWideRootNoise,
     genmoveAntiMirror,analysisAntiMirror,
-    perspective,analysisPVLen,
-    std::move(patternBonusTable)
+    perspective,analysisPVLen
   );
   engine->setOrResetBoardSize(cfg,logger,seedRand,defaultBoardXSize,defaultBoardYSize,loggingToStderr);
 
@@ -2053,7 +2010,7 @@ int MainCmds::gtp(const vector<string>& args) {
         engine->genMove(
           pla,
           logger,searchFactorWhenWinningThreshold,searchFactorWhenWinning,
-          cleanupBeforePass,friendlyPass,ogsChatToStderr,
+          ogsChatToStderr,
           allowResignation,resignThreshold,resignConsecTurns,resignMinScoreDifference,
           logSearchInfo,debug,playChosenMove,
           response,responseIsError,maybeStartPondering,
@@ -2083,7 +2040,7 @@ int MainCmds::gtp(const vector<string>& args) {
         engine->genMove(
           pla,
           logger,searchFactorWhenWinningThreshold,searchFactorWhenWinning,
-          cleanupBeforePass,friendlyPass,ogsChatToStderr,
+          ogsChatToStderr,
           allowResignation,resignThreshold,resignConsecTurns,resignMinScoreDifference,
           logSearchInfo,debug,playChosenMove,
           response,responseIsError,maybeStartPondering,

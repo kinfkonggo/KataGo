@@ -96,6 +96,7 @@ string Rules::toString() const {
 //omitDefaults: Takes up a lot of string space to include stuff, so omit some less common things if matches tromp-taylor rules
 //which is the default for parsing and if not otherwise specified
 json Rules::toJsonHelper(bool omitKomi, bool omitDefaults) const {
+  (void)omitDefaults;
   json ret;
   ret["tax"] = writeTaxRule(taxRule);
   if(!omitKomi)

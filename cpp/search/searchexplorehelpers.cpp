@@ -95,8 +95,8 @@ double Search::getExploreSelectionValueOfChild(
   int32_t childVirtualLosses = child->virtualLosses.load(std::memory_order_acquire);
   int64_t childVisits = child->stats.visits.load(std::memory_order_acquire);
   double utilityAvg = child->stats.utilityAvg.load(std::memory_order_acquire);
-  double scoreMeanAvg = child->stats.scoreMeanAvg.load(std::memory_order_acquire);
-  double scoreMeanSqAvg = child->stats.scoreMeanSqAvg.load(std::memory_order_acquire);
+  //double scoreMeanAvg = child->stats.scoreMeanAvg.load(std::memory_order_acquire);
+  //double scoreMeanSqAvg = child->stats.scoreMeanSqAvg.load(std::memory_order_acquire);
   double childWeight = child->stats.getChildWeight(childEdgeVisits,childVisits);
 
   //It's possible that childVisits is actually 0 here with multithreading because we're visiting this node while a child has
@@ -208,8 +208,8 @@ double Search::getReducedPlaySelectionWeight(
   float nnPolicyProb = parentPolicyProbs[movePos];
 
   int64_t childVisits = child->stats.visits.load(std::memory_order_acquire);
-  double scoreMeanAvg = child->stats.scoreMeanAvg.load(std::memory_order_acquire);
-  double scoreMeanSqAvg = child->stats.scoreMeanSqAvg.load(std::memory_order_acquire);
+  //double scoreMeanAvg = child->stats.scoreMeanAvg.load(std::memory_order_acquire);
+  //double scoreMeanSqAvg = child->stats.scoreMeanSqAvg.load(std::memory_order_acquire);
   double utilityAvg = child->stats.utilityAvg.load(std::memory_order_acquire);
   double childWeight = child->stats.getChildWeight(childEdgeVisits,childVisits);
 

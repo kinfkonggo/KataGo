@@ -16,7 +16,7 @@ using namespace std;
 InitialPosition::InitialPosition()
   :board(),hist(),pla(C_EMPTY)
 {}
-InitialPosition::InitialPosition(const Board& b, const BoardHistory& h, Player p, bool plainFork, bool sekiFork, bool hintFork)
+InitialPosition::InitialPosition(const Board& b, const BoardHistory& h, Player p, bool plainFork, bool hintFork)
   :board(b),hist(h),pla(p),isPlainFork(plainFork),isHintFork(hintFork)
 {}
 InitialPosition::~InitialPosition()
@@ -159,8 +159,7 @@ void GameInitializer::initShared(ConfigParser& cfg, Logger& logger) {
         else {
           bool hashComments = false;
           bool hashParent = false;
-          bool flipIfPassOrWFirst = true;
-          sgf->iterAllUniquePositions(uniqueHashes, hashComments, hashParent, flipIfPassOrWFirst, NULL, posHandler);
+          sgf->iterAllUniquePositions(uniqueHashes, hashComments, hashParent, NULL, posHandler);
         }
       }
       catch(const StringError& e) {
@@ -363,7 +362,7 @@ void GameInitializer::createGameSharedUnsynchronized(
     hist = initialPosition->hist;
     pla = initialPosition->pla;
 
-    extraBlackAndKomi = PlayUtils::chooseExtraBlackAndKomi(
+    extraBlackAndKomi = PlayUtils::chooseKomi(
       hist.rules.komi, komiStdev, komiAllowIntegerProb,
       komiBigStdevProb, komiBigStdev, sqrt(board.x_size*board.y_size), rand
     );
@@ -426,7 +425,7 @@ void GameInitializer::createGameSharedUnsynchronized(
       pla = getOpp(startPos.moves[i].pla);
     }
 
-    extraBlackAndKomi = PlayUtils::chooseExtraBlackAndKomi(
+    extraBlackAndKomi = PlayUtils::chooseKomi(
       komiMean, komiStdev, komiAllowIntegerProb,
       komiBigStdevProb, komiBigStdev, sqrt(board.x_size*board.y_size), rand
     );
@@ -449,7 +448,7 @@ void GameInitializer::createGameSharedUnsynchronized(
     pla = P_BLACK;
     hist.clear(board,pla,rules);
 
-    extraBlackAndKomi = PlayUtils::chooseExtraBlackAndKomi(
+    extraBlackAndKomi = PlayUtils::chooseKomi(
       komiMean, komiStdev, komiAllowIntegerProb,
       komiBigStdevProb, komiBigStdev, sqrt(board.x_size*board.y_size), rand
     );
@@ -1309,7 +1308,7 @@ FinishedGameData* Play::runGame(
         PlayUtils::setKomiWithNoise(extraBlackAndKomi,hist,gameRand);
         double temperature = playSettings.policyInitAreaTemperature;
         assert(temperature > 0.0 && temperature < 10.0);
-        PlayUtils::initializeGameUsingPolicy(botB, botW, board, hist, pla, gameRand, doEndGameIfAllPassAlive, proportionOfBoardArea, temperature);
+        PlayUtils::initializeGameUsingPolicy(botB, botW, board, hist, pla, gameRand, proportionOfBoardArea, temperature);
         hist.setKomi(oldKomi);
       }
       bool shouldCompensate =
@@ -1807,18 +1806,6 @@ static void replayGameUpToMove(const FinishedGameData* finishedGameData, int mov
   }
 }
 
-static bool hasUnownedSpot(const FinishedGameData* finishedGameData) {
-  assert(finishedGameData->finalOwnership != NULL);
-  const Board& board = finishedGameData->startBoard;
-  for(int y = 0; y<board.y_size; y++) {
-    for(int x = 0; x<board.x_size; x++) {
-      Loc loc = Location::getLoc(x,y,board.x_size);
-      if(finishedGameData->finalOwnership[loc] == C_EMPTY)
-        return true;
-    }
-  }
-  return false;
-}
 
 void Play::maybeForkGame(
   const FinishedGameData* finishedGameData,
@@ -1908,7 +1895,7 @@ void Play::maybeForkGame(
   //If the game is over now, don't actually do anything
   if(hist.isGameFinished)
     return;
-  forkData->add(new InitialPosition(board,hist,pla,true,false,false));
+  forkData->add(new InitialPosition(board,hist,pla,true,false));
 }
 
 
@@ -1947,7 +1934,7 @@ void Play::maybeHintForkGame(
   //If the game is over now, don't actually do anything
   if(hist.isGameFinished)
     return;
-  forkData->add(new InitialPosition(board,hist,pla,false,false,true));
+  forkData->add(new InitialPosition(board,hist,pla,false,true));
 }
 
 

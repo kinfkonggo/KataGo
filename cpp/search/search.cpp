@@ -12,7 +12,6 @@
 #include "../core/timer.h"
 #include "../game/graphhash.h"
 #include "../search/distributiontable.h"
-#include "../search/patternbonustable.h"
 #include "../search/searchnode.h"
 #include "../search/searchnodetable.h"
 #include "../search/subtreevaluebiastable.h"
@@ -85,8 +84,6 @@ Search::Search(SearchParams params, NNEvaluator* nnEval, Logger* lg, const strin
    valueWeightDistribution(NULL),
    normToTApproxZ(0.0),
    normToTApproxTable(),
-   patternBonusTable(NULL),
-   externalPatternBonusTable(nullptr),
    nonSearchRand(rSeed + string("$nonSearchRand")),
    logger(lg),
    nnEvaluator(nnEval),
@@ -135,7 +132,6 @@ Search::~Search() {
   delete nodeTable;
   delete mutexPool;
   delete subtreeValueBiasTable;
-  delete patternBonusTable;
   killThreads();
 }
 
@@ -228,19 +224,6 @@ void Search::setParams(SearchParams params) {
 
 void Search::setParamsNoClearing(SearchParams params) {
   searchParams = params;
-}
-
-void Search::setExternalPatternBonusTable(std::unique_ptr<PatternBonusTable>&& table) {
-  if(table == externalPatternBonusTable)
-    return;
-  //Probably not actually needed so long as we do a fresh search to refresh and use the new table
-  //but this makes behavior consistent with all the other setters.
-  clearSearch();
-  externalPatternBonusTable = std::move(table);
-}
-
-void Search::setCopyOfExternalPatternBonusTable(const std::unique_ptr<PatternBonusTable>& table) {
-  setExternalPatternBonusTable(table == nullptr ? nullptr : std::make_unique<PatternBonusTable>(*table));
 }
 
 void Search::setNNEval(NNEvaluator* nnEval) {
@@ -423,14 +406,6 @@ void Search::runWholeSearch(
   double_t maxTime = pondering ? searchParams.maxTimePondering : searchParams.maxTime;
 
   {
-    //Possibly reduce computation time, for human friendliness
-    if(rootHistory.moveHistory.size() >= 1 && rootHistory.moveHistory[rootHistory.moveHistory.size()-1].loc == Board::PASS_LOC) {
-      if(rootHistory.moveHistory.size() >= 3 && rootHistory.moveHistory[rootHistory.moveHistory.size()-3].loc == Board::PASS_LOC)
-        searchFactor *= searchParams.searchFactorAfterTwoPass;
-      else
-        searchFactor *= searchParams.searchFactorAfterOnePass;
-    }
-
     if(searchFactor != 1.0) {
       double cap = (double)((int64_t)1L << 62);
       maxVisits = (int64_t)ceil(std::min(cap, maxVisits * searchFactor));
@@ -565,11 +540,6 @@ void Search::beginSearch(bool pondering) {
     //and the player that the search is for changes, we need to clear the tree since we need new evals for the new way around
     if(searchParams.playoutDoublingAdvantage != 0 && searchParams.playoutDoublingAdvantagePla == C_EMPTY)
       clearSearch();
-    //If we are doing pattern bonus and the player the search is for changes, clear the search. Recomputing the search tree
-    //recursively *would* fix all our utilities, but the problem is the playout distribution will still be matching the
-    //old probabilities without a lot of new search, so clearing ensures a better distribution.
-    if(searchParams.avoidRepeatedPatternUtility != 0 || externalPatternBonusTable != nullptr)
-      clearSearch();
   }
   plaThatSearchIsForLastSearch = plaThatSearchIsFor;
   //cout << "BEGINSEARCH " << PlayerIO::playerToString(rootPla) << " " << PlayerIO::playerToString(plaThatSearchIsFor) << endl;
@@ -582,24 +552,6 @@ void Search::beginSearch(bool pondering) {
   if(searchParams.subtreeValueBiasFactor != 0 && subtreeValueBiasTable == NULL && !(searchParams.antiMirror && mirroringPla != C_EMPTY))
     subtreeValueBiasTable = new SubtreeValueBiasTable(searchParams.subtreeValueBiasTableNumShards);
 
-  //Refresh pattern bonuses if needed
-  if(patternBonusTable != NULL) {
-    delete patternBonusTable;
-    patternBonusTable = NULL;
-  }
-  if(searchParams.avoidRepeatedPatternUtility != 0 || externalPatternBonusTable != nullptr) {
-    if(externalPatternBonusTable != nullptr)
-      patternBonusTable = new PatternBonusTable(*externalPatternBonusTable);
-    else
-      patternBonusTable = new PatternBonusTable();
-    if(searchParams.avoidRepeatedPatternUtility != 0) {
-      double bonus = plaThatSearchIsFor == P_WHITE ? -searchParams.avoidRepeatedPatternUtility : searchParams.avoidRepeatedPatternUtility;
-      patternBonusTable->addBonusForGameMoves(rootHistory,bonus,plaThatSearchIsFor);
-    }
-    //Clear any pattern bonus on the root node itself
-    if(rootNode != NULL)
-      rootNode->patternBonusHash = Hash128();
-  }
 
   if(searchParams.rootSymmetryPruning) {
     const std::vector<int>& avoidMoveUntilByLoc = rootPla == P_BLACK ? avoidMoveUntilByLocBlack : avoidMoveUntilByLocWhite;
@@ -713,7 +665,7 @@ void Search::beginSearch(bool pondering) {
 
     //Recursively update all stats in the tree if we have dynamic score values
     //And also to clear out lastResponseBiasDeltaSum and lastResponseBiasWeight
-    if(searchParams.dynamicScoreUtilityFactor != 0 || searchParams.subtreeValueBiasFactor != 0 || patternBonusTable != NULL) {
+    if(searchParams.dynamicScoreUtilityFactor != 0 || searchParams.subtreeValueBiasFactor != 0) {
       recursivelyRecomputeStats(node);
       if(anyFiltered) {
         //Recursive stats recomputation resulted in us marking all nodes we have. Anything filtered is old now, delete it.
@@ -795,8 +747,6 @@ SearchNode* Search::allocateOrFindNode(SearchThread& thread, Player nextPla, Loc
         }
       }
 
-      if(patternBonusTable != NULL)
-        child->patternBonusHash = patternBonusTable->getHash(getOpp(thread.pla), bestChildMoveLoc, thread.history.getRecentBoard(1));
 
       //Insert into map! Use insertLoc as hint.
       nodeMap.insert(insertLoc, std::make_pair(childHash,child));
@@ -941,7 +891,6 @@ void Search::recursivelyRecomputeStats(SearchNode& n) {
         double resultUtility = getResultUtility(winLossValueAvg, noResultValueAvg);
         double scoreUtility = getScoreUtility(scoreMeanAvg, scoreMeanSqAvg);
         double newUtilityAvg = resultUtility + scoreUtility;
-        newUtilityAvg += getPatternBonus(node->patternBonusHash,getOpp(node->nextPla));
         double newUtilitySqAvg = newUtilityAvg * newUtilityAvg;
 
         while(node->statsLock.test_and_set(std::memory_order_acquire));

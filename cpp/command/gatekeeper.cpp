@@ -121,7 +121,6 @@ namespace {
         }
         else {
           BoardHistory hist(data->endHist);
-          Board endBoard = hist.getRecentBoard(0);
           //Force game end just in caseif we crossed a move limit
           if(!hist.isGameFinished)
             hist.setWinner(C_EMPTY);

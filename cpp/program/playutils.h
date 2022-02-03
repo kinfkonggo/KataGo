@@ -8,7 +8,7 @@
 //This is a grab-bag of various useful higher-level functions that select moves or evaluate the board in various ways.
 
 namespace PlayUtils {
-  ExtraBlackAndKomi chooseExtraBlackAndKomi(
+  ExtraBlackAndKomi chooseKomi(
     float base, float stdev, double allowIntegerProb, 
     double bigStdevProb, float bigStdev, double sqrtBoardArea, Rand& rand
   );
@@ -44,7 +44,7 @@ namespace PlayUtils {
   );
   void initializeGameUsingPolicy(
     Search* botB, Search* botW, Board& board, BoardHistory& hist, Player& pla,
-    Rand& gameRand, bool doEndGameIfAllPassAlive,
+    Rand& gameRand,
     double proportionOfBoardArea, double temperature
   );
 

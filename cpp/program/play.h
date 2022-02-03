@@ -22,7 +22,7 @@ struct InitialPosition {
   bool isHintFork;
 
   InitialPosition();
-  InitialPosition(const Board& board, const BoardHistory& hist, Player pla, bool isPlainFork, bool isSekiFork, bool isHintFork);
+  InitialPosition(const Board& board, const BoardHistory& hist, Player pla, bool isPlainFork,  bool isHintFork);
   ~InitialPosition();
 };
 

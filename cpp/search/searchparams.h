@@ -75,14 +75,11 @@ struct SearchParams {
   bool useNonBuggyLcb; //LCB was very minorly buggy as of pre-v1.8. Set to true to fix.
 
   //Mild behavior hackery
-  double rootEndingBonusPoints; //Extra bonus (or penalty) to encourage good passing behavior at the end of the game.
-  bool rootPruneUselessMoves; //Prune moves that are entirely useless moves that prolong the game.
   double wideRootNoise; //Explore at the root more widely
 
   double playoutDoublingAdvantage; //Play as if we have this many doublings of playouts vs the opponent
   Player playoutDoublingAdvantagePla; //Negate playoutDoublingAdvantage when making a move for the opponent of this player. If empty, opponent of the root player.
 
-  double avoidRepeatedPatternUtility; //Have the root player avoid repeating similar shapes, penalizing this much utility per instance.
 
   float nnPolicyTemperature; //Scale neural net policy probabilities by this temperature, applies everywhere in the tree
   bool antiMirror; //Enable anti-mirroring logic
@@ -110,9 +107,6 @@ struct SearchParams {
   //Amount of time to reserve for lag when using a time control
   double lagBuffer;
 
-  //Human-friendliness
-  double searchFactorAfterOnePass; //Multiply playouts and visits and time by this much after a pass by the opponent
-  double searchFactorAfterTwoPass; //Multiply playouts and visits and time by this after two passes by the opponent
 
   //Time control
   double treeReuseCarryOverTimeFactor; //Assume we gain this much "time" on the next move purely from % tree preserved * time spend on that tree.

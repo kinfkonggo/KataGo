@@ -141,7 +141,6 @@ struct SearchNode {
   //Constant during search--------------------------------------------------------------
   const Player nextPla;
   const bool forceNonTerminal;
-  Hash128 patternBonusHash;
   const uint32_t mutexIdx; // For lookup into mutex pool
 
   //Mutable---------------------------------------------------------------------------

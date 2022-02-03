@@ -17,7 +17,8 @@ Hash128 GraphHash::getStateHash(const BoardHistory& hist, Player nextPlayer, dou
 }
 
 Hash128 GraphHash::getGraphHash(Hash128 prevGraphHash, const BoardHistory& hist, Player nextPlayer, int repBound, double drawEquivalentWinsForWhite) {
-  
+  (void)prevGraphHash;
+  (void)repBound;
   return getStateHash(hist,nextPlayer,drawEquivalentWinsForWhite);
 }
 
@@ -35,7 +36,7 @@ Hash128 GraphHash::getGraphHashFromScratch(const BoardHistory& histOrig, Player 
  //   BoardHistory::getSituationRulesAndKoHash(board, hist, nextPlayer, drawEquivalentWinsForWhite) ==
  //   BoardHistory::getSituationRulesAndKoHash(histOrig.getRecentBoard(0), histOrig, nextPlayer, drawEquivalentWinsForWhite)
  // );
-
+  (void)repBound;
   Hash128 graphHash = getGraphHash(Hash128(), histOrig, nextPlayer, repBound, drawEquivalentWinsForWhite);
   return graphHash;
 }

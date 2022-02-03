@@ -36,7 +36,6 @@ void Search::addLeafValue(
       utility += biasFactor * newEntryDeltaUtilitySum / newEntryWeightSum;
   }
 
-  utility += getPatternBonus(node.patternBonusHash,getOpp(node.nextPla));
 
   double utilitySq = utility * utility;
   double weightSq = weight * weight;
@@ -309,7 +308,6 @@ void Search::recomputeNodeStats(SearchNode& node, SearchThread& thread, int numV
   double utilitySqAvg = utilitySqSum / weightSum;
 
   double oldUtilityAvg = utilityAvg;
-  utilityAvg += getPatternBonus(node.patternBonusHash,getOpp(node.nextPla));
   utilitySqAvg = utilitySqAvg + (utilityAvg * utilityAvg - oldUtilityAvg * oldUtilityAvg);
 
   //TODO statslock may be unnecessary now with the dirtyCounter mechanism?

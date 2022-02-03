@@ -177,12 +177,8 @@ const Board& BoardHistory::getRecentBoard(int numMovesAgo) const {
 
 
 void BoardHistory::setKomi(float newKomi) {
-  float oldKomi = rules.komi;
   rules.komi = newKomi;
 
-  //Recompute the game result due to the new komi
-  //if(isGameFinished && isScored)
-  //  std::cout<<"setKomi when isGameFinished && isScored";
 }
 
 
@@ -256,8 +252,7 @@ bool BoardHistory::makeBoardMoveTolerant(Board& board, Loc moveLoc, Player moveP
 }
 
 void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player movePla) {
-  Hash128 posHashBeforeMove = board.pos_hash;
-
+ 
   //If somehow we're making a move after the game was ended, just clear those values and continue
   isGameFinished = false;
   winner = C_EMPTY;
@@ -297,9 +292,7 @@ void BoardHistory::maybeFinishGame(Board& board,Player lastPla,Loc lastLoc)
 
 
 Hash128 BoardHistory::getSituationRulesHash(const Board& board, const BoardHistory& hist, Player nextPlayer, double drawEquivalentWinsForWhite) {
-  int xSize = board.x_size;
-  int ySize = board.y_size;
-
+ 
   //Note that board.pos_hash also incorporates the size of the board.
   Hash128 hash = board.pos_hash;
   hash ^= Board::ZOBRIST_PLAYER_HASH[nextPlayer];

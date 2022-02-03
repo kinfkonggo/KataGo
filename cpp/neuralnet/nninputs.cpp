@@ -55,12 +55,6 @@ static const double twoOverPi = 0.63661977236758134308;
 static const double piOverTwo = 1.57079632679489661923;
 
 
-static double inverse_atan(double x) {
-  if(x >= piOverTwo - 1e-6) return 1e6;
-  if(x <= -piOverTwo + 1e-6) return -1e6;
-  return tan(x);
-}
-
 
 double ScoreValue::getScoreStdev(double scoreMean, double scoreMeanSq) {
   double variance = scoreMeanSq - scoreMean * scoreMean;

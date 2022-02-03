@@ -32,11 +32,7 @@ int MainCmds::evalsgf(const vector<string>& args) {
   bool printPolicy;
   bool printLogPolicy;
   bool printDirichletShape;
-  bool printScoreNow;
-  bool printRootEndingBonus;
-  bool printLead;
   bool printAvgShorttermError;
-  bool printSharpScore;
   bool printGraph;
   int printMaxDepth;
   bool rawNN;
@@ -62,11 +58,7 @@ int MainCmds::evalsgf(const vector<string>& args) {
     TCLAP::SwitchArg printPolicyArg("","print-policy","Print policy");
     TCLAP::SwitchArg printLogPolicyArg("","print-log-policy","Print log policy");
     TCLAP::SwitchArg printDirichletShapeArg("","print-dirichlet-shape","Print dirichlet shape");
-    TCLAP::SwitchArg printScoreNowArg("","print-score-now","Print score now");
-    TCLAP::SwitchArg printRootEndingBonusArg("","print-root-ending-bonus","Print root ending bonus now");
-    TCLAP::SwitchArg printLeadArg("","print-lead","Compute and print lead");
     TCLAP::SwitchArg printAvgShorttermErrorArg("","print-avg-shortterm-error","Compute and print avgShorttermError");
-    TCLAP::SwitchArg printSharpScoreArg("","print-sharp-score","Compute and print sharp weighted score");
     TCLAP::SwitchArg printGraphArg("","print-graph","Print graph structure of the search");
     TCLAP::ValueArg<int> printMaxDepthArg("","print-max-depth","How deep to print",false,1,"DEPTH");
     TCLAP::SwitchArg rawNNArg("","raw-nn","Perform single raw neural net eval");
@@ -91,11 +83,7 @@ int MainCmds::evalsgf(const vector<string>& args) {
     cmd.add(printPolicyArg);
     cmd.add(printLogPolicyArg);
     cmd.add(printDirichletShapeArg);
-    cmd.add(printScoreNowArg);
-    cmd.add(printRootEndingBonusArg);
-    cmd.add(printLeadArg);
     cmd.add(printAvgShorttermErrorArg);
-    cmd.add(printSharpScoreArg);
     cmd.add(printGraphArg);
     cmd.add(printMaxDepthArg);
     cmd.add(rawNNArg);
@@ -118,11 +106,7 @@ int MainCmds::evalsgf(const vector<string>& args) {
     printPolicy = printPolicyArg.getValue();
     printLogPolicy = printLogPolicyArg.getValue();
     printDirichletShape = printDirichletShapeArg.getValue();
-    printScoreNow = printScoreNowArg.getValue();
-    printRootEndingBonus = printRootEndingBonusArg.getValue();
-    printLead = printLeadArg.getValue();
     printAvgShorttermError = printAvgShorttermErrorArg.getValue();
-    printSharpScore = printSharpScoreArg.getValue();
     printGraph = printGraphArg.getValue();
     printMaxDepth = printMaxDepthArg.getValue();
     rawNN = rawNNArg.getValue();

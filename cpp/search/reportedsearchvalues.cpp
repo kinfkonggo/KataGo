@@ -8,7 +8,6 @@ ReportedSearchValues::ReportedSearchValues()
 ReportedSearchValues::~ReportedSearchValues()
 {}
 ReportedSearchValues::ReportedSearchValues(
-  const Search& search,
   double winLossValueAvg,
   double noResultValueAvg,
   double scoreMeanAvg,

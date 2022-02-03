@@ -203,6 +203,7 @@ bool Board::isOnBoard(Loc loc) const {
 //Check if moving here is illegal.
 bool Board::isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
 {
+  (void)isMultiStoneSuicideLegal;
   if(pla != P_BLACK && pla != P_WHITE)
     return false;
   return loc == PASS_LOC || (
@@ -446,6 +447,8 @@ void Board::checkConsistency() const {
 }
 
 bool Board::isEqualForTesting(const Board& other, bool checkNumCaptures, bool checkSimpleKo) const {
+  (void)checkNumCaptures;
+  (void)checkSimpleKo;
   checkConsistency();
   other.checkConsistency();
   if(x_size != other.x_size)

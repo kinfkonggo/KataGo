@@ -117,10 +117,6 @@ struct Search {
   double normToTApproxZ;
   std::vector<double> normToTApproxTable;
 
-  //Pattern bonuses are currently only looked up for shapes completed by the player who the search is for.
-  //Implicitly these utility adjustments "assume" the opponent likes the negative of our adjustments.
-  PatternBonusTable* patternBonusTable;
-  std::unique_ptr<PatternBonusTable> externalPatternBonusTable;
 
   Rand nonSearchRand; //only for use not in search, since rand isn't threadsafe
 
@@ -198,8 +194,6 @@ struct Search {
   void setRootSymmetryPruningOnly(const std::vector<int>& rootPruneOnlySymmetries);
   void setParams(SearchParams params);
   void setParamsNoClearing(SearchParams params); //Does not clear search
-  void setExternalPatternBonusTable(std::unique_ptr<PatternBonusTable>&& table);
-  void setCopyOfExternalPatternBonusTable(const std::unique_ptr<PatternBonusTable>& table);
   void setNNEval(NNEvaluator* nnEval);
 
   //If the number of threads is reduced, this can free up some excess threads in the thread pool.
@@ -383,7 +377,7 @@ private:
   // Miscellaneous search biasing helpers, root move selection, etc.
   // searchhelpers.cpp
   //----------------------------------------------------------------------------------------
-  double getPatternBonus(Hash128 patternBonusHash, Player prevMovePla) const;
+
 
   double interpolateEarly(double halflife, double earlyValue, double value) const;
 

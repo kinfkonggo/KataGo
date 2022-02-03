@@ -579,7 +579,6 @@ int MainCmds::samplesgfs(const vector<string>& args) {
   int64_t maxDepth;
   int64_t maxNodeCount;
   int64_t maxBranchCount;
-  bool flipIfPassOrWFirst;
 
   int minMinRank;
   string requiredPlayerName;
@@ -596,7 +595,6 @@ int MainCmds::samplesgfs(const vector<string>& args) {
     TCLAP::ValueArg<string> maxDepthArg("","max-depth","Max depth allowed for sgf",false,"100000000","INT");
     TCLAP::ValueArg<string> maxNodeCountArg("","max-node-count","Max node count allowed for sgf",false,"100000000","INT");
     TCLAP::ValueArg<string> maxBranchCountArg("","max-branch-count","Max branch count allowed for sgf",false,"100000000","INT");
-    TCLAP::SwitchArg flipIfPassOrWFirstArg("","flip-if-pass","Try to heuristically find cases where an sgf passes to simulate white<->black");
     TCLAP::ValueArg<int> minMinRankArg("","min-min-rank","Require both players in a game to have rank at least this",false,Sgf::RANK_UNKNOWN,"INT");
     TCLAP::ValueArg<string> requiredPlayerNameArg("","required-player-name","Require player making the move to have this name",false,string(),"NAME");
     TCLAP::ValueArg<double> maxKomiArg("","max-komi","Require absolute value of game komi to be at most this",false,1000,"KOMI");
@@ -608,7 +606,6 @@ int MainCmds::samplesgfs(const vector<string>& args) {
     cmd.add(maxDepthArg);
     cmd.add(maxNodeCountArg);
     cmd.add(maxBranchCountArg);
-    cmd.add(flipIfPassOrWFirstArg);
     cmd.add(minMinRankArg);
     cmd.add(requiredPlayerNameArg);
     cmd.add(maxKomiArg);
@@ -621,7 +618,6 @@ int MainCmds::samplesgfs(const vector<string>& args) {
     maxDepth = Global::stringToInt64(maxDepthArg.getValue());
     maxNodeCount = Global::stringToInt64(maxNodeCountArg.getValue());
     maxBranchCount = Global::stringToInt64(maxBranchCountArg.getValue());
-    flipIfPassOrWFirst = flipIfPassOrWFirstArg.getValue();
     minMinRank = minMinRankArg.getValue();
     requiredPlayerName = requiredPlayerNameArg.getValue();
     maxKomi = maxKomiArg.getValue();
@@ -762,7 +758,7 @@ int MainCmds::samplesgfs(const vector<string>& args) {
     bool hashComments = false;
     bool hashParent = false;
     Rand iterRand;
-    sgf->iterAllUniquePositions(uniqueHashes, hashComments, hashParent, flipIfPassOrWFirst, &iterRand, posHandler);
+    sgf->iterAllUniquePositions(uniqueHashes, hashComments, hashParent, &iterRand, posHandler);
   };
 
   for(size_t i = 0; i<sgfFiles.size(); i++) {
@@ -1683,7 +1679,7 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
       try {
         bool hashParent = true; //Hash parent so that we distinguish hint moves that reach the same position but were different moves from different starting states.
         sgf->iterAllUniquePositions(
-          uniqueHashes, hashComments, hashParent, flipIfPassOrWFirst, &seedRand, [&](Sgf::PositionSample& unusedSample, const BoardHistory& hist, const string& comments) {
+          uniqueHashes, hashComments, hashParent,  &seedRand, [&](Sgf::PositionSample& unusedSample, const BoardHistory& hist, const string& comments) {
             if(comments.size() > 0 && comments.find("%NOHINT%") != string::npos)
               return;
             if(hist.moveHistory.size() <= 0)

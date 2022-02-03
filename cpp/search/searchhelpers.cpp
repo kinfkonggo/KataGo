@@ -2,7 +2,6 @@
 
 #include "../core/fancymath.h"
 #include "../search/searchnode.h"
-#include "../search/patternbonustable.h"
 
 //------------------------
 #include "../core/using.h"
@@ -227,6 +226,7 @@ double Search::getScoreUtilityDiff(double scoreMeanAvg, double scoreMeanSqAvg, d
 
 //Ignores scoreMeanSq's effect on the utility, since that's complicated
 double Search::getApproxScoreUtilityDerivative(double scoreMean) const {
+  (void)scoreMean;
  return searchParams.staticScoreUtilityFactor;
 }
 
@@ -236,12 +236,6 @@ double Search::getUtilityFromNN(const NNOutput& nnOutput) const {
   return resultUtility + getScoreUtility(nnOutput.whiteScoreMean, nnOutput.whiteScoreMeanSq);
 }
 
-
-double Search::getPatternBonus(Hash128 patternBonusHash, Player prevMovePla) const {
-  if(patternBonusTable == NULL || prevMovePla != plaThatSearchIsFor)
-    return 0;
-  return patternBonusTable->get(patternBonusHash).utilityBonus;
-}
 
 
 double Search::interpolateEarly(double halflife, double earlyValue, double value) const {
@@ -269,6 +263,7 @@ double Search::getNormToTApproxForLCB(int64_t numVisits) const {
 }
 
 void Search::getSelfUtilityLCBAndRadius(const SearchNode& parent, const SearchNode* child, int64_t edgeVisits, Loc moveLoc, double& lcbBuf, double& radiusBuf) const {
+  (void)moveLoc;
   int64_t childVisits = child->stats.visits.load(std::memory_order_acquire);
   double scoreMeanAvg = child->stats.scoreMeanAvg.load(std::memory_order_acquire);
   double scoreMeanSqAvg = child->stats.scoreMeanSqAvg.load(std::memory_order_acquire);
