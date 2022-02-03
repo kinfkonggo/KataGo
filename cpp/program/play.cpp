@@ -18,9 +18,9 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
   static const double EARLYFILLRATE2 = 0.03;
   pla = C_WHITE;
 
-  if (gameRand.nextBool(0.3))//黑棋乱撒
+  if (gameRand.nextBool(0.2))//黑棋乱撒
   {
-    double fillRate = gameRand.nextExponential() * 0.1;//平均填36个子
+    double fillRate = gameRand.nextExponential() * 0.07;//平均填26个子
     if (EARLY)fillRate = gameRand.nextGaussianTruncated(2)*EARLYFILLRATE1/2+EARLYFILLRATE1+0.0001;
     if (fillRate > 0.9)fillRate = 0.9;
     for (int y = 0; y < board.y_size; y++)
@@ -32,8 +32,27 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
   }
   else //指定开局
   {
-    const int numOpenings = 12;
     std::string openingStrs[] = {
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . x . . x . . . x . . . x . . x . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . x . . . . . . . . . . . . . x . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . . . . . . x . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . x . . . . . . . . . . . . . x . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . x . . . . . . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . x . . . . . . . . . . . . . x . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . x . . x . . . x . . . x . . x . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . . . . . "
+      ,
       ". . . . . . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . . . . . "
       ". . x . . . . . . x . . . . . . x . . "
@@ -275,6 +294,8 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
       ". . . . . . . . . x x x x x x x x x x "
       ". . . . . . . . . x x x x x x x x x x "
     };
+
+    const int numOpenings = sizeof(openingStrs)/sizeof(string);
     int openingID = gameRand.nextUInt(numOpenings);
     for (int y = 0; y < board.y_size; y++)
       for (int x = 0; x < board.x_size; x++)
