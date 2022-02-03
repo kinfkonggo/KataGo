@@ -215,6 +215,7 @@ bool Board::isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
 
 MovePriority Board::getMovePriority(Player pla, Loc loc, bool isSixWin, bool isPassForbidded)const
 {
+
   if (loc == PASS_LOC)return isPassForbidded ? MP_ILLEGAL : MP_NORMAL;
   if (!isLegal(loc, pla, false))return MP_ILLEGAL;
   MovePriority MP = getMovePriorityAssumeLegal(pla, loc, isSixWin);
@@ -222,6 +223,7 @@ MovePriority Board::getMovePriority(Player pla, Loc loc, bool isSixWin, bool isP
 }
 MovePriority Board::getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const
 {
+  if (loc == PASS_LOC)return MP_NORMAL;
   MovePriority MP = MP_NORMAL;
   for (int i = 0; i < 4; i++)
   {

@@ -685,8 +685,8 @@ void NNInputs::fillRowV7(
   
   //Hide history from the net if a pass would end things and we're behaving as if a pass won't.
   //Or if the game is in fact over right now!
-  bool hideHistory =
-    hist.isGameFinished;
+  bool hideHistory = true;
+  //  hist.isGameFinished;
 
   //Features 9,10,11,12,13
   if(!hideHistory) {
