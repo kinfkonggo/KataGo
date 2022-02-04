@@ -716,22 +716,28 @@ void NNEvaluator::evaluate(
     int ySize = board.y_size;
 
     float maxPolicy = -1e25f;
-    bool isLegal[NNPos::MAX_NN_POLICY_SIZE];
+    //bool isLegal[NNPos::MAX_NN_POLICY_SIZE];
+    MovePriority MPlist[NNPos::MAX_NN_POLICY_SIZE];
     int legalCount = 0;
     for(int i = 0; i<policySize; i++) {
       Loc loc = NNPos::posToLoc(i,xSize,ySize,nnXLen,nnYLen);
-      isLegal[i] = history.isLegal(board,loc,nextPlayer);
+      MPlist[i] = board.getMovePriority(nextPlayer,loc,true,false);
+      //MPlist[i] = history.isLegal(board, loc, nextPlayer) ? MP_NORMAL : MP_ILLEGAL;
     }
-
 
     for(int i = 0; i<policySize; i++) {
       float policyValue;
-      if(isLegal[i]) {
+      if(MPlist[i]!=MP_ILLEGAL) {
         legalCount += 1;
         policyValue = policy[i] * nnPolicyInvTemperature;
       }
       else
         policyValue = -1e30f;
+
+      if (MPlist[i] == MP_FIVE)policyValue += 10000;
+      else if (MPlist[i] == MP_OPPOFOUR)policyValue += 8000;
+      else if (MPlist[i] == MP_MYLIFEFOUR)policyValue += 6000;
+      else if (MPlist[i] == MP_VCF)policyValue += 4000;
 
       policy[i] = policyValue;
       if(policyValue > maxPolicy)
@@ -760,13 +766,13 @@ void NNEvaluator::evaluate(
       }
       float uniform = 1.0f / legalCount;
       for(int i = 0; i<policySize; i++) {
-        policy[i] = isLegal[i] ? uniform : -1.0f;
+        policy[i] = MPlist[i]!=MP_ILLEGAL ? uniform : -1.0f;
       }
     }
     //Normal case
     else {
       for(int i = 0; i<policySize; i++)
-        policy[i] = isLegal[i] ? (policy[i] / policySum) : -1.0f;
+        policy[i] = MPlist[i]!=MP_ILLEGAL ? (policy[i] / policySum) : -1.0f;
     }
 
     //Fill everything out-of-bounds too, for robustness.

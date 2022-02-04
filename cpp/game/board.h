@@ -13,8 +13,12 @@
 
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 15
+#define COMPILE_MAX_BOARD_LEN 19
 #endif
+
+//等差数列6子棋
+static const int CONNECT_NUM = 6;//几连获胜
+static const int MAX_CONNECT_DISTANCE = (COMPILE_MAX_BOARD_LEN - 1) / (CONNECT_NUM - 1);
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
 
@@ -143,8 +147,8 @@ struct Board
   MovePriority getMovePriority(Player pla, Loc loc, bool isSixWin, bool isPassForbidded)const;
   MovePriority getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const;
 private:
-  MovePriority getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, bool isSixWin, int adjID)const;
-  int connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isSixWin, bool& isLife)const;
+  MovePriority getMovePriorityOneDirectionAssumeLegal(Player pla, int locx,int locy, int adjx,int adjy, bool isSixWin)const;
+  int connectionLengthOneDirection(Player pla, int locx,int locy, int adjx,int adjy, bool isSixWin, bool& isLife)const;
 public:
 
   bool isOnBoard(Loc loc) const;
