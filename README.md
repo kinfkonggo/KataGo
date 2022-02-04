@@ -17,8 +17,8 @@ TODO:
    | |
 2.需要提子但不需要点目的   											|CaptureGo2022   |finished
 2.1 吃子棋   																		|CaptureGo2022   |finished
-2.2 反吃子棋（不围棋）   												|CaptureGo2022   |training
-2.3 活一块就算赢(死活对局)																|lifego2 |training	   				   
+2.2 反吃子棋（不围棋）   												|CaptureGo2022   |**training**
+2.3 活一块就算赢(死活对局)																|lifego2 |**training**   				   
 2.4 黑棋活一块就赢，但是不能被吃子							|aliveWin   |finished
 2.5 吃子n子棋    																| |以前做过所以不做了
 2.6 白能吃黑，黑吃不掉白，黑棋最多多少手不被吃   | |todo
@@ -29,9 +29,9 @@ TODO:
 3.1 五子棋系列(各种规则)   				| |todo
 3.2 连五的个数     | |todo
 3.3 反n子棋   			| |todo
-3.4 Hex   					|Hex2022 |training
+3.4 Hex   					|Hex2022 |**training**
 3.4.1 反Hex   					|  |todo
-3.5 等差数列6子棋|EquDifGomoku|training
+3.5 等差数列6子棋|EquDifGomoku|**training**
 3.6 Angels and Devils game | |
 3.7 每一步必须在上一步的附近某些位置，满足某些条件获胜 | |todo
  | |
@@ -42,7 +42,7 @@ TODO:
 4.3 Amazons(亚马逊棋)| |todo
 4.4 Breakthrough| |todo
 4.5 Ataxx(Botzone上的“同化棋”)| |todo
-4.5 各种极简象棋变种| |todo
+4.6 各种极简象棋变种| |todo
 
 
 
