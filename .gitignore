@@ -4,18 +4,22 @@
 __pycache__
 *.h5
 *.log
+*.bak
+.vs
 
 tmp*.txt
-
+LinuxCompile*/
 cpp/write
 cpp/runtests
 cpp/example
 cpp/gtp
 cpp/gtp.log
 cpp/build
+cpp/build_trt
 cpp/build_cuda
 cpp/build_opencl
 cpp/build_eigen
+cpp/out
 cpp/match
 cpp/matchcuda
 cpp/matchtensorflow
