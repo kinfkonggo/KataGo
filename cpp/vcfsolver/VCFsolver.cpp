@@ -217,6 +217,7 @@ void VCFsolver::addNeighborSix(int y, int x, uint8_t pla,int factor)
 
 void VCFsolver::solve(const Board& board, uint8_t pla, uint8_t& res, uint16_t& loc)
 {
+  if (zob_board[0][0][0].hash0 == 0)cout << "VCFSolver::zob_board not init";
   int32_t result=setBoard(board,pla); 
   if (resultNotSure(result))
   {

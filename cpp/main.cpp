@@ -14,6 +14,8 @@
 //------------------------
 #include "../core/using.h"
 //------------------------
+#include "../vcfsolver/VCFsolver.h"
+
 
 static void printHelp(const vector<string>& args) {
   cout << endl;
@@ -117,6 +119,11 @@ static int handleSubcommand(const string& subcommand, const vector<string>& args
 
 
 int main(int argc, const char* const* argv) {
+
+
+
+
+
   vector<string> args = MainArgs::getCommandLineArgsUTF8(argc,argv);
 
   if(args.size() < 2) {
@@ -128,6 +135,9 @@ int main(int argc, const char* const* argv) {
     printHelp(args);
     return 0;
   }
+
+  //init
+  VCFsolver::init();
 
 #if defined(OS_IS_WINDOWS)
   //On windows, uncaught exceptions reaching toplevel don't normally get printed out,
