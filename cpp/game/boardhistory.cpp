@@ -283,11 +283,15 @@ void BoardHistory::maybeFinishGame(Board& board,Player lastPla,Loc lastLoc)
   {
     setWinner(getOpp(lastPla));
   }
-  if (board.getMovePriorityAssumeLegal(lastPla, lastLoc, true) == MP_FIVE)
+  bool isSixWin =
+    RULE == FREESTYLE ? true :
+    RULE == STANDARD ? false :
+    RULE == RENJU ? (lastPla == C_BLACK ? false : true):true;
+  if (board.getMovePriorityAssumeLegal(lastPla, lastLoc, isSixWin) == MP_FIVE)
   {
     setWinner(lastPla);
   }
-  if (board.numStonesOnBoard() >= board.x_size * board.y_size)setWinner(C_EMPTY);
+  if (board.numStonesOnBoard() >= board.x_size * board.y_size-10)setWinner(C_EMPTY);
 }
 
 

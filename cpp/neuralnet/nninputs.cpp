@@ -1,5 +1,6 @@
 #include "../neuralnet/nninputs.h"
-
+#include "../vcfsolver/VCFsolver.h"
+#include "../forbiddenPoint/ForbiddenPointFinder.h"
 using namespace std;
 
 int NNPos::xyToPos(int x, int y, int nnXLen) {
@@ -656,71 +657,97 @@ void NNInputs::fillRowV7(
     posStride = 1;
   }
 
-  for(int y = 0; y<ySize; y++) {
-    for(int x = 0; x<xSize; x++) {
-      int pos = NNPos::xyToPos(x,y,nnXLen);
-      Loc loc = Location::getLoc(x,y,xSize);
+  uint8_t myvcfres = 0, oppvcfres = 0;
+  Loc myvcfloc = Board::NULL_LOC;
+#ifdef USE_VCF_FEATURE_IF_USE_VCF
+  if (myvcfres == 0)
+  {
+    uint16_t myvcfloc1;
+    VCFsolver::run(board, nextPlayer, myvcfres, myvcfloc1);//我自己能不能直接vcf
+    myvcfloc = myvcfloc1;
+  }
+  if (oppvcfres == 0)
+  {
+    uint16_t oppvcfloc;
+    VCFsolver::run(board, getOpp(nextPlayer), oppvcfres, oppvcfloc);//如果我不走，对手能不能vcf（对手这一手是不是活三/做杀）
+  }
+  if (myvcfres == 0 || oppvcfres == 0)cout << "vcf no result";
+
+#else
+  myvcfres = 2;
+  oppvcfres = 2;
+  myvcfloc = Board::NULL_LOC;
+#endif
+
+#if RULE==RENJU
+#ifdef FORBIDDEN_FEATURE 
+
+
+  CForbiddenPointFinder fpf(board.x_size);
+  for (int x = 0; x < board.x_size; x++)
+    for (int y = 0; y < board.y_size; y++)
+    {
+      fpf.SetStone(x, y, board.colors[Location::getLoc(x, y, board.x_size)]);
+    }
+#endif
+#endif // RENJU
+  for (int y = 0; y < ySize; y++) {
+    for (int x = 0; x < xSize; x++) {
+      int pos = NNPos::xyToPos(x, y, nnXLen);
+      Loc loc = Location::getLoc(x, y, xSize);
 
       //Feature 0 - on board
-      setRowBin(rowBin,pos,0, 1.0f, posStride, featureStride);
+      setRowBin(rowBin, pos, 0, 1.0f, posStride, featureStride);
 
       Color stone = board.colors[loc];
 
       //Features 1,2 - pla,opp stone
-      //Features 3,4,5 - 1,2,3 libs
-      if(stone == pla)
-        setRowBin(rowBin,pos,1, 1.0f, posStride, featureStride);
-      else if(stone == opp)
-        setRowBin(rowBin,pos,2, 1.0f, posStride, featureStride);
+      if (stone == pla)
+        setRowBin(rowBin, pos, 1, 1.0f, posStride, featureStride);
+      else if (stone == opp)
+        setRowBin(rowBin, pos, 2, 1.0f, posStride, featureStride);
 
+      //Features 5 - vcf
+#ifdef USE_VCF_FEATURE_IF_USE_VCF
+      if (myvcfres == 1 && loc == myvcfloc)setRowBin(rowBin, pos, 5, 1.0f, posStride, featureStride);
+#endif
+
+#if RULE==RENJU
+#ifdef FORBIDDEN_FEATURE 
+      if (pla == C_BLACK)
+      {
+        if (fpf.isForbidden(x, y)) setRowBin(rowBin, pos, 3, 1.0f, posStride, featureStride);
+      }
+      else if (pla == C_WHITE)
+      {
+
+        if (fpf.isForbidden(x, y)) setRowBin(rowBin, pos, 4, 1.0f, posStride, featureStride);
+
+      }
+#endif 
+#endif //RENJU
     }
   }
-
-  
-  //Hide history from the net if a pass would end things and we're behaving as if a pass won't.
-  //Or if the game is in fact over right now!
-  bool hideHistory = true;
-  //  hist.isGameFinished;
-
-  //Features 9,10,11,12,13
-  if(!hideHistory) {
-    const vector<Move>& moveHistory = hist.moveHistory;
-    size_t moveHistoryLen = moveHistory.size();
-    int numTurnsThisPhase = moveHistoryLen ;
-
-    if(numTurnsThisPhase >= 1 && moveHistory[moveHistoryLen-1].pla == opp) {
-      Loc prev1Loc = moveHistory[moveHistoryLen-1].loc;
-      if(prev1Loc == Board::PASS_LOC)
-        rowGlobal[0] = 1.0;
-      else if(prev1Loc != Board::NULL_LOC) {
-        int pos = NNPos::locToPos(prev1Loc,xSize,nnXLen,nnYLen);
-        setRowBin(rowBin,pos,9, 1.0f, posStride, featureStride);
-      }
-      if(numTurnsThisPhase >= 2 && moveHistory[moveHistoryLen-2].pla == pla) {
-        Loc prev2Loc = moveHistory[moveHistoryLen-2].loc;
-        if(prev2Loc == Board::PASS_LOC)
-          rowGlobal[1] = 1.0;
-        else if(prev2Loc != Board::NULL_LOC) {
-          int pos = NNPos::locToPos(prev2Loc,xSize,nnXLen,nnYLen);
-          setRowBin(rowBin,pos,10, 1.0f, posStride, featureStride);
-        }
-      }
-    }
-  }
-
-
-  //Global features.
-  //The first 2 of them were set already above to flag which of the past 5 moves were passes.
-
   //Tax
-  if(hist.rules.taxRule == Rules::TAX_NONE) {}
-  else if(hist.rules.taxRule == Rules::TAX_SEKI)
-    rowGlobal[15] = 1.0f;
-  else if(hist.rules.taxRule == Rules::TAX_ALL) {\
-    rowGlobal[15] = 2.0f;
-  }
-  else
-    ASSERT_UNREACHABLE;
+  //if(hist.rules.taxRule == Rules::TAX_NONE) {}
+  //else if(hist.rules.taxRule == Rules::TAX_SEKI)
+  //  rowGlobal[15] = 1.0f;
+  //else if(hist.rules.taxRule == Rules::TAX_ALL) {\
+  //  rowGlobal[15] = 2.0f;
+  //}
+  //else
+  //  ASSERT_UNREACHABLE;
+
+  rowGlobal[5] = nextPlayer == P_BLACK ? -1 : 1;
+  //rowGlobal[6] =1;// hist.rules.koRule == Rules::KO_SITUATIONAL;//situational = sixNotWin
+#ifdef USE_VCF_FEATURE_IF_USE_VCF
+  if (myvcfres == 1)rowGlobal[7] = 1.0;//can vcf
+  else if (myvcfres == 2)rowGlobal[8] = 1.0;//cannot vcf
+  if (oppvcfres == 1)rowGlobal[9] = 1.0;//opp can vcf
+  else if (oppvcfres == 2)rowGlobal[10] = 1.0;//opp cannot vcf
+#endif
+
+  //rowGlobal[11] = nextPlayer == P_BLACK ? -nnInputParams.noResultUtilityForWhite : nnInputParams.noResultUtilityForWhite;
 
 
 
@@ -728,8 +755,8 @@ void NNInputs::fillRowV7(
   //Parameter 15 is used because there's actually a discontinuity in how training behavior works when this is
   //nonzero, no matter how slightly.
   if(nnInputParams.playoutDoublingAdvantage != 0) {
-    rowGlobal[16] = 1.0;
-    rowGlobal[17] = (float)(0.5 * nnInputParams.playoutDoublingAdvantage);
+    rowGlobal[15] = 1.0;
+    rowGlobal[16] = (float)(0.5 * nnInputParams.playoutDoublingAdvantage);
   }
 
 

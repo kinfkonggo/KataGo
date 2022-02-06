@@ -1,5 +1,5 @@
 #include "../game/board.h"
-
+#include "../forbiddenPoint/ForbiddenPointFinder.h"
 /*
  * board.cpp
  * Originally from an unreleased project back in 2010, modified since.
@@ -206,11 +206,15 @@ bool Board::isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
   (void)isMultiStoneSuicideLegal;
   if(pla != P_BLACK && pla != P_WHITE)
     return false;
-  return loc == PASS_LOC || (
+  if(!( loc == PASS_LOC || (
     loc >= 0 &&
     loc < MAX_ARR_SIZE &&
     (colors[loc] == C_EMPTY)
-  );
+  ))) return false;
+#if RULE==RENJU
+  if (pla == C_BLACK) return !isForbidden(loc);
+#endif
+   return true;
 }
 
 
@@ -392,6 +396,46 @@ void Board::removeSingleStone(Loc loc)
   colors[loc] = C_EMPTY;
   pos_hash ^= ZOBRIST_BOARD_HASH[loc][pla];
 }
+
+bool Board::isForbidden(Loc loc) const
+{
+  if (loc == PASS_LOC)
+  {
+    return false;
+  }
+  if (!(loc >= 0 &&
+    loc < MAX_ARR_SIZE &&
+    (colors[loc] == C_EMPTY)))return false;
+  if (x_size == y_size)
+  {
+    int x = Location::getX(loc, x_size);
+    int y = Location::getY(loc, x_size);
+    int nearbyBlack = 0;
+    //x++; y++;
+    for (int i = std::max(x - 2, 0); i <= std::min(x + 2, x_size - 1); i++)
+      for (int j = std::max(y - 2, 0); j <= std::min(y + 2, y_size - 1); j++)
+      {
+        int xd = i - x;
+        int yd = j - y;
+        xd = xd > 0 ? xd : -xd;
+        yd = yd > 0 ? yd : -yd;
+        if (((xd + yd) != 3) && (colors[Location::getLoc(i, j, x_size)] == C_BLACK))nearbyBlack++;
+      }
+
+    if (nearbyBlack >= 2)
+    {
+      CForbiddenPointFinder fpf(x_size);
+      for (int x = 0; x < x_size; x++)
+        for (int y = 0; y < y_size; y++)
+        {
+          fpf.SetStone(x, y, colors[Location::getLoc(x, y, x_size)]);
+        }
+      if (fpf.isForbiddenNoNearbyCheck(Location::getX(loc, x_size), Location::getY(loc, x_size)))return true;
+    }
+  }
+  return false;
+}
+
 
 
 int Location::distance(Loc loc0, Loc loc1, int x_size) {

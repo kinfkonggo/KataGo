@@ -12,26 +12,11 @@
 #include "../external/nlohmann_json/json.hpp"
 
 
-#ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 15
-#endif
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
 
 struct Board;
 
-//Player
-typedef int8_t Player;
-static constexpr Player P_BLACK = 1;
-static constexpr Player P_WHITE = 2;
-
-//Color of a point on the board
-typedef int8_t Color;
-static constexpr Color C_EMPTY = 0;
-static constexpr Color C_BLACK = 1;
-static constexpr Color C_WHITE = 2;
-static constexpr Color C_WALL = 3;
-static constexpr int NUM_BOARD_COLORS = 4;
 
 
 typedef char MovePriority;
@@ -205,6 +190,8 @@ public:
   void removeSingleStone(Loc loc);
 
   friend std::ostream& operator<<(std::ostream& out, const Board& board);
+
+  bool isForbidden(Loc loc) const;
 
   //static void monteCarloOwner(Player player, Board* board, int mc_counts[]);
 };
