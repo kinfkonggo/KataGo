@@ -797,7 +797,7 @@ void NNEvaluator::evaluate(
         double shorttermWinlossErrorPreSoftplus = buf.result->shorttermWinlossError;
         double shorttermScoreErrorPreSoftplus = buf.result->shorttermScoreError;
 
-        noResultLogits -= 100000.0;
+        //noResultLogits -= 100000.0;
 
         //Softmax
         double maxLogits = std::max(std::max(winLogits,lossLogits),noResultLogits);
@@ -805,7 +805,7 @@ void NNEvaluator::evaluate(
         lossProb = exp(lossLogits - maxLogits);
         noResultProb = exp(noResultLogits - maxLogits);
 
-        noResultProb = 0.0;
+        //noResultProb = 0.0;
 
         double probSum = winProb + lossProb + noResultProb;
         winProb /= probSum;
