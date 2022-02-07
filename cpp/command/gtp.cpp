@@ -601,6 +601,7 @@ struct GTPEngine {
             out << " ";
           const AnalysisData& data = buf[i];
           double winrate = 0.5 * (1.0 + data.winLossValue);
+          double drawrate = 100.0 * data.noResultValue;
           double utility = data.utility;
           //We still hack the LCB for consistency with LZ-analyze
           double lcb = PlayUtils::getHackedLCBForWinrate(search,data,pla);
@@ -621,7 +622,7 @@ struct GTPEngine {
           out << " visits " << data.numVisits;
           out << " utility " << utility;
           out << " winrate " << winrate;
-          out << " scoreMean " << lead;
+          out << " scoreMean " << drawrate;
           out << " scoreStdev " << data.scoreStdev;
           out << " scoreLead " << lead;
           out << " scoreSelfplay " << scoreMean;

@@ -10,6 +10,7 @@ AnalysisData::AnalysisData()
    resultUtility(0.0),
    scoreUtility(0.0),
    winLossValue(0.0),
+   noResultValue(0.0),
    policyPrior(0.0),
    scoreMean(0.0),
    scoreStdev(0.0),
@@ -38,6 +39,7 @@ AnalysisData::AnalysisData(const AnalysisData& other)
    resultUtility(other.resultUtility),
    scoreUtility(other.scoreUtility),
    winLossValue(other.winLossValue),
+   noResultValue(other.noResultValue),
    policyPrior(other.policyPrior),
    scoreMean(other.scoreMean),
    scoreStdev(other.scoreStdev),
@@ -66,6 +68,7 @@ AnalysisData::AnalysisData(AnalysisData&& other) noexcept
    resultUtility(other.resultUtility),
    scoreUtility(other.scoreUtility),
    winLossValue(other.winLossValue),
+   noResultValue(other.noResultValue),
    policyPrior(other.policyPrior),
    scoreMean(other.scoreMean),
    scoreStdev(other.scoreStdev),
@@ -99,6 +102,7 @@ AnalysisData& AnalysisData::operator=(const AnalysisData& other) {
   resultUtility = other.resultUtility;
   scoreUtility = other.scoreUtility;
   winLossValue = other.winLossValue;
+  noResultValue = other.noResultValue;
   policyPrior = other.policyPrior;
   scoreMean = other.scoreMean;
   scoreStdev = other.scoreStdev;
@@ -130,6 +134,7 @@ AnalysisData& AnalysisData::operator=(AnalysisData&& other) noexcept {
   resultUtility = other.resultUtility;
   scoreUtility = other.scoreUtility;
   winLossValue = other.winLossValue;
+  noResultValue = other.noResultValue;
   policyPrior = other.policyPrior;
   scoreMean = other.scoreMean;
   scoreStdev = other.scoreStdev;
