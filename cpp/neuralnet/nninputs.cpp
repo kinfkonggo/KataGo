@@ -632,7 +632,7 @@ Hash128 NNInputs::getHash(
 void NNInputs::fillRowV7(
   const Board& board, const BoardHistory& hist, Player nextPlayer,
   const MiscNNInputParams& nnInputParams,
-  int nnXLen, int nnYLen, bool useNHWC, float* rowBin, float* rowGlobal
+  int nnXLen, int nnYLen, bool useNHWC, float* rowBin, float* rowGlobal, ResultBeforeNN& resultbeforenn
 ) {
   assert(nnXLen <= NNPos::MAX_BOARD_LEN);
   assert(nnYLen <= NNPos::MAX_BOARD_LEN);
@@ -656,28 +656,7 @@ void NNInputs::fillRowV7(
     featureStride = nnXLen * nnYLen;
     posStride = 1;
   }
-
-  uint8_t myvcfres = 0, oppvcfres = 0;
-  Loc myvcfloc = Board::NULL_LOC;
-#ifdef USE_VCF_FEATURE_IF_USE_VCF
-  if (myvcfres == 0)
-  {
-    uint16_t myvcfloc1;
-    VCFsolver::run(board, nextPlayer, myvcfres, myvcfloc1);//我自己能不能直接vcf
-    myvcfloc = myvcfloc1;
-  }
-  if (oppvcfres == 0)
-  {
-    uint16_t oppvcfloc;
-    VCFsolver::run(board, getOpp(nextPlayer), oppvcfres, oppvcfloc);//如果我不走，对手能不能vcf（对手这一手是不是活三/做杀）
-  }
-  if (myvcfres == 0 || oppvcfres == 0)cout << "vcf no result";
-
-#else
-  myvcfres = 2;
-  oppvcfres = 2;
-  myvcfloc = Board::NULL_LOC;
-#endif
+  resultbeforenn.init(board,hist,nextPlayer);
 
 #if RULE==RENJU
 #ifdef FORBIDDEN_FEATURE 
@@ -709,7 +688,7 @@ void NNInputs::fillRowV7(
 
       //Features 5 - vcf
 #ifdef USE_VCF_FEATURE_IF_USE_VCF
-      if (myvcfres == 1 && loc == myvcfloc)setRowBin(rowBin, pos, 5, 1.0f, posStride, featureStride);
+      if (resultbeforenn.winner == nextPlayer && loc == resultbeforenn.myOnlyLoc)setRowBin(rowBin, pos, 5, 1.0f, posStride, featureStride);
 #endif
 
 #if RULE==RENJU
@@ -741,10 +720,10 @@ void NNInputs::fillRowV7(
   rowGlobal[5] = nextPlayer == P_BLACK ? -1 : 1;
   //rowGlobal[6] =1;// hist.rules.koRule == Rules::KO_SITUATIONAL;//situational = sixNotWin
 #ifdef USE_VCF_FEATURE_IF_USE_VCF
-  if (myvcfres == 1)rowGlobal[7] = 1.0;//can vcf
-  else if (myvcfres == 2)rowGlobal[8] = 1.0;//cannot vcf
-  if (oppvcfres == 1)rowGlobal[9] = 1.0;//opp can vcf
-  else if (oppvcfres == 2)rowGlobal[10] = 1.0;//opp cannot vcf
+  if (resultbeforenn.myVCFresult == 1)rowGlobal[7] = 1.0;//can vcf
+  else if (resultbeforenn.myVCFresult == 2)rowGlobal[8] = 1.0;//cannot vcf
+  if (resultbeforenn.oppVCFresult == 1)rowGlobal[9] = 1.0;//opp can vcf
+  else if (resultbeforenn.oppVCFresult == 2)rowGlobal[10] = 1.0;//opp cannot vcf
 #endif
 
   //rowGlobal[11] = nextPlayer == P_BLACK ? -nnInputParams.noResultUtilityForWhite : nnInputParams.noResultUtilityForWhite;

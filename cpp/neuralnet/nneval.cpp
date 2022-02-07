@@ -1,5 +1,6 @@
 #include "../neuralnet/nneval.h"
 #include "../neuralnet/modelversion.h"
+#include "../search/resultbeforenn.h"
 
 using namespace std;
 
@@ -633,6 +634,8 @@ void NNEvaluator::evaluate(
   buf.boardXSizeForServer = board.x_size;
   buf.boardYSizeForServer = board.y_size;
 
+  ResultBeforeNN resultbeforenn(board, history, nextPlayer);
+
   if(!debugSkipNeuralNet) {
     int rowSpatialLen = NNModelVersion::getNumSpatialFeatures(modelVersion) * nnXLen * nnYLen;
     if(buf.rowSpatial == NULL) {
@@ -655,7 +658,7 @@ void NNEvaluator::evaluate(
 
     static_assert(NNModelVersion::latestInputsVersionImplemented == 7, "");
     if(inputsVersion == 7)
-      NNInputs::fillRowV7(board, history, nextPlayer, nnInputParams, nnXLen, nnYLen, inputsUseNHWC, buf.rowSpatial, buf.rowGlobal);
+      NNInputs::fillRowV7(board, history, nextPlayer, nnInputParams, nnXLen, nnYLen, inputsUseNHWC, buf.rowSpatial, buf.rowGlobal,resultbeforenn);
     else
       ASSERT_UNREACHABLE;
   }
@@ -718,9 +721,20 @@ void NNEvaluator::evaluate(
     float maxPolicy = -1e25f;
     bool isLegal[NNPos::MAX_NN_POLICY_SIZE];
     int legalCount = 0;
-    for(int i = 0; i<policySize; i++) {
-      Loc loc = NNPos::posToLoc(i,xSize,ySize,nnXLen,nnYLen);
-      isLegal[i] = history.isLegal(board,loc,nextPlayer);
+    //if(false)
+    if (resultbeforenn.myOnlyLoc == Board::NULL_LOC)
+    {
+      for (int i = 0; i < policySize; i++) {
+        Loc loc = NNPos::posToLoc(i, xSize, ySize, nnXLen, nnYLen);
+        isLegal[i] = history.isLegal(board, loc, nextPlayer);
+      }
+    }
+    else//assume all other moves are illegal
+    {
+      for (int i = 0; i < policySize; i++) {
+        isLegal[i] = false;
+      }
+      isLegal[NNPos::locToPos(resultbeforenn.myOnlyLoc, xSize, nnXLen, nnYLen)] = true;
     }
 
 
@@ -799,11 +813,26 @@ void NNEvaluator::evaluate(
 
         //noResultLogits -= 100000.0;
 
-        //Softmax
-        double maxLogits = std::max(std::max(winLogits,lossLogits),noResultLogits);
-        winProb = exp(winLogits - maxLogits);
-        lossProb = exp(lossLogits - maxLogits);
-        noResultProb = exp(noResultLogits - maxLogits);
+        if(resultbeforenn.winner == nextPlayer)
+        {
+          winProb = 1;
+          lossProb = 0;
+          noResultProb = 0;
+        }
+        else if(resultbeforenn.winner == getOpp(nextPlayer))
+        {
+          winProb = 0;
+          lossProb = 1;
+          noResultProb = 0;
+        }
+        else
+        {
+          //Softmax
+          double maxLogits = std::max(std::max(winLogits,lossLogits),noResultLogits);
+          winProb = exp(winLogits - maxLogits);
+          lossProb = exp(lossLogits - maxLogits);
+          noResultProb = exp(noResultLogits - maxLogits);
+        }
 
         //noResultProb = 0.0;
 

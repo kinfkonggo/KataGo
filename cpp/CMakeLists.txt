@@ -197,6 +197,7 @@ add_executable(katago
   search/subtreevaluebiastable.cpp
   search/analysisdata.cpp
   search/reportedsearchvalues.cpp
+  search/resultbeforenn.cpp
   program/gtpconfig.cpp
   program/setup.cpp
   program/playutils.cpp
