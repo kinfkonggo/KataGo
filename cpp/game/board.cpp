@@ -332,16 +332,12 @@ bool Board::setStone(Loc loc, Color color)
   if(color != C_BLACK && color != C_WHITE && color != C_EMPTY)
     return false;
 
-  if(colors[loc] == color)
-  {}
-  else if(colors[loc] == C_EMPTY)
-    playMoveAssumeLegal(loc,color);
-  else if(color == C_EMPTY)
-    removeSingleStone(loc);
-  else {
-    removeSingleStone(loc);
-    playMoveAssumeLegal(loc,color);
-  }
+  Color oldColor = colors[loc];
+  colors[loc] = color;
+  pos_hash ^= ZOBRIST_BOARD_HASH[loc][oldColor];
+  pos_hash ^= ZOBRIST_BOARD_HASH[loc][color];
+
+
 
   return true;
 }
@@ -379,18 +375,12 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
     return;
   }
 
-
-  colors[loc] = pla;
-  pos_hash ^= ZOBRIST_BOARD_HASH[loc][pla];
-}
-
-//Remove a single stone, even a stone part of a larger group.
-void Board::removeSingleStone(Loc loc)
-{
-  Player pla = colors[loc];
-
-  colors[loc] = C_EMPTY;
-  pos_hash ^= ZOBRIST_BOARD_HASH[loc][pla];
+  setStone(loc, pla);
+  for (int i = 0; i < 8; i++)
+  {
+    Loc loc1 = loc + adj_offsets[i];
+    if (colors[loc1] == getOpp(pla))setStone(loc1, pla);
+  }
 }
 
 

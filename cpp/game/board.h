@@ -202,7 +202,6 @@ public:
 
   private:
   void init(int xS, int yS);
-  void removeSingleStone(Loc loc);
 
   friend std::ostream& operator<<(std::ostream& out, const Board& board);
 
