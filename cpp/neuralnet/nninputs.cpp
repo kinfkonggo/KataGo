@@ -707,8 +707,11 @@ void NNInputs::fillRowV7(
       }
     }
   }
-
-
+  double isOdd = (board.x_size * board.y_size) % 2;
+  double komi = hist.rules.komi;
+  double komiint = 2 * floor((komi+isOdd) / 2) + 1-isOdd;
+  if (nextPlayer == C_WHITE)komiint = -komiint;
+  rowGlobal[3] = komiint * 0.2;
   //Global features.
   //The first 2 of them were set already above to flag which of the past 5 moves were passes.
 

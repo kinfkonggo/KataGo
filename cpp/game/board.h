@@ -13,7 +13,7 @@
 
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 15
+#define COMPILE_MAX_BOARD_LEN 7
 #endif
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
@@ -140,12 +140,6 @@ struct Board
 
   bool isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const;
 
-  MovePriority getMovePriority(Player pla, Loc loc, bool isSixWin, bool isPassForbidded)const;
-  MovePriority getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const;
-private:
-  MovePriority getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, bool isSixWin, int adjID)const;
-  int connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isSixWin, bool& isLife)const;
-public:
 
   bool isOnBoard(Loc loc) const;
   //Is this board empty?

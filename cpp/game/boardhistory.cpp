@@ -283,11 +283,25 @@ void BoardHistory::maybeFinishGame(Board& board,Player lastPla,Loc lastLoc)
   {
     setWinner(getOpp(lastPla));
   }
-  if (board.getMovePriorityAssumeLegal(lastPla, lastLoc, true) == MP_FIVE)
+  if (board.numStonesOnBoard() >= board.x_size * board.y_size)
   {
-    setWinner(lastPla);
+    int bnum = 0,wnum=0;
+    for(int y = 0; y < board.y_size; y++) {
+      for(int x = 0; x < board.x_size; x++) {
+        Loc loc = Location::getLoc(x,y,board.x_size);
+        if(board.colors[loc] == C_BLACK )
+          bnum += 1;
+        if(board.colors[loc] == C_WHITE )
+          wnum += 1;
+      }
+    }
+    float Wscore = wnum - bnum + rules.komi;
+    if (Wscore > 0)setWinner(C_WHITE);
+    if (Wscore < 0)setWinner(C_BLACK);
+    if (Wscore == 0)setWinner(C_EMPTY);
+
   }
-  if (board.numStonesOnBoard() >= board.x_size * board.y_size)setWinner(C_EMPTY);
+
 }
 
 
