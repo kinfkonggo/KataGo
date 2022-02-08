@@ -11,8 +11,8 @@ Hash128 VCFsolver::zob_board[2][sz][sz];
 VCFHashTable VCFsolver::hashtable(20, 2);
 uint64_t VCFsolver::MAXNODE = 50000;
 #else
-VCFHashTable VCFsolver::hashtable(26, 20);
-uint64_t VCFsolver::MAXNODE = 300000;
+VCFHashTable VCFsolver::hashtable(27, 21);
+uint64_t VCFsolver::MAXNODE = 100000;
 #endif
 
 

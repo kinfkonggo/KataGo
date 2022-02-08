@@ -396,7 +396,7 @@ void Board::removeSingleStone(Loc loc)
   colors[loc] = C_EMPTY;
   pos_hash ^= ZOBRIST_BOARD_HASH[loc][pla];
 }
-
+#if RULE==RENJU
 bool Board::isForbidden(Loc loc) const
 {
   if (loc == PASS_LOC)
@@ -435,7 +435,7 @@ bool Board::isForbidden(Loc loc) const
   }
   return false;
 }
-
+#endif
 
 
 int Location::distance(Loc loc0, Loc loc1, int x_size) {

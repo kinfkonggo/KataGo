@@ -417,10 +417,10 @@ vector<SearchParams> Setup::loadParams(
 
     if(cfg.contains("cpuctExploration"+idxStr)) params.cpuctExploration = cfg.getDouble("cpuctExploration"+idxStr, 0.0, 10.0);
     else if(cfg.contains("cpuctExploration"))   params.cpuctExploration = cfg.getDouble("cpuctExploration",        0.0, 10.0);
-    else                                        params.cpuctExploration = 1.0;
-    if(cfg.contains("cpuctExplorationLog"+idxStr)) params.cpuctExplorationLog = cfg.getDouble("cpuctExplorationLog"+idxStr, 0.0, 10.0);
-    else if(cfg.contains("cpuctExplorationLog"))   params.cpuctExplorationLog = cfg.getDouble("cpuctExplorationLog",        0.0, 10.0);
-    else                                           params.cpuctExplorationLog = 0.45;
+    else                                        params.cpuctExploration = 0.6;
+    if(cfg.contains("cpuctExplorationLog"+idxStr)) params.cpuctExplorationLog = cfg.getDouble("cpuctExplorationLog"+idxStr, -10.0, 10.0);
+    else if(cfg.contains("cpuctExplorationLog"))   params.cpuctExplorationLog = cfg.getDouble("cpuctExplorationLog",        -10.0, 10.0);
+    else                                           params.cpuctExplorationLog = -0.3;
     if(cfg.contains("cpuctExplorationBase"+idxStr)) params.cpuctExplorationBase = cfg.getDouble("cpuctExplorationBase"+idxStr, 10.0, 100000.0);
     else if(cfg.contains("cpuctExplorationBase"))   params.cpuctExplorationBase = cfg.getDouble("cpuctExplorationBase",        10.0, 100000.0);
     else                                            params.cpuctExplorationBase = 500.0;
@@ -594,7 +594,7 @@ vector<SearchParams> Setup::loadParams(
 
     if(cfg.contains("subtreeValueBiasFactor"+idxStr)) params.subtreeValueBiasFactor = cfg.getDouble("subtreeValueBiasFactor"+idxStr, 0.0, 1.0);
     else if(cfg.contains("subtreeValueBiasFactor")) params.subtreeValueBiasFactor = cfg.getDouble("subtreeValueBiasFactor", 0.0, 1.0);
-    else params.subtreeValueBiasFactor = 0.35;
+    else params.subtreeValueBiasFactor = 0.0;
     if(cfg.contains("subtreeValueBiasFreeProp"+idxStr)) params.subtreeValueBiasFreeProp = cfg.getDouble("subtreeValueBiasFreeProp"+idxStr, 0.0, 1.0);
     else if(cfg.contains("subtreeValueBiasFreeProp")) params.subtreeValueBiasFreeProp = cfg.getDouble("subtreeValueBiasFreeProp", 0.0, 1.0);
     else params.subtreeValueBiasFreeProp = 0.8;
@@ -604,7 +604,7 @@ vector<SearchParams> Setup::loadParams(
 
     if(cfg.contains("nodeTableShardsPowerOfTwo"+idxStr)) params.nodeTableShardsPowerOfTwo = cfg.getInt("nodeTableShardsPowerOfTwo"+idxStr, 8, 24);
     else if(cfg.contains("nodeTableShardsPowerOfTwo"))   params.nodeTableShardsPowerOfTwo = cfg.getInt("nodeTableShardsPowerOfTwo",        8, 24);
-    else                                                 params.nodeTableShardsPowerOfTwo = 16;
+    else                                                 params.nodeTableShardsPowerOfTwo = 18;
     if(cfg.contains("numVirtualLossesPerThread"+idxStr)) params.numVirtualLossesPerThread = cfg.getDouble("numVirtualLossesPerThread"+idxStr, 0.01, 1000.0);
     else if(cfg.contains("numVirtualLossesPerThread"))   params.numVirtualLossesPerThread = cfg.getDouble("numVirtualLossesPerThread",        0.01, 1000.0);
     else                                                 params.numVirtualLossesPerThread = 1.0;

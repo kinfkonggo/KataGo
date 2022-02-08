@@ -190,9 +190,9 @@ public:
   void removeSingleStone(Loc loc);
 
   friend std::ostream& operator<<(std::ostream& out, const Board& board);
-
+#if RULE==RENJU
   bool isForbidden(Loc loc) const;
-
+#endif
   //static void monteCarloOwner(Player player, Board* board, int mc_counts[]);
 };
 
