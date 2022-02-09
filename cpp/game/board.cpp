@@ -22,7 +22,6 @@ Hash128 Board::ZOBRIST_SIZE_X_HASH[MAX_LEN+1];
 Hash128 Board::ZOBRIST_SIZE_Y_HASH[MAX_LEN+1];
 Hash128 Board::ZOBRIST_BOARD_HASH[MAX_ARR_SIZE][4];
 Hash128 Board::ZOBRIST_PLAYER_HASH[4];
-Hash128 Board::ZOBRIST_BOARD_HASH2[MAX_ARR_SIZE][4];
 const Hash128 Board::ZOBRIST_GAME_IS_OVER = //Based on sha256 hash of Board::ZOBRIST_GAME_IS_OVER
   Hash128(0xb6f9e465597a77eeULL, 0xf1d583d960a4ce7fULL);
 
@@ -177,15 +176,6 @@ void Board::initHash()
     ZOBRIST_SIZE_Y_HASH[i] = nextHash();
   }
 
-  //Reseed and compute one more set of zobrist hashes, mixed a bit differently
-  rand.init("Board::initHash() for second set of ZOBRIST hashes");
-  for(int i = 0; i<MAX_ARR_SIZE; i++) {
-    for(Color j = 0; j<4; j++) {
-      ZOBRIST_BOARD_HASH2[i][j] = nextHash();
-      ZOBRIST_BOARD_HASH2[i][j].hash0 = Hash::murmurMix(ZOBRIST_BOARD_HASH2[i][j].hash0);
-      ZOBRIST_BOARD_HASH2[i][j].hash1 = Hash::splitMix64(ZOBRIST_BOARD_HASH2[i][j].hash1);
-    }
-  }
 
   IS_ZOBRIST_INITALIZED = true;
 }
