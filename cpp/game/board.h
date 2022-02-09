@@ -13,7 +13,7 @@
 
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 15
+#define COMPILE_MAX_BOARD_LEN 25
 #endif
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
@@ -165,7 +165,8 @@ public:
 
   //Plays the specified move, assuming it is legal.
   void playMoveAssumeLegal(Loc loc, Player pla);
-
+  bool isBlackSuicideAssumePlayed(Loc loc) const;
+  bool isWhiteCaptureAssumePlayed(Loc loc) const;
 
   //Get what the position hash would be if we were to play this move and resolve captures and suicides.
   //Assumes the move is on an empty location.
@@ -203,6 +204,7 @@ public:
   private:
   void init(int xS, int yS);
   void removeSingleStone(Loc loc);
+  bool blackHasLiberty(Loc loc,bool* visited) const;
 
   friend std::ostream& operator<<(std::ostream& out, const Board& board);
 

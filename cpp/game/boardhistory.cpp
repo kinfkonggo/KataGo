@@ -282,12 +282,36 @@ void BoardHistory::maybeFinishGame(Board& board,Player lastPla,Loc lastLoc)
   if (lastLoc == Board::PASS_LOC)
   {
     setWinner(getOpp(lastPla));
+    return;
   }
-  if (board.getMovePriorityAssumeLegal(lastPla, lastLoc, true) == MP_FIVE)
+  //贴n目：黑棋可以走n个子，如果走完后白棋没提掉则黑胜，提掉了和棋
+  //贴n+0.5目：黑棋可以走n个子，如果走完后白棋没提掉则黑胜，提掉了白胜
+  if (lastPla == C_BLACK)
   {
-    setWinner(lastPla);
+    if(board.isBlackSuicideAssumePlayed(lastLoc))
+      setWinner(C_WHITE);
+    return;
   }
-  if (board.numStonesOnBoard() >= board.x_size * board.y_size)setWinner(C_EMPTY);
+  assert(lastPla == C_WHITE);
+
+  bool whiteCapBlack = board.isWhiteCaptureAssumePlayed(lastLoc);
+
+
+  float remainmove = rules.komi - board.numPlaStonesOnBoard(lastPla);
+
+  if (whiteCapBlack)
+  {
+    if (remainmove >= 0.5)setWinner(C_WHITE);
+    else if (remainmove >= 0.0)setWinner(C_EMPTY);
+    else
+    {
+      std::cout << "bug";
+    }
+  }
+  else
+  {
+    if (remainmove <= 0.5)setWinner(C_BLACK);
+  }
 }
 
 

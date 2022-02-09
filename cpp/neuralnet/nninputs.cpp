@@ -675,38 +675,22 @@ void NNInputs::fillRowV7(
 
     }
   }
+  rowGlobal[0] = nextPlayer == C_BLACK ? 1 : 0;
+  int channelBias= nextPlayer == C_BLACK ? 5 : 0;
 
-  
-  //Hide history from the net if a pass would end things and we're behaving as if a pass won't.
-  //Or if the game is in fact over right now!
-  bool hideHistory = true;
-  //  hist.isGameFinished;
-
-  //Features 9,10,11,12,13
-  if(!hideHistory) {
-    const vector<Move>& moveHistory = hist.moveHistory;
-    size_t moveHistoryLen = moveHistory.size();
-    int numTurnsThisPhase = moveHistoryLen ;
-
-    if(numTurnsThisPhase >= 1 && moveHistory[moveHistoryLen-1].pla == opp) {
-      Loc prev1Loc = moveHistory[moveHistoryLen-1].loc;
-      if(prev1Loc == Board::PASS_LOC)
-        rowGlobal[0] = 1.0;
-      else if(prev1Loc != Board::NULL_LOC) {
-        int pos = NNPos::locToPos(prev1Loc,xSize,nnXLen,nnYLen);
-        setRowBin(rowBin,pos,9, 1.0f, posStride, featureStride);
-      }
-      if(numTurnsThisPhase >= 2 && moveHistory[moveHistoryLen-2].pla == pla) {
-        Loc prev2Loc = moveHistory[moveHistoryLen-2].loc;
-        if(prev2Loc == Board::PASS_LOC)
-          rowGlobal[1] = 1.0;
-        else if(prev2Loc != Board::NULL_LOC) {
-          int pos = NNPos::locToPos(prev2Loc,xSize,nnXLen,nnYLen);
-          setRowBin(rowBin,pos,10, 1.0f, posStride, featureStride);
-        }
-      }
-    }
+  //贴n目：黑棋可以走n个子，如果走完后白棋没提掉则黑胜，提掉了和棋
+  //贴n+0.5目：黑棋可以走n个子，如果走完后白棋没提掉则黑胜，提掉了白胜
+  float remainmove = hist.rules.komi - board.numPlaStonesOnBoard(nextPlayer);
+  if (remainmove <= 0)
+  {
+    cout << "bug remainmove<=0";
+    cout << "channelBias" << channelBias << "komi" << hist.rules.komi << "stn" << board.numPlaStonesOnBoard(nextPlayer) << endl;
   }
+  rowGlobal[1 + channelBias] = remainmove / 10.0;
+  rowGlobal[2 + channelBias] = exp(-remainmove/ 2.0);
+  rowGlobal[3 + channelBias] = exp(-remainmove/ 5.0);
+  rowGlobal[4 + channelBias] = exp(-remainmove/ 15.0);
+  rowGlobal[5 + channelBias] = 1.0/remainmove;
 
 
   //Global features.

@@ -1305,20 +1305,10 @@ FinishedGameData* Play::runGame(
       //Perform the initialization using a different noised komi, to get a bit of opening policy mixing across komi
       {
         float oldKomi = hist.rules.komi;
-        PlayUtils::setKomiWithNoise(extraBlackAndKomi,hist,gameRand);
         double temperature = playSettings.policyInitAreaTemperature;
         assert(temperature > 0.0 && temperature < 10.0);
         PlayUtils::initializeGameUsingPolicy(botB, botW, board, hist, pla, gameRand, proportionOfBoardArea, temperature);
         hist.setKomi(oldKomi);
-      }
-      bool shouldCompensate =
-        playSettings.compensateAfterPolicyInitProb > 0.0 && gameRand.nextBool(playSettings.compensateAfterPolicyInitProb);
-      if(gameData->mode != FinishedGameData::MODE_NORMAL)
-        shouldCompensate = extraBlackAndKomi.makeGameFair;
-      if(shouldCompensate) {
-        PlayUtils::adjustKomiToEven(botB,botW,board,hist,pla,playSettings.compensateKomiVisits,otherGameProps,gameRand);
-        extraBlackAndKomi.komiMean = hist.rules.komi;
-        PlayUtils::setKomiWithNoise(extraBlackAndKomi,hist,gameRand);
       }
     }
   }
@@ -1525,6 +1515,7 @@ FinishedGameData* Play::runGame(
       finalValueTargets.loss = 0.0f;
       finalValueTargets.noResult = 1.0f;
       finalValueTargets.score = 0.0f;
+      
 
       //Fill with empty so that we use "nobody owns anything" as the training target.
       //Although in practice actually the training normally weights by having a result or not, so it doesn't matter what we fill.

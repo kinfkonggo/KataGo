@@ -141,6 +141,19 @@ void Board::init(int xS, int yS)
   Location::getAdjacentOffsets(adj_offsets,x_size);
 }
 
+bool Board::blackHasLiberty(Loc loc, bool* visited) const
+{
+  if (!isOnBoard(loc))return false;
+  if (colors[loc]==C_EMPTY)return true;
+  if (colors[loc]==C_WHITE)return false;
+  if (visited[loc])return false;
+  visited[loc] = true;
+  for (int i = 0; i < 4; i++)
+    if (blackHasLiberty(loc + adj_offsets[i], visited))return true;
+
+  return false;
+}
+
 void Board::initHash()
 {
   if(IS_ZOBRIST_INITALIZED)
@@ -382,6 +395,26 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
 
   colors[loc] = pla;
   pos_hash ^= ZOBRIST_BOARD_HASH[loc][pla];
+}
+
+bool Board::isBlackSuicideAssumePlayed(Loc loc) const
+{
+  bool visited[MAX_ARR_SIZE];
+  std::fill(visited, visited + MAX_ARR_SIZE, false);
+  return !blackHasLiberty(loc,visited);
+}
+
+bool Board::isWhiteCaptureAssumePlayed(Loc loc) const
+{
+  bool visited[MAX_ARR_SIZE];
+  for (int i = 0; i < 4; i++)
+  {
+    Loc loc1 = loc + adj_offsets[i];
+    if (colors[loc1] != C_BLACK)continue;
+    std::fill(visited, visited + MAX_ARR_SIZE, false);
+    if (!blackHasLiberty(loc1, visited))return true;
+  }
+  return false;
 }
 
 //Remove a single stone, even a stone part of a larger group.

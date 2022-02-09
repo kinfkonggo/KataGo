@@ -732,12 +732,14 @@ void NNEvaluator::evaluate(
       }
       else
         policyValue = -1e30f;
-
+      if (!(policyValue > -100) && isLegal[i])
+      {
+        cout << policyValue << " ";
+      }
       policy[i] = policyValue;
       if(policyValue > maxPolicy)
         maxPolicy = policyValue;
     }
-
     assert(legalCount > 0);
 
     float policySum = 0.0f;
@@ -747,6 +749,7 @@ void NNEvaluator::evaluate(
     }
 
     if(!isfinite(policySum)) {
+      cout << maxPolicy<<" ";
       cout << "Got nonfinite for policy sum" << endl;
       history.printDebugInfo(cout,board);
       throw StringError("Got nonfinite for policy sum");
