@@ -31,7 +31,8 @@ static constexpr Color C_EMPTY = 0;
 static constexpr Color C_BLACK = 1;
 static constexpr Color C_WHITE = 2;
 static constexpr Color C_WALL = 3;
-static constexpr int NUM_BOARD_COLORS = 4;
+static constexpr Color C_BANLOC = 4;
+static constexpr int NUM_BOARD_COLORS = 5;
 
 
 typedef char MovePriority;
@@ -124,8 +125,7 @@ struct Board
   static bool IS_ZOBRIST_INITALIZED;
   static Hash128 ZOBRIST_SIZE_X_HASH[MAX_LEN+1];
   static Hash128 ZOBRIST_SIZE_Y_HASH[MAX_LEN+1];
-  static Hash128 ZOBRIST_BOARD_HASH[MAX_ARR_SIZE][4];
-  static Hash128 ZOBRIST_BOARD_HASH2[MAX_ARR_SIZE][4];
+  static Hash128 ZOBRIST_BOARD_HASH[MAX_ARR_SIZE][5];
   static Hash128 ZOBRIST_PLAYER_HASH[4];
   static const Hash128 ZOBRIST_GAME_IS_OVER;
 
@@ -159,6 +159,8 @@ public:
 
   //Sets the specified stone if possible. Returns true usually, returns false location or color were out of range.
   bool setStone(Loc loc, Color color);
+  //Sets the specified stone if possible. Returns true usually, returns false location or color were out of range.
+  bool setBanLoc(Loc loc);
 
   //Attempts to play the specified move. Returns true if successful, returns false if the move was illegal.
   bool playMove(Loc loc, Player pla, bool isMultiStoneSuicideLegal);
