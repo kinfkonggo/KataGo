@@ -108,7 +108,7 @@ uint32_t VCFsolver::findDefendPosOfFive(int y, int x)
   {
     int x1 = x - i;
     if (x1 < 0)break;
-    if (x1 >= sz - 4)continue;
+    if (x1 >= xsize - 4)continue;
     check(0, y, x1);
     if (emptypos != -1)return emptypos;
   }
@@ -117,7 +117,7 @@ uint32_t VCFsolver::findDefendPosOfFive(int y, int x)
   {
     int y1 = y - i;
     if (y1 < 0)break;
-    if (y1 >= sz - 4)continue;
+    if (y1 >= ysize - 4)continue;
     check(1, y1, x);
     if (emptypos != -1)return emptypos;
   }
@@ -127,9 +127,9 @@ uint32_t VCFsolver::findDefendPosOfFive(int y, int x)
     int x1 = x - i;
     int y1 = y - i;
     if (x1 < 0)break;
-    if (x1 >= sz - 4)continue;
+    if (x1 >= xsize - 4)continue;
     if (y1 < 0)break;
-    if (y1 >= sz - 4)continue;
+    if (y1 >= ysize - 4)continue;
     check(2, y1, x1);
     if (emptypos != -1)return emptypos;
   }
@@ -139,8 +139,8 @@ uint32_t VCFsolver::findDefendPosOfFive(int y, int x)
     int x1 = x - i;
     int y1 = y + i;
     if (x1 < 0)break;
-    if (x1 >= sz - 4)continue;
-    if (y1 >= sz)break;
+    if (x1 >= xsize - 4)continue;
+    if (y1 >= ysize)break;
     if (y1 < 4)continue;
     check(3, y1, x1);
     if (emptypos != -1)return emptypos;
@@ -161,7 +161,7 @@ void VCFsolver::addNeighborSix(int y, int x, uint8_t pla,int factor)
   t = 0;
   x1 = x + 1;
   y1 = y ;
-  if (x1 < sz - 4)
+  if (x1 < xsize - 4)
     stonecount[t][y1][x1] +=factor;
 
   //-x
@@ -175,7 +175,7 @@ void VCFsolver::addNeighborSix(int y, int x, uint8_t pla,int factor)
   t = 1;
   x1 = x;
   y1 = y+1;
-  if (y1 < sz - 4)
+  if (y1 < ysize - 4)
     stonecount[t][y1][x1] += factor;
 
   //-y
@@ -189,7 +189,7 @@ void VCFsolver::addNeighborSix(int y, int x, uint8_t pla,int factor)
   t = 2;
   x1 = x+1;
   y1 = y + 1;
-  if (x1 < sz - 4&& y1 < sz - 4)
+  if (x1 < xsize - 4&& y1 < ysize - 4)
     stonecount[t][y1][x1] += factor;
 
   //-x-y
@@ -203,14 +203,14 @@ void VCFsolver::addNeighborSix(int y, int x, uint8_t pla,int factor)
   t = 3;
   x1 = x + 1;
   y1 = y - 1;
-  if (x1 < sz - 4 && y1 >= 4)
+  if (x1 < xsize - 4 && y1 >= 4)
     stonecount[t][y1][x1] += factor;
 
   //-x+y
   t = 3;
   x1 = x -5;
   y1 = y +5;
-  if (x1>=0 && y1 <sz)
+  if (x1>=0 && y1 <ysize)
     stonecount[t][y1][x1] += factor;
 }
 #endif
@@ -234,7 +234,7 @@ void VCFsolver::solve(const Board& board, uint8_t pla, uint8_t& res, uint16_t& l
     cout << "No result!";
   }
   int x = rootresultpos % sz, y = rootresultpos / sz;
-  loc = x + 1 + (y + 1) * (sz + 1);
+  loc = x + 1 + (y + 1) * (xsize + 1);
 
 
   //some debug information
@@ -272,13 +272,13 @@ inline void printnum2(int n)
 void VCFsolver::print()
 {
   cout << "  ";
-  for (int i = 0; i < sz; i++)printnum2(i);
+  for (int i = 0; i < xsize; i++)printnum2(i);
   cout << endl;
-  for (int y = 0; y < sz; y++)
+  for (int y = 0; y < ysize; y++)
   {
     printnum2(y);
     cout << " ";
-    for (int x = 0; x < sz; x++)
+    for (int x = 0; x < xsize; x++)
     {
       auto c = board[y][x];
       if (c == 0)cout << ". ";
@@ -292,13 +292,13 @@ void VCFsolver::print()
 void VCFsolver::printRoot()
 {
   cout << "  ";
-  for (int i = 0; i < sz; i++)printnum2(i);
+  for (int i = 0; i < xsize; i++)printnum2(i);
   cout << endl;
-  for (int y = 0; y < sz; y++)
+  for (int y = 0; y < ysize; y++)
   {
     printnum2(y);
     cout << " ";
-    for (int x = 0; x < sz; x++)
+    for (int x = 0; x < xsize; x++)
     {
       auto c = rootboard[y][x];
       if (c == 0)cout << ". ";
@@ -312,6 +312,8 @@ void VCFsolver::printRoot()
 
 int32_t VCFsolver::setBoard(const Board& b, uint8_t pla)
 {
+  xsize = b.x_size;
+  ysize = b.y_size;
 #if RULE==2
   forbiddenSide = (pla == C_BLACK) ? C_MY : C_OPP;//如果自己是黑棋则为1，否则为2
 #endif
@@ -333,10 +335,10 @@ int32_t VCFsolver::setBoard(const Board& b, uint8_t pla)
         mystonecount[i][j][k] = 0;
         oppstonecount[i][j][k] = 0;
       }
-  for (int y = 0; y < sz; y++)
-    for (int x = 0; x < sz; x++)
+  for (int y = 0; y < ysize; y++)
+    for (int x = 0; x < xsize; x++)
     {
-      short loc = (x + 1) + (y + 1)*(sz + 1);
+      short loc = (x + 1) + (y + 1)*(xsize + 1);
       auto c = b.colors[loc];
 
       if (c == 0)board[y][x] = 0;
@@ -371,8 +373,8 @@ int32_t VCFsolver::setBoard(const Board& b, uint8_t pla)
   //count stone num
 
   //x
-  for (int y = 0; y < sz; y++)
-    for (int x = 0; x < sz-4; x++)
+  for (int y = 0; y < ysize; y++)
+    for (int x = 0; x < xsize-4; x++)
     {
       int mycount = 0, oppcount = 0;
       for (int i = 0; i < 5; i++)
@@ -385,8 +387,8 @@ int32_t VCFsolver::setBoard(const Board& b, uint8_t pla)
       oppstonecount[0][y][x] += oppcount;
     }
   //y
-  for (int x = 0; x < sz; x++)
-    for (int y = 0; y < sz-4; y++)
+  for (int x = 0; x < xsize; x++)
+    for (int y = 0; y < ysize-4; y++)
     {
       int mycount = 0, oppcount = 0;
       for (int i = 0; i < 5; i++)
@@ -399,8 +401,8 @@ int32_t VCFsolver::setBoard(const Board& b, uint8_t pla)
       oppstonecount[1][y][x] += oppcount;
     }
   //+x+y
-  for (int x = 0; x < sz-4; x++)
-    for (int y = 0; y < sz - 4; y++)
+  for (int x = 0; x < xsize-4; x++)
+    for (int y = 0; y < ysize - 4; y++)
     {
       int mycount = 0, oppcount = 0;
       for (int i = 0; i < 5; i++)
@@ -413,8 +415,8 @@ int32_t VCFsolver::setBoard(const Board& b, uint8_t pla)
       oppstonecount[2][y][x] += oppcount;
     }
   //+x-y
-  for (int x = 0; x < sz - 4; x++)
-    for (int y = 4; y < sz; y++)
+  for (int x = 0; x < xsize - 4; x++)
+    for (int y = 4; y < ysize; y++)
     {
       int mycount = 0, oppcount = 0;
       for (int i = 0; i < 5; i++)
@@ -430,8 +432,8 @@ int32_t VCFsolver::setBoard(const Board& b, uint8_t pla)
   
 
   for (int t = 0; t < 4; t++)
-    for (int y = 0; y < sz; y++)
-      for (int x = 0; x < sz; x++)
+    for (int y = 0; y < ysize; y++)
+      for (int x = 0; x < xsize; x++)
       {
         int my = mystonecount[t][y][x];
         int opp = oppstonecount[t][y][x];
@@ -583,7 +585,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
     {
       int x1 = x - i;
       if (x1 < 0)break;
-      if (x1>=sz-4)continue;
+      if (x1>=xsize-4)continue;
       addandcheck(0, y, x1);
     }
     //y
@@ -591,7 +593,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
     {
       int y1 = y - i;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >= ysize - 4)continue;
       addandcheck(1, y1, x);
     }
     //+x+y
@@ -600,9 +602,9 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
       int x1 = x - i;
       int y1 = y - i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >= ysize - 4)continue;
       addandcheck(2, y1, x1);
     }
     //+x+y
@@ -611,8 +613,8 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
       int x1 = x - i;
       int y1 = y + i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
-      if (y1 >= sz)break;
+      if (x1 >= xsize - 4)continue;
+      if (y1 >= ysize)break;
       if (y1 < 4)continue;
       addandcheck(3, y1, x1);
     }
@@ -755,7 +757,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
     {
       int x1 = x - i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
       addandcheck(0, y, x1);
     }
     //y
@@ -763,7 +765,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
     {
       int y1 = y - i;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >= ysize - 4)continue;
       addandcheck(1, y1, x);
     }
     //+x+y
@@ -773,8 +775,8 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
       int y1 = y - i;
       if (x1 < 0)break;
       if (y1 < 0)break;
-      if (x1 >= sz - 4)continue;
-      if (y1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
+      if (y1 >= ysize - 4)continue;
       addandcheck(2, y1, x1);
     }
     //+x+y
@@ -783,8 +785,8 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
       int x1 = x - i;
       int y1 = y + i;
       if (x1 < 0)break;
-      if (y1 >= sz)break;
-      if (x1 >= sz - 4)continue;
+      if (y1 >= ysize)break;
+      if (x1 >= xsize - 4)continue;
       if (y1 < 4)continue;
       addandcheck(3, y1, x1);
     }
@@ -861,7 +863,7 @@ void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bo
     {
       int x1 = x - i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
       mystonecount[0][y][x1]--;
     }
     //y
@@ -869,7 +871,7 @@ void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bo
     {
       int y1 = y - i;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >= ysize - 4)continue;
       mystonecount[1][y1][x]--;
     }
     //+x+y
@@ -879,8 +881,8 @@ void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bo
       int y1 = y - i;
       if (x1 < 0)break;
       if (y1 < 0)break;
-      if (x1 >= sz - 4)continue;
-      if (y1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
+      if (y1 >= ysize - 4)continue;
       mystonecount[2][y1][x1]--;
     }
     //+x+y
@@ -889,8 +891,8 @@ void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bo
       int x1 = x - i;
       int y1 = y + i;
       if (x1 < 0)break;
-      if (y1 >= sz)break;
-      if (x1 >= sz - 4)continue;
+      if (y1 >= ysize)break;
+      if (x1 >= xsize - 4)continue;
       if (y1 < 4)continue;
       mystonecount[3][y1][x1]--;
     }
@@ -903,7 +905,7 @@ void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bo
     {
       int x1 = x - i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
       oppstonecount[0][y][x1]--;
     }
     //y
@@ -911,7 +913,7 @@ void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bo
     {
       int y1 = y - i;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >= ysize - 4)continue;
       oppstonecount[1][y1][x]--;
     }
     //+x+y
@@ -921,8 +923,8 @@ void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bo
       int y1 = y - i;
       if (x1 < 0)break;
       if (y1 < 0)break;
-      if (x1 >= sz - 4)continue;
-      if (y1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
+      if (y1 >= ysize - 4)continue;
       oppstonecount[2][y1][x1]--;
     }
     //+x+y
@@ -931,8 +933,8 @@ void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bo
       int x1 = x - i;
       int y1 = y + i;
       if (x1 < 0)break;
-      if (y1 >= sz)break;
-      if (x1 >= sz - 4)continue;
+      if (y1 >= ysize)break;
+      if (x1 >= xsize - 4)continue;
       if (y1 < 4)continue;
       oppstonecount[3][y1][x1]--;
     }
@@ -1129,7 +1131,7 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
     {
       int x1 = x - i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
       addandcheck(0, y, x1);
     }
     //y
@@ -1137,7 +1139,7 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
     {
       int y1 = y - i;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >= ysize - 4)continue;
       addandcheck(1, y1, x);
     }
     //+x+y
@@ -1146,9 +1148,9 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
       int x1 = x - i;
       int y1 = y - i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >= ysize - 4)continue;
       addandcheck(2, y1, x1);
     }
     //+x+y
@@ -1157,8 +1159,8 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
       int x1 = x - i;
       int y1 = y + i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
-      if (y1 >= sz)break;
+      if (x1 >= xsize - 4)continue;
+      if (y1 >= ysize)break;
       if (y1 < 4)continue;
       addandcheck(3, y1, x1);
     }
@@ -1195,7 +1197,7 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
     {
       int x1 = x - i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
       subandcheck(0, y, x1);
     }
     //y
@@ -1203,7 +1205,7 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
     {
       int y1 = y - i;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >= ysize - 4)continue;
       subandcheck(1, y1, x);
     }
     //+x+y
@@ -1212,9 +1214,9 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
       int x1 = x - i;
       int y1 = y - i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >=ysize - 4)continue;
       subandcheck(2, y1, x1);
     }
     //+x+y
@@ -1223,8 +1225,8 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
       int x1 = x - i;
       int y1 = y + i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
-      if (y1 >= sz)break;
+      if (x1 >= xsize - 4)continue;
+      if (y1 >= ysize)break;
       if (y1 < 4)continue;
       subandcheck(3, y1, x1);
     }
@@ -1262,7 +1264,7 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
       int y1 = y;
       int x1 = x - i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
       //以下这段复制4遍
       int sc = stonecount[t][y1][x1];
       int osc = ostonecount[t][y1][x1];
@@ -1320,7 +1322,7 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
       int x1 = x;
       int y1 = y - i;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >= ysize - 4)continue;
       int sc = stonecount[t][y1][x1];
       int osc = ostonecount[t][y1][x1];
       if (sc == 3 && (osc % 6 == 0))
@@ -1376,9 +1378,9 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
       int x1 = x - i;
       int y1 = y - i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
+      if (x1 >= xsize - 4)continue;
       if (y1 < 0)break;
-      if (y1 >= sz - 4)continue;
+      if (y1 >= ysize - 4)continue;
       int sc = stonecount[t][y1][x1];
       int osc = ostonecount[t][y1][x1];
       if (sc == 3 && (osc % 6 == 0))
@@ -1434,8 +1436,8 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
       int x1 = x - i;
       int y1 = y + i;
       if (x1 < 0)break;
-      if (x1 >= sz - 4)continue;
-      if (y1 >= sz)break;
+      if (x1 >= xsize - 4)continue;
+      if (y1 >= ysize)break;
       if (y1 < 4)continue;
       int sc = stonecount[t][y1][x1];
       int osc = ostonecount[t][y1][x1];
@@ -1495,13 +1497,13 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
 void VCFsolver::printForbiddenMap()
 {
   cout << "  ";
-  for (int i = 0; i < sz; i++)printnum2(i);
+  for (int i = 0; i < xsize; i++)printnum2(i);
   cout << endl;
-  for (int y = 0; y < sz; y++)
+  for (int y = 0; y < ysize; y++)
   {
     printnum2(y);
     cout << " ";
-    for (int x = 0; x < sz; x++)
+    for (int x = 0; x < xsize; x++)
     {
       auto c = board[y][x];
       if (isForbiddenMove(y, x))cout << "& ";

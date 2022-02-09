@@ -38,6 +38,7 @@ public:
 #endif
 
   //board
+  int xsize, ysize;
   uint8_t rootboard[sz][sz];//board[y][x]
   uint8_t board[sz][sz];//board[y][x]
   int32_t movenum;//己方总棋子个数
@@ -48,10 +49,10 @@ public:
 
   uint8_t mystonecount[4][sz][sz];//依次是下面4个
   uint8_t oppstonecount[4][sz][sz];//依次是下面4个
-  //uint8_t mystonecount1[sz][sz - 4];//x
-  //uint8_t mystonecount2[sz - 4][sz];//y
-  //uint8_t mystonecount3[sz - 4][sz - 4];//+x+y
-  //uint8_t mystonecount4[sz - 4][sz - 4];//+x-y
+  //uint8_t mystonecount1[ysize][xsize - 4];//x
+  //uint8_t mystonecount2[ysize - 4][xsize];//y
+  //uint8_t mystonecount3[ysize - 4][xsize - 4];//+x+y
+  //uint8_t mystonecount4[ysize - 4][xsize - 4];//+x-y
   vector<int64_t> threes;
   //mystonecount[t][y][x]对应(t*sz*sz+y*sz+x)<<32|pos1<<16|pos2,   pos=y*sz+x
   //眠三表。可能有被堵死的眠三，但初始时的死眠三不计
