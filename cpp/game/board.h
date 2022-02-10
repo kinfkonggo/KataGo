@@ -153,6 +153,7 @@ public:
   bool isEmpty() const;
   //Count the number of stones on the board
   int numStonesOnBoard() const;
+  int emptynum() const;
   int numPlaStonesOnBoard(Player pla) const;
 
   //Get a hash that combines the position of the board with simple ko prohibition and a player to move.
