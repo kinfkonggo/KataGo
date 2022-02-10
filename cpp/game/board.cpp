@@ -421,7 +421,7 @@ void Board::checkConsistency() const {
         throw StringError(errLabel + "Non-WALL value outside of board legal area");
     }
     else {
-      if(colors[loc] == C_BLACK || colors[loc] == C_WHITE) {
+      if(colors[loc] == C_BLACK || colors[loc] == C_WHITE|| colors[loc] == C_BANLOC) {
         tmp_pos_hash ^= ZOBRIST_BOARD_HASH[loc][colors[loc]];
         tmp_pos_hash ^= ZOBRIST_BOARD_HASH[loc][C_EMPTY];
       }
@@ -430,7 +430,7 @@ void Board::checkConsistency() const {
         //   throw StringError(errLabel + "Empty list doesn't contain empty location");
       }
       else
-        throw StringError(errLabel + "Non-(black,white,empty) value within board legal area");
+        throw StringError(errLabel + "Non-(black,white,banloc,empty) value within board legal area");
     }
   }
   if(pos_hash != tmp_pos_hash)

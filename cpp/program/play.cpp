@@ -15,21 +15,17 @@ using namespace std;
 
 static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& gameRand)
 {
-  static const bool EARLY = false;
-  static const double EARLYFILLRATE1 = 0.1;
-  static const double EARLYFILLRATE2 = 0.03;
-  pla = C_WHITE;
+  pla = C_BLACK;
 
-  if (gameRand.nextBool(0.2))//黑棋乱撒
+  if (gameRand.nextBool(0.7))//乱撒
   {
-    double fillRate = gameRand.nextExponential() * 0.07;//平均填26个子
-    if (EARLY)fillRate = gameRand.nextGaussianTruncated(2)*EARLYFILLRATE1/2+EARLYFILLRATE1+0.0001;
+    double fillRate = gameRand.nextExponential() * 0.02;//平均填4个子
     if (fillRate > 0.9)fillRate = 0.9;
     for (int y = 0; y < board.y_size; y++)
       for (int x = 0; x < board.x_size; x++)
       {
         Loc loc = Location::getLoc(x, y, board.x_size);
-        if (gameRand.nextBool(fillRate)&&board.isLegal(loc, C_BLACK, false))hist.makeBoardMoveAssumeLegal(board,loc, C_BLACK);
+        if (gameRand.nextBool(fillRate))board.setBanLoc(loc);
       }
   }
   else //指定开局
@@ -50,6 +46,39 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
       ". . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . "
+      ,
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . b . . . . . . . b . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . b . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . b . . . . . . . b . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ,
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . b . . . . . . . b . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . b . . . . . . . b . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      ". . . . . . . . . . . . . . . "
+      
      
     };
 
@@ -60,25 +89,12 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
       {
         int pos = x + y * board.x_size;
         char c = openingStrs[openingID][2 * pos];
-        Color color = c == 'x' ? C_BLACK : c == 'o' ? C_WHITE : C_EMPTY;
         Loc loc = Location::getLoc(x, y, board.x_size);
-        if (color!=C_EMPTY&&board.isLegal(loc, color, false))hist.makeBoardMoveAssumeLegal(board,loc, color);
+        if (c=='b')board.setBanLoc(loc);
       }
-    double fillRate = gameRand.nextDouble();
-    fillRate = fillRate * fillRate * fillRate * fillRate * fillRate;
-    fillRate = fillRate * 15 / 361.0;
-    if (EARLY)fillRate = gameRand.nextExponential()*EARLYFILLRATE2;
-    if (fillRate > 0.9)fillRate = 0.9;
-    Color color = gameRand.nextBool(0.5) ? C_BLACK : C_WHITE;
-    if (EARLY && gameRand.nextBool(0.9))color = C_BLACK;
-    for (int y = 0; y < board.y_size; y++)
-      for (int x = 0; x < board.x_size; x++)
-      {
-        Loc loc = Location::getLoc(x, y, board.x_size);
-        if (gameRand.nextBool(fillRate)&&board.isLegal(loc, color, false))hist.makeBoardMoveAssumeLegal(board,loc, color);
-      }
-  }
 
+  }
+  hist.clear(board, pla, hist.rules);
 }
 
 InitialPosition::InitialPosition()
@@ -1366,7 +1382,7 @@ FinishedGameData* Play::runGame(
       }
     }
   };
-
+  initRandomGame(board, hist, pla, gameRand);
   if(playSettings.initGamesWithPolicy && otherGameProps.allowPolicyInit) {
     double proportionOfBoardArea = otherGameProps.isSgfPos ? playSettings.startPosesPolicyInitAreaProp : playSettings.policyInitAreaProp;
     if(proportionOfBoardArea > 0) {
@@ -1378,15 +1394,6 @@ FinishedGameData* Play::runGame(
         assert(temperature > 0.0 && temperature < 10.0);
         PlayUtils::initializeGameUsingPolicy(botB, botW, board, hist, pla, gameRand, proportionOfBoardArea, temperature);
         hist.setKomi(oldKomi);
-      }
-      bool shouldCompensate =
-        playSettings.compensateAfterPolicyInitProb > 0.0 && gameRand.nextBool(playSettings.compensateAfterPolicyInitProb);
-      if(gameData->mode != FinishedGameData::MODE_NORMAL)
-        shouldCompensate = extraBlackAndKomi.makeGameFair;
-      if(shouldCompensate) {
-        PlayUtils::adjustKomiToEven(botB,botW,board,hist,pla,playSettings.compensateKomiVisits,otherGameProps,gameRand);
-        extraBlackAndKomi.komiMean = hist.rules.komi;
-        PlayUtils::setKomiWithNoise(extraBlackAndKomi,hist,gameRand);
       }
     }
   }

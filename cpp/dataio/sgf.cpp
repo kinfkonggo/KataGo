@@ -1506,6 +1506,22 @@ void WriteSgf::writeSgf(
     }
   }
 
+  bool hasAE = false;
+  for(int y = 0; y<ySize; y++) {
+    for(int x = 0; x<xSize; x++) {
+      Loc loc = Location::getLoc(x,y,xSize);
+      if(initialBoard.colors[loc] == C_BANLOC) {
+        if(!hasAE) {
+          out << "AE";
+          hasAE = true;
+        }
+        out << "[";
+        writeSgfLoc(out,loc,xSize,ySize);
+        out << "]";
+      }
+    }
+  }
+
   size_t startTurnIdx = 0;
   if(gameData != NULL) {
     startTurnIdx = gameData->startHist.moveHistory.size();
