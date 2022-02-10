@@ -17,9 +17,9 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
 {
   pla = C_BLACK;
 
-  if (gameRand.nextBool(0.7))//乱撒
+  if (gameRand.nextBool(0.8))//乱撒
   {
-    double fillRate = gameRand.nextExponential() * 0.02;//平均填4个子
+    double fillRate = gameRand.nextExponential() * 0.04;//平均填9个子
     if (fillRate > 0.9)fillRate = 0.9;
     for (int y = 0; y < board.y_size; y++)
       for (int x = 0; x < board.x_size; x++)
@@ -66,15 +66,15 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
       ". . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . "
-      ". . . b . . . . . . . b . . . "
+      ". . . b . . . b . . . b . . . "
       ". . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . "
+      ". . . b . . . b . . . b . . . "
       ". . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . "
-      ". . . . . . . . . . . . . . . "
-      ". . . b . . . . . . . b . . . "
+      ". . . b . . . b . . . b . . . "
       ". . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . "
       ". . . . . . . . . . . . . . . "
