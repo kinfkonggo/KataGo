@@ -667,6 +667,7 @@ AnalysisData Search::getAnalysisDataOfSingleChild(
       data.winLossValue = -1.0;
     if(data.winLossValue > 1.0)
       data.winLossValue = 1.0;
+    data.noResultValue = 0.0;
     data.scoreMean = parentScoreMean;
     data.scoreStdev = parentScoreStdev;
     data.lead = parentLead;
@@ -681,6 +682,7 @@ AnalysisData Search::getAnalysisDataOfSingleChild(
     data.resultUtility = getResultUtility(winLossValueAvg, noResultValueAvg);
     data.scoreUtility = getScoreUtility(scoreMeanAvg, scoreMeanSqAvg);
     data.winLossValue = winLossValueAvg;
+    data.noResultValue = noResultValueAvg;
     data.scoreMean = scoreMeanAvg;
     data.scoreStdev = ScoreValue::getScoreStdev(scoreMeanAvg,scoreMeanSqAvg);
     data.lead = leadAvg;

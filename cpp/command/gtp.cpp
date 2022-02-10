@@ -607,6 +607,7 @@ struct GTPEngine {
           ///But now we also offer the proper LCB that KataGo actually uses.
           double utilityLcb = data.lcb;
           double scoreMean = data.scoreMean;
+          double drawrate = 100.0 * data.noResultValue;
           double lead = data.lead;
           if(perspective == P_BLACK || (perspective != P_BLACK && perspective != P_WHITE && pla == P_BLACK)) {
             winrate = 1.0-winrate;
@@ -621,7 +622,7 @@ struct GTPEngine {
           out << " visits " << data.numVisits;
           out << " utility " << utility;
           out << " winrate " << winrate;
-          out << " scoreMean " << lead;
+          out << " scoreMean " << drawrate;
           out << " scoreStdev " << data.scoreStdev;
           out << " scoreLead " << lead;
           out << " scoreSelfplay " << scoreMean;

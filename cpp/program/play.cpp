@@ -1338,6 +1338,7 @@ FinishedGameData* Play::runGame(
 
   vector<SidePosition*> sidePositionsToSearch;
 
+  vector<double> historicalMctsDrawrate;
   vector<double> historicalMctsWinLossValues;
   vector<double> historicalMctsLeads;
   vector<double> historicalMctsScoreStdevs;
@@ -1345,6 +1346,8 @@ FinishedGameData* Play::runGame(
   vector<ReportedSearchValues> rawNNValues;
 
   ClockTimer timer;
+
+  bool drawEarlyEndGame = gameRand.nextBool(0.9);
 
   //Main play loop
   for(int i = 0; i<maxMovesPerGame; i++) {
@@ -1440,6 +1443,7 @@ FinishedGameData* Play::runGame(
 
     if(playSettings.allowResignation || playSettings.reduceVisits) {
       ReportedSearchValues values = toMoveBot->getRootValuesRequireSuccess();
+      historicalMctsDrawrate.push_back(values.noResultValue);
       historicalMctsWinLossValues.push_back(values.winLossValue);
       historicalMctsLeads.push_back(values.lead);
       historicalMctsScoreStdevs.push_back(values.expectedScoreStdev);
@@ -1488,6 +1492,18 @@ FinishedGameData* Play::runGame(
         if(shouldResign)
           hist.setWinnerByResignation(getOpp(pla));
       }
+    }
+
+    //Check for drawEarlyEndGame
+    if (drawEarlyEndGame&&historicalMctsDrawrate.size()>=5)
+    {
+      bool shouldEndGameDraw = true;
+      for (int i = 0; i < 5; i++)
+      {
+        if (historicalMctsDrawrate[historicalMctsDrawrate.size() - i - 1] < 0.99)
+          shouldEndGameDraw = false;
+      }
+      if (shouldEndGameDraw)hist.setWinner(C_EMPTY);
     }
 
     int nextTurnIdx = hist.moveHistory.size();

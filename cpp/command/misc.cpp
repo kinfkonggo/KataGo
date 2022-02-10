@@ -84,6 +84,7 @@ static void writeLine(
     cout << NNPos::locToPos(data.move,board.x_size,nnXLen,nnYLen) << " ";
     cout << data.numVisits << " ";
     cout << data.winLossValue << " ";
+    cout << data.noResultValue << " ";
     cout << data.scoreMean << " ";
     cout << data.scoreStdev << " ";
     cout << data.policyPrior << " ";
