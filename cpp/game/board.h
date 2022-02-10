@@ -82,6 +82,7 @@ namespace Location
   std::string toStringMach(Loc loc, const Board& b);
 
   bool tryOfString(const std::string& str, int x_size, int y_size, Loc& result);
+  bool tryOfStringGom(const std::string& str, int x_size, int y_size, Loc& result);//have 'I'
   bool tryOfString(const std::string& str, const Board& b, Loc& result);
   Loc ofString(const std::string& str, int x_size, int y_size);
   Loc ofString(const std::string& str, const Board& b);
@@ -161,6 +162,8 @@ public:
   bool setStone(Loc loc, Color color);
   //Sets the specified stone if possible. Returns true usually, returns false location or color were out of range.
   bool setBanLoc(Loc loc);
+  bool removeBanLoc(Loc loc);
+  void removeAllBanLoc();
 
   //Attempts to play the specified move. Returns true if successful, returns false if the move was illegal.
   bool playMove(Loc loc, Player pla, bool isMultiStoneSuicideLegal);

@@ -270,6 +270,35 @@ bool Search::isLegalStrict(Loc moveLoc, Player movePla) const {
 }
 
 
+bool Search::setBanLoc(const std::vector<Loc>& locs)
+{
+  bool suc = true;
+  for (int i = 0; i < locs.size(); i++)
+  {
+    suc &= rootBoard.setBanLoc(locs[i]);
+  }
+  setPlayerAndClearHistory(rootPla);
+  return suc;
+}
+
+bool Search::removeBanLoc(const std::vector<Loc>& locs)
+{
+  bool suc = true;
+  for (int i = 0; i < locs.size(); i++)
+  {
+    suc &= rootBoard.removeBanLoc(locs[i]);
+  }
+  setPlayerAndClearHistory(rootPla);
+  return suc;
+}
+
+void Search::clearAllBanLoc()
+{
+  rootBoard.removeAllBanLoc();
+  setPlayerAndClearHistory(rootPla);
+  return ;
+}
+
 bool Search::makeMove(Loc moveLoc, Player movePla) {
   if(!isLegalTolerant(moveLoc,movePla))
     return false;

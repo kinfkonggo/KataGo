@@ -430,6 +430,17 @@ struct GTPEngine {
       moveHistory.push_back(Move(loc,pla));
     return suc;
   }
+  bool setBanLoc(const std::vector<Loc>& locs) {
+    bool suc = bot->setBanLoc(locs);
+    return suc;
+  }
+  bool removeBanLoc(const std::vector<Loc>& locs) {
+    bool suc = bot->removeBanLoc(locs);
+    return suc;
+  }
+  void clearAllBanLoc() {
+    bot->clearAllBanLoc();
+  }
 
   bool undo() {
     if(moveHistory.size() <= 0)
@@ -437,8 +448,15 @@ struct GTPEngine {
     assert(bot->getRootHist().rules == currentRules);
 
     vector<Move> moveHistoryCopy = moveHistory;
+    bool banlocMap[Board::MAX_ARR_SIZE] = { false };
+    for (int i = 0; i < Board::MAX_ARR_SIZE; i++)
+      banlocMap[i] = bot->getRootBoard().colors[i] == C_BANLOC;
 
     Board undoneBoard = initialBoard;
+    for (int i = 0; i < Board::MAX_ARR_SIZE; i++)
+      if(banlocMap[i])
+        undoneBoard.setBanLoc(i);
+
     BoardHistory undoneHist(undoneBoard,initialPla,currentRules);
     undoneHist.setInitialTurnNumber(bot->getRootHist().initialTurnNumber);
     vector<Move> emptyMoveHistory;
@@ -607,6 +625,7 @@ struct GTPEngine {
           ///But now we also offer the proper LCB that KataGo actually uses.
           double utilityLcb = data.lcb;
           double scoreMean = data.scoreMean;
+          double drawrate = 100.0 * data.noResultValue;
           double lead = data.lead;
           if(perspective == P_BLACK || (perspective != P_BLACK && perspective != P_WHITE && pla == P_BLACK)) {
             winrate = 1.0-winrate;
@@ -621,7 +640,7 @@ struct GTPEngine {
           out << " visits " << data.numVisits;
           out << " utility " << utility;
           out << " winrate " << winrate;
-          out << " scoreMean " << lead;
+          out << " scoreMean " << drawrate;
           out << " scoreStdev " << data.scoreStdev;
           out << " scoreLead " << lead;
           out << " scoreSelfplay " << scoreMean;
@@ -1941,6 +1960,72 @@ int MainCmds::gtp(const vector<string>& args) {
           response = "illegal move";
         }
         maybeStartPondering = true;
+      }
+    }
+
+    else if (command == "ban") {
+      if (pieces.size() == 0) {
+        responseIsError = true;
+        response = "Expected at least one arguments for ban but got '" + Global::concat(pieces, " ") + "'";
+      }
+      else
+      {
+        int xsize = engine->bot->getRootBoard().x_size, ysize = engine->bot->getRootBoard().y_size;
+        vector<Loc> banloc;
+        for (int i = 0; i < pieces.size(); i++)
+        {
+          Loc loc;
+          if (Location::tryOfStringGom(pieces[i], xsize, ysize, loc))
+            banloc.push_back(loc);
+          else
+          {
+            responseIsError = true;
+            response = "Could not parse vertex: '" + pieces[i] + "'";
+          }
+        }
+
+        if (!responseIsError)
+        {
+          bool suc = engine->bot->setBanLoc(banloc);
+          if (!suc) {
+            responseIsError = true;
+            response = "illegal banloc";
+          }
+          maybeStartPondering = true;
+        }
+      }
+    }
+
+    else if (command == "removeban") {
+      if (pieces.size() == 0) {
+        engine->bot->clearAllBanLoc();
+        maybeStartPondering = true;
+      }
+      else
+      {
+        int xsize = engine->bot->getRootBoard().x_size, ysize = engine->bot->getRootBoard().y_size;
+        vector<Loc> banloc;
+        for (int i = 0; i < pieces.size(); i++)
+        {
+          Loc loc;
+          if (Location::tryOfStringGom(pieces[i], xsize, ysize, loc))
+            banloc.push_back(loc);
+          else
+          {
+            responseIsError = true;
+            response = "Could not parse vertex: '" + pieces[i] + "'";
+          }
+        }
+
+        if (!responseIsError)
+        {
+          bool suc = engine->bot->removeBanLoc(banloc);
+          if (!suc) {
+            responseIsError = true;
+            response = "illegal banloc";
+          }
+          maybeStartPondering = true;
+        }
       }
     }
 

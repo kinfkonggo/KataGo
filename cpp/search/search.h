@@ -204,6 +204,9 @@ struct Search {
   //Just directly clear search without changing anything
   void clearSearch();
 
+  bool setBanLoc(const std::vector<Loc>& locs);
+  bool removeBanLoc(const std::vector<Loc>& locs);
+  void clearAllBanLoc();
   //Updates position and preserves the relevant subtree of search
   //If the move is not legal for the specified player, returns false and does nothing, else returns true
   //In the case where the player was not the expected one moving next, also clears history.

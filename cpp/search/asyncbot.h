@@ -39,6 +39,10 @@ class AsyncBot {
   void setParamsNoClearing(SearchParams params);
   void clearSearch();
 
+
+  bool setBanLoc(const std::vector<Loc>& locs);
+  bool removeBanLoc(const std::vector<Loc>& locs);
+  void clearAllBanLoc();
   //Updates position and preserves the relevant subtree of search
   //Will stop any ongoing search, waiting for a full stop.
   //If the move is not legal for the current player, returns false and does nothing, else returns true

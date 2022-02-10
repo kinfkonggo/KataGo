@@ -342,6 +342,21 @@ bool Board::setBanLoc(Loc loc)
     return false;
   colors[loc] = C_BANLOC;
   pos_hash ^= ZOBRIST_BOARD_HASH[loc][C_BANLOC];
+  return true;
+}
+
+bool Board::removeBanLoc(Loc loc)
+{
+  if(!isOnBoard(loc)||colors[loc]!=C_BANLOC)
+    return false;
+  colors[loc] = C_EMPTY;
+  pos_hash ^= ZOBRIST_BOARD_HASH[loc][C_BANLOC];
+  return true;
+}
+
+void Board::removeAllBanLoc()
+{
+  for (int i = 0; i < MAX_ARR_SIZE; i++)removeBanLoc(i);
 }
 
 
@@ -474,6 +489,7 @@ char PlayerIO::colorToChar(Color c)
   case C_BLACK: return 'X';
   case C_WHITE: return 'O';
   case C_EMPTY: return '.';
+  case C_BANLOC: return 'b';
   default:  return '#';
   }
 }
@@ -484,6 +500,7 @@ string PlayerIO::playerToString(Color c)
   case C_BLACK: return "Black";
   case C_WHITE: return "White";
   case C_EMPTY: return "Empty";
+  case C_BANLOC: return "BanLoc";
   default:  return "Wall";
   }
 }
@@ -494,6 +511,7 @@ string PlayerIO::playerToStringShort(Color c)
   case C_BLACK: return "B";
   case C_WHITE: return "W";
   case C_EMPTY: return "E";
+  case C_BANLOC: return "R";
   default:  return "";
   }
 }
@@ -573,6 +591,15 @@ static bool tryParseLetterCoordinate(char c, int& x) {
     return false;
   return true;
 }
+static bool tryParseLetterCoordinateGom(char c, int& x) {
+  if(c >= 'A' && c <= 'Z')
+    x = c-'A';
+  else if(c >= 'a' && c <= 'z')
+    x = c-'a';
+  else
+    return false;
+  return true;
+}
 
 bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& result) {
   string s = Global::trim(str);
@@ -607,6 +634,58 @@ bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& resul
     if((s[1] >= 'A' && s[1] <= 'Z') || (s[1] >= 'a' && s[1] <= 'z')) {
       int x1;
       if(!tryParseLetterCoordinate(s[1],x1))
+        return false;
+      x = (x+1) * 25 + x1;
+      s = s.substr(2,s.length()-2);
+    }
+    else {
+      s = s.substr(1,s.length()-1);
+    }
+
+    int y;
+    bool sucY = Global::tryStringToInt(s,y);
+    if(!sucY)
+      return false;
+    y = y_size - y;
+    if(x < 0 || y < 0 || x >= x_size || y >= y_size)
+      return false;
+    result = Location::getLoc(x,y,x_size);
+    return true;
+  }
+}
+bool Location::tryOfStringGom(const string& str, int x_size, int y_size, Loc& result) {
+  string s = Global::trim(str);
+  if(s.length() < 2)
+    return false;
+  if(Global::isEqualCaseInsensitive(s,string("pass")) || Global::isEqualCaseInsensitive(s,string("pss"))) {
+    result = Board::PASS_LOC;
+    return true;
+  }
+  if(s[0] == '(') {
+    if(s[s.length()-1] != ')')
+      return false;
+    s = s.substr(1,s.length()-2);
+    vector<string> pieces = Global::split(s,',');
+    if(pieces.size() != 2)
+      return false;
+    int x;
+    int y;
+    bool sucX = Global::tryStringToInt(pieces[0],x);
+    bool sucY = Global::tryStringToInt(pieces[1],y);
+    if(!sucX || !sucY)
+      return false;
+    result = Location::getLoc(x,y,x_size);
+    return true;
+  }
+  else {
+    int x;
+    if(!tryParseLetterCoordinateGom(s[0],x))
+      return false;
+
+    //Extended format
+    if((s[1] >= 'A' && s[1] <= 'Z') || (s[1] >= 'a' && s[1] <= 'z')) {
+      int x1;
+      if(!tryParseLetterCoordinateGom(s[1],x1))
         return false;
       x = (x+1) * 25 + x1;
       s = s.substr(2,s.length()-2);

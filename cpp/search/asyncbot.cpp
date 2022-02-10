@@ -108,6 +108,24 @@ void AsyncBot::clearSearch() {
   search->clearSearch();
 }
 
+bool AsyncBot::setBanLoc(const std::vector<Loc>& locs)
+{
+  stopAndWait();
+  return search->setBanLoc(locs);
+}
+
+bool AsyncBot::removeBanLoc(const std::vector<Loc>& locs)
+{
+  stopAndWait();
+  return search->removeBanLoc(locs);
+}
+
+void AsyncBot::clearAllBanLoc()
+{
+  stopAndWait();
+  search->clearAllBanLoc();
+}
+
 bool AsyncBot::makeMove(Loc moveLoc, Player movePla) {
   stopAndWait();
   return search->makeMove(moveLoc,movePla);
