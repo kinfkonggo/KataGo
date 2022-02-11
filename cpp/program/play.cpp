@@ -104,7 +104,7 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
       loc = Location::getLoc(gameRand.nextUInt(board.x_size), gameRand.nextUInt(board.y_size), board.x_size);
     } while (!board.isLegal(loc, pla, false));
     hist.makeBoardMoveAssumeLegal(board, loc, pla);
-    pla == getOpp(pla);
+    pla = getOpp(pla);
   }
 }
 
