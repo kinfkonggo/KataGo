@@ -13,8 +13,10 @@
 
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 15
+#define COMPILE_MAX_BOARD_LEN 19
 #endif
+
+static const int CONNECT_LEN = 5;
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
 

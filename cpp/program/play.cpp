@@ -1347,7 +1347,7 @@ FinishedGameData* Play::runGame(
 
   ClockTimer timer;
 
-  bool drawEarlyEndGame = gameRand.nextBool(0.9);
+  bool drawEarlyEndGame = false;
 
   //Main play loop
   for(int i = 0; i<maxMovesPerGame; i++) {
