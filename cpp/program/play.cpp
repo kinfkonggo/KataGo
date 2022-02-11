@@ -17,7 +17,7 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
 {
   pla = C_BLACK;
 
-  if (gameRand.nextBool(0.8))//乱撒
+  if (gameRand.nextBool(0.9)||board.x_size!=15||board.y_size!=15)//乱撒
   {
     double fillRate = gameRand.nextExponential() * 0.04;//平均填9个子
     if (fillRate > 0.9)fillRate = 0.9;
@@ -95,6 +95,17 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
 
   }
   hist.clear(board, pla, hist.rules);
+
+  if (gameRand.nextBool(0.8))//第一手黑棋随机落子
+  {
+    Loc loc;
+    do
+    {
+      loc = Location::getLoc(gameRand.nextUInt(board.x_size), gameRand.nextUInt(board.y_size), board.x_size);
+    } while (!board.isLegal(loc, pla, false));
+    hist.makeBoardMoveAssumeLegal(board, loc, pla);
+    pla == getOpp(pla);
+  }
 }
 
 InitialPosition::InitialPosition()
