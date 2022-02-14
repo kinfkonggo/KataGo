@@ -1923,7 +1923,21 @@ int MainCmds::gtp(const vector<string>& args) {
     else if(command == "play") {
       Player pla;
       Loc loc;
-      if(pieces.size() != 2) {
+      if(pieces.size() ==1) {
+        if (!tryParseLoc(pieces[0], engine->bot->getRootBoard(), loc)) {
+          responseIsError = true;
+          response = "Could not parse vertex: '" + pieces[1] + "'";
+        }
+        pla = engine->bot->getRootBoard().nextPla;
+
+        bool suc = engine->play(loc,pla);
+        if(!suc) {
+          responseIsError = true;
+          response = "illegal move";
+        }
+        maybeStartPondering = true;
+      }
+      else if(pieces.size() != 2) {
         responseIsError = true;
         response = "Expected two arguments for play but got '" + Global::concat(pieces," ") + "'";
       }
@@ -1943,6 +1957,35 @@ int MainCmds::gtp(const vector<string>& args) {
         }
         maybeStartPondering = true;
       }
+    }
+
+
+    else if (command == "p" || command == "play3") {
+      Player pla;
+      Loc loc;
+      if (pieces.size() != STAGE_NUM_EACH_PLA) {
+        responseIsError = true;
+        response = "Expected 3 arguments for play3 but got '" + Global::concat(pieces, " ") + "'";
+      }
+
+      for (int i = 0; i < STAGE_NUM_EACH_PLA; i++)
+      {
+        pla = engine->bot->getRootBoard().nextPla;
+        if (!tryParseLoc(pieces[i], engine->bot->getRootBoard(), loc)) {
+          responseIsError = true;
+          response = "Could not parse vertex: '" + pieces[i] + "'";
+          break;
+        }
+        else {
+          bool suc = engine->play(loc, pla);
+          if (!suc) {
+            responseIsError = true;
+            response = "illegal move";
+            break;
+          }
+        }
+      }
+      maybeStartPondering = true;
     }
 
     else if(command == "set_position") {
@@ -1996,17 +2039,14 @@ int MainCmds::gtp(const vector<string>& args) {
 
     else if(command == "genmove" || command == "genmove_debug" || command == "search_debug") {
       Player pla;
-      if(pieces.size() != 1) {
+      if(pieces.size() >1) {
         responseIsError = true;
         response = "Expected one argument for genmove but got '" + Global::concat(pieces," ") + "'";
-      }
-      else if(!PlayerIO::tryParsePlayer(pieces[0],pla)) {
-        responseIsError = true;
-        response = "Could not parse color: '" + pieces[0] + "'";
       }
       else {
         bool debug = command == "genmove_debug" || command == "search_debug";
         bool playChosenMove = command != "search_debug";
+        pla = engine->bot->getRootBoard().nextPla;
 
         engine->genMove(
           pla,
@@ -2017,6 +2057,32 @@ int MainCmds::gtp(const vector<string>& args) {
           response,responseIsError,maybeStartPondering,
           GTPEngine::AnalyzeArgs()
         );
+      }
+    }
+
+    else if (command == "g" || command == "genmove3") {
+      Player pla;
+      if (pieces.size() > 0) {
+        responseIsError = true;
+        response = "Expected one argument for genmove but got '" + Global::concat(pieces, " ") + "'";
+      }
+      else {
+        for (int i = 0; i < STAGE_NUM_EACH_PLA; i++)
+        {
+          bool debug = false;
+          bool playChosenMove = true;
+          pla = engine->bot->getRootBoard().nextPla;
+
+          engine->genMove(
+            pla,
+            logger, searchFactorWhenWinningThreshold, searchFactorWhenWinning,
+            ogsChatToStderr,
+            allowResignation, resignThreshold, resignConsecTurns, resignMinScoreDifference,
+            logSearchInfo, debug, playChosenMove,
+            response, responseIsError, maybeStartPondering,
+            GTPEngine::AnalyzeArgs()
+          );
+        }
       }
     }
 
