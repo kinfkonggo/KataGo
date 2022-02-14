@@ -211,8 +211,8 @@ bool Board::isQueenMove(Loc locSrc, Loc locDst) const
 
   for (int i = 1; i < d; i++)
   {
-    int x = x1 + d * dx;
-    int y = y1 + d * dy;
+    int x = x1 + i * dx;
+    int y = y1 + i * dy;
     Loc loc = Location::getLoc(x, y, x_size);
     if (colors[loc] != C_EMPTY)
       return false;
