@@ -22,6 +22,9 @@ Hash128 Board::ZOBRIST_SIZE_X_HASH[MAX_LEN+1];
 Hash128 Board::ZOBRIST_SIZE_Y_HASH[MAX_LEN+1];
 Hash128 Board::ZOBRIST_BOARD_HASH[MAX_ARR_SIZE][4];
 Hash128 Board::ZOBRIST_PLAYER_HASH[4];
+Hash128 Board::ZOBRIST_STAGENUM_HASH[STAGE_NUM_EACH_PLA];
+Hash128 Board::ZOBRIST_STAGELOC_HASH[MAX_ARR_SIZE][STAGE_NUM_EACH_PLA];
+Hash128 Board::ZOBRIST_NEXTPLA_HASH[4];
 const Hash128 Board::ZOBRIST_GAME_IS_OVER = //Based on sha256 hash of Board::ZOBRIST_GAME_IS_OVER
   Hash128(0xb6f9e465597a77eeULL, 0xf1d583d960a4ce7fULL);
 
@@ -136,7 +139,19 @@ void Board::init(int xS, int yS)
     }
   }
 
-  pos_hash = ZOBRIST_SIZE_X_HASH[x_size] ^ ZOBRIST_SIZE_Y_HASH[y_size];
+  for (int i = 0; i < STAGE_NUM_EACH_PLA; i++)
+  {
+    midLocs[i] = Board::NULL_LOC;
+  }
+  nextPla = C_BLACK;
+  stage = 0;
+
+  pos_hash = ZOBRIST_SIZE_X_HASH[x_size] ^ ZOBRIST_SIZE_Y_HASH[y_size] ^ ZOBRIST_NEXTPLA_HASH[nextPla] ^ ZOBRIST_STAGENUM_HASH[stage];
+
+
+  //todo: play some initial stones
+  static_assert(false);
+
   Location::getAdjacentOffsets(adj_offsets,x_size);
 }
 
@@ -166,8 +181,17 @@ void Board::initHash()
     }
   }
 
+  for (int i = 0; i < STAGE_NUM_EACH_PLA; i++)
+  {
+    ZOBRIST_STAGENUM_HASH[i] = nextHash();
+    for(int j=0;j<MAX_ARR_SIZE;j++)
+      ZOBRIST_STAGELOC_HASH[j][i] = nextHash();
+    ZOBRIST_STAGELOC_HASH[Board::NULL_LOC][i] = Hash128();
+  }
 
-
+  for (Color j = 0; j < 4; j++) {
+    ZOBRIST_NEXTPLA_HASH[j] = nextHash();
+  }
   //Reseed the random number generator so that these size hashes are also
   //not affected by the size of the board we compile with
   rand.init("Board::initHash() for ZOBRIST_SIZE hashes");
@@ -196,90 +220,16 @@ bool Board::isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
   (void)isMultiStoneSuicideLegal;
   if(pla != P_BLACK && pla != P_WHITE)
     return false;
-  return loc == PASS_LOC || (
-    loc >= 0 &&
-    loc < MAX_ARR_SIZE &&
-    (colors[loc] == C_EMPTY)
-  );
+  if (loc == PASS_LOC)
+    return true;
+
+  if (!isOnBoard(loc))
+    return false;
+
+  //TODO: Add some logic
+  static_assert(false);
 }
 
-
-MovePriority Board::getMovePriority(Player pla, Loc loc, bool isSixWin, bool isPassForbidded)const
-{
-
-  if (loc == PASS_LOC)return isPassForbidded ? MP_ILLEGAL : MP_NORMAL;
-  if (!isLegal(loc, pla, false))return MP_ILLEGAL;
-  MovePriority MP = getMovePriorityAssumeLegal(pla, loc, isSixWin);
-  return MP;
-}
-MovePriority Board::getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const
-{
-  if (loc == PASS_LOC)return MP_NORMAL;
-  MovePriority MP = MP_NORMAL;
-  for (int i = 0; i < 4; i++)
-  {
-    MovePriority tmpMP = getMovePriorityOneDirectionAssumeLegal(pla, loc, isSixWin, i);
-    if (tmpMP < MP)MP = tmpMP;
-  }
-  return MP;
-}
-MovePriority Board::getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, bool isSixWin, int adjID) const
-{
-  assert(adjID >= 0 && adjID < 4);
-  Player opp = getOpp(pla);
-  short adj = adj_offsets[2*adjID];
-  bool isMyLife1, isMyLife2, isOppLife1, isOppLife2;
-  int myConNum = connectionLengthOneDirection(pla, loc, adj, isSixWin, isMyLife1) + connectionLengthOneDirection(pla, loc, -adj, isSixWin, isMyLife2) + 1;
-  int oppConNum = connectionLengthOneDirection(opp, loc, adj, isSixWin, isOppLife1) + connectionLengthOneDirection(opp, loc, -adj, isSixWin, isOppLife2) + 1;
-  if (myConNum == 5 || (myConNum > 5 && isSixWin))return MP_FIVE;
-#if RULE==RENJU
-  if ((oppConNum == 5 && opp == P_BLACK) || (oppConNum >= 5 && opp == P_WHITE))return MP_OPPOFOUR;
-#else
-  if (oppConNum == 5 || (oppConNum > 5 && isSixWin))return MP_OPPOFOUR;
-#endif //  RENJU
-
-
-  if (myConNum == 4 && isMyLife1&&isMyLife2)return MP_MYLIFEFOUR;
-  return MP_NORMAL;
-
-}
-
-int Board::connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isSixWin, bool& isLife)const
-{
-  Loc tmploc = loc;
-  int conNum = 0;
-  isLife = false;
-  while (1)
-  {
-    tmploc += adj;
-    if (!isOnBoard(tmploc))break;
-    if (colors[tmploc] == pla)conNum++;
-    else if (colors[tmploc] == C_EMPTY)
-    {
-      isLife = true;
-      if (!isSixWin)
-      {
-
-        tmploc += adj;
-        if (isOnBoard(tmploc) && colors[tmploc] == pla)isLife = false;
-      }
-#if RULE==RENJU
-      if (pla == C_BLACK)
-      {
-
-        tmploc += adj;
-        if (isOnBoard(tmploc) && colors[tmploc] == C_BLACK)isLife = false;
-      }
-#endif
-      break;
-    }
-    else break;
-  }
-  return conNum;
-
-
-
-}
 bool Board::isEmpty() const {
   for(int y = 0; y < y_size; y++) {
     for(int x = 0; x < x_size; x++) {
@@ -322,17 +272,10 @@ bool Board::setStone(Loc loc, Color color)
   if(color != C_BLACK && color != C_WHITE && color != C_EMPTY)
     return false;
 
-  if(colors[loc] == color)
-  {}
-  else if(colors[loc] == C_EMPTY)
-    playMoveAssumeLegal(loc,color);
-  else if(color == C_EMPTY)
-    removeSingleStone(loc);
-  else {
-    removeSingleStone(loc);
-    playMoveAssumeLegal(loc,color);
-  }
-
+  Color oldColor = colors[loc];
+  colors[loc] = oldColor;
+  pos_hash ^= ZOBRIST_BOARD_HASH[loc][oldColor];
+  pos_hash ^= ZOBRIST_BOARD_HASH[loc][color];
   return true;
 }
 
@@ -363,6 +306,8 @@ Hash128 Board::getPosHashAfterMove(Loc loc, Player pla) const {
 //Plays the specified move, assuming it is legal.
 void Board::playMoveAssumeLegal(Loc loc, Player pla)
 {
+  //TODO
+  static_assert(false);
   //Pass?
   if(loc == PASS_LOC)
   {
@@ -374,14 +319,13 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
   pos_hash ^= ZOBRIST_BOARD_HASH[loc][pla];
 }
 
-//Remove a single stone, even a stone part of a larger group.
-void Board::removeSingleStone(Loc loc)
+Player Board::nextnextPla() const
 {
-  Player pla = colors[loc];
-
-  colors[loc] = C_EMPTY;
-  pos_hash ^= ZOBRIST_BOARD_HASH[loc][pla];
+  if (stage == STAGE_NUM_EACH_PLA - 1)
+    return getOpp(nextPla);
+  else return nextPla;
 }
+
 
 
 int Location::distance(Loc loc0, Loc loc1, int x_size) {
@@ -425,6 +369,13 @@ void Board::checkConsistency() const {
         throw StringError(errLabel + "Non-(black,white,empty) value within board legal area");
     }
   }
+
+  tmp_pos_hash ^= ZOBRIST_NEXTPLA_HASH[nextPla];
+  tmp_pos_hash ^= ZOBRIST_STAGENUM_HASH[stage];
+  for (int i = 0; i < STAGE_NUM_EACH_PLA; i++)
+    tmp_pos_hash ^= ZOBRIST_STAGELOC_HASH[midLocs[i]][i];
+
+
   if(pos_hash != tmp_pos_hash)
     throw StringError(errLabel + "Pos hash does not match expected");
 

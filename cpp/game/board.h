@@ -18,31 +18,36 @@
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
 
+
+//每一步棋分为几个阶段
+//例如：象棋类分为“选子”和“选落点”2步，六子棋分为2步，amazons分为3步，也有一些棋不定步数
+static const int STAGE_NUM_EACH_PLA = 200;
+
 struct Board;
+
+
 
 //Player
 typedef int8_t Player;
-static constexpr Player P_BLACK = 1;
-static constexpr Player P_WHITE = 2;
 
 //Color of a point on the board
 typedef int8_t Color;
+
+//Location of a point on the board
+//(x,y) is represented as (x+1) + (y+1)*(x_size+1)
+typedef short Loc;
+
+
+
+
+static constexpr Player P_BLACK = 1;
+static constexpr Player P_WHITE = 2;
+
 static constexpr Color C_EMPTY = 0;
 static constexpr Color C_BLACK = 1;
 static constexpr Color C_WHITE = 2;
 static constexpr Color C_WALL = 3;
 static constexpr int NUM_BOARD_COLORS = 4;
-
-
-typedef char MovePriority;
-static const MovePriority MP_NORMAL = 126;
-static const MovePriority MP_FIVE = 1;
-static const MovePriority MP_OPPOFOUR = 2;
-static const MovePriority MP_MYLIFEFOUR = 3;
-static const MovePriority MP_VCF = 4;
-static const MovePriority MP_USELESS = 127;
-static const MovePriority MP_ILLEGAL = -1;
-
 
 static inline Color getOpp(Color c)
 {return c ^ 3;}
@@ -56,9 +61,6 @@ namespace PlayerIO {
   Player parsePlayer(const std::string& s);
 }
 
-//Location of a point on the board
-//(x,y) is represented as (x+1) + (y+1)*(x_size+1)
-typedef short Loc;
 namespace Location
 {
   Loc getLoc(int x, int y, int x_size);
@@ -125,6 +127,9 @@ struct Board
   static Hash128 ZOBRIST_SIZE_X_HASH[MAX_LEN+1];
   static Hash128 ZOBRIST_SIZE_Y_HASH[MAX_LEN+1];
   static Hash128 ZOBRIST_BOARD_HASH[MAX_ARR_SIZE][4];
+  static Hash128 ZOBRIST_STAGENUM_HASH[STAGE_NUM_EACH_PLA];
+  static Hash128 ZOBRIST_STAGELOC_HASH[MAX_ARR_SIZE][STAGE_NUM_EACH_PLA];
+  static Hash128 ZOBRIST_NEXTPLA_HASH[4];
   static Hash128 ZOBRIST_PLAYER_HASH[4];
   static const Hash128 ZOBRIST_GAME_IS_OVER;
 
@@ -139,12 +144,7 @@ struct Board
 
   bool isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const;
 
-  MovePriority getMovePriority(Player pla, Loc loc, bool isSixWin, bool isPassForbidded)const;
-  MovePriority getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const;
-private:
-  MovePriority getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, bool isSixWin, int adjID)const;
-  int connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isSixWin, bool& isLife)const;
-public:
+  
 
   bool isOnBoard(Loc loc) const;
   //Is this board empty?
@@ -165,6 +165,7 @@ public:
   //Plays the specified move, assuming it is legal.
   void playMoveAssumeLegal(Loc loc, Player pla);
 
+  Player nextnextPla() const;
 
   //Get what the position hash would be if we were to play this move and resolve captures and suicides.
   //Assumes the move is on an empty location.
@@ -191,6 +192,15 @@ public:
   int y_size;                  //Vertical size of board
   Color colors[MAX_ARR_SIZE];  //Color of each location on the board.
 
+  //下一阶段是谁下
+  Color nextPla;
+
+  //第几个状态
+  int stage;
+
+  //一步内每一阶段的选点
+  //例如：象棋类midLoc[0]是选择的棋子，midLoc[1]是落点
+  Loc midLocs[STAGE_NUM_EACH_PLA];
 
   /* PointList empty_list; //List of all empty locations on board */
 
@@ -201,7 +211,7 @@ public:
 
   private:
   void init(int xS, int yS);
-  void removeSingleStone(Loc loc);
+
 
   friend std::ostream& operator<<(std::ostream& out, const Board& board);
 

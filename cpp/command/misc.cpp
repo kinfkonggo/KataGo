@@ -328,7 +328,7 @@ static void initializeDemoGame(Board& board, BoardHistory& hist, Player& pla, Ra
 
         //Make the move!
         hist.makeBoardMoveAssumeLegal(board,nextMove.loc,nextMove.pla);
-        pla = getOpp(pla);
+        pla = board.nextPla;
 
         hist.clear(board,pla,hist.rules);
         bot->setPosition(pla,board,hist);
@@ -533,7 +533,7 @@ int MainCmds::demoplay(const vector<string>& args) {
         assert(suc);
         (void)suc; //Avoid warning when asserts are off
 
-        pla = getOpp(pla);
+        pla = bot->getRootBoard().nextPla;
       }
 
     }
@@ -804,7 +804,7 @@ static bool maybeGetValuesAfterMove(
     if(!hist.isLegal(newBoard,moveLoc,newNextPla))
       return false;
     newHist.makeBoardMoveAssumeLegal(newBoard,moveLoc,newNextPla);
-    newNextPla = getOpp(newNextPla);
+    newNextPla = newBoard.nextPla;
   }
 
   search->setPosition(newNextPla,newBoard,newHist);
@@ -1311,7 +1311,7 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
         break;
       }
       hist.makeBoardMoveAssumeLegal(board,sgfMoves[m].loc,sgfMoves[m].pla);
-      nextPla = getOpp(sgfMoves[m].pla);
+      nextPla = board.nextPla;
     }
     boards.push_back(board);
     hists.push_back(hist);
@@ -1497,7 +1497,7 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
         return;
       assert(sample.moves[i].pla == pla);
       hist.makeBoardMoveAssumeLegal(board,sample.moves[i].loc,sample.moves[i].pla);
-      pla = getOpp(pla);
+      pla = board.nextPla;
     }
 
     //Make sure the hinted move is legal too
@@ -1845,7 +1845,7 @@ int MainCmds::trystartposes(const vector<string>& args) {
         allLegal = false;
         break;
       }
-      pla = getOpp(startPos.moves[i].pla);
+      pla = board.nextPla;
     }
     if(!allLegal) {
       throw StringError("Illegal move in startpos: " + Sgf::PositionSample::toJsonLine(startPos));
@@ -2000,7 +2000,7 @@ int MainCmds::viewstartposes(const vector<string>& args) {
         allLegal = false;
         break;
       }
-      pla = getOpp(startPos.moves[i].pla);
+      pla = board.nextPla;
     }
     if(!allLegal) {
       throw StringError("Illegal move in startpos: " + Sgf::PositionSample::toJsonLine(startPos));

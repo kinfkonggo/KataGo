@@ -272,7 +272,7 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
   recentBoards[currentRecentBoardIdx] = board;
 
   moveHistory.push_back(Move(moveLoc,movePla));
-  presumedNextMovePla = getOpp(movePla);
+  presumedNextMovePla = board.nextPla;
 
   maybeFinishGame(board,movePla,moveLoc);
 }

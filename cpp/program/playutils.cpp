@@ -200,7 +200,7 @@ void PlayUtils::initializeGameUsingPolicy(
     //Make the move!
     assert(hist.isLegal(board,loc,pla));
     hist.makeBoardMoveAssumeLegal(board,loc,pla);
-    pla = getOpp(pla);
+    pla = board.nextPla;
 
     if(hist.isGameFinished)
       break;
@@ -493,7 +493,7 @@ PlayUtils::BenchmarkResults PlayUtils::benchmarkSearchOnPositionsAndPrint(
         cerr << "SGF Illegal move " << (moveNum+1) << " for " << PlayerIO::colorToChar(moves[moveNum].pla) << ": " << Location::toString(moves[moveNum].loc,board) << endl;
         throw StringError("Illegal move in SGF");
       }
-      nextPla = getOpp(moves[moveNum].pla);
+      nextPla = board.nextPla;
       moveNum += 1;
     }
 

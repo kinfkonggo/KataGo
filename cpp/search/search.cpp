@@ -337,7 +337,7 @@ bool Search::makeMove(Loc moveLoc, Player movePla) {
 
 
   rootHistory.makeBoardMoveAssumeLegal(rootBoard,moveLoc,rootPla);
-  rootPla = getOpp(rootPla);
+  rootPla = rootBoard.nextPla;
 
   //Explicitly clear avoid move arrays when we play a move - user needs to respecify them if they want them.
   avoidMoveUntilByLocBlack.clear();
@@ -533,8 +533,7 @@ void Search::beginSearch(bool pondering) {
     plaThatSearchIsFor = rootPla;
   //If we begin the game with a ponder, then assume that "we" are the opposing side until we see otherwise.
   if(plaThatSearchIsFor == C_EMPTY)
-    plaThatSearchIsFor = getOpp(rootPla);
-
+    plaThatSearchIsFor = rootBoard.nextnextPla();
   if(plaThatSearchIsForLastSearch != plaThatSearchIsFor) {
     //In the case we are doing playoutDoublingAdvantage without a specific player (so, doing the root player)
     //and the player that the search is for changes, we need to clear the tree since we need new evals for the new way around
@@ -742,7 +741,7 @@ SearchNode* Search::allocateOrFindNode(SearchThread& thread, Player nextPla, Loc
         if(thread.history.moveHistory.size() >= 2) {
           Loc prevMoveLoc = thread.history.moveHistory[thread.history.moveHistory.size()-2].loc;
           if(prevMoveLoc != Board::NULL_LOC) {
-            child->subtreeValueBiasTableEntry = subtreeValueBiasTable->get(getOpp(thread.pla), prevMoveLoc, bestChildMoveLoc, thread.history.getRecentBoard(1));
+            child->subtreeValueBiasTableEntry = subtreeValueBiasTable->get(thread.board.nextnextPla(), prevMoveLoc, bestChildMoveLoc, thread.history.getRecentBoard(1));
           }
         }
       }
@@ -1101,7 +1100,7 @@ bool Search::playoutDescend(
 
       //Make the move! We need to make the move before we create the node so we can see the new state and get the right graphHash.
       thread.history.makeBoardMoveAssumeLegal(thread.board,bestChildMoveLoc,thread.pla);
-      thread.pla = getOpp(thread.pla);
+      thread.pla = thread.board.nextPla;
       if(searchParams.useGraphSearch)
         thread.graphHash = GraphHash::getGraphHash(
           thread.graphHash, thread.history, thread.pla, searchParams.graphSearchRepBound, searchParams.drawEquivalentWinsForWhite
@@ -1158,7 +1157,7 @@ bool Search::playoutDescend(
 
       //Make the move!
       thread.history.makeBoardMoveAssumeLegal(thread.board,bestChildMoveLoc,thread.pla);
-      thread.pla = getOpp(thread.pla);
+      thread.pla = thread.board.nextPla;
       if(searchParams.useGraphSearch)
         thread.graphHash = GraphHash::getGraphHash(
           thread.graphHash, thread.history, thread.pla, searchParams.graphSearchRepBound, searchParams.drawEquivalentWinsForWhite

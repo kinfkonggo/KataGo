@@ -422,7 +422,7 @@ void GameInitializer::createGameSharedUnsynchronized(
         break;
       }
       hist.makeBoardMoveAssumeLegal(board,startPos.moves[i].loc,startPos.moves[i].pla);
-      pla = getOpp(startPos.moves[i].pla);
+      pla =board.nextPla;
     }
 
     extraBlackAndKomi = PlayUtils::chooseKomi(
@@ -878,7 +878,7 @@ static void recordTreePositionsRec(
       Board copy = board;
       BoardHistory histCopy = hist;
       histCopy.makeBoardMoveAssumeLegal(copy, moveLoc, pla);
-      Player nextPla = getOpp(pla);
+      Player nextPla = board.nextPla;
       recordTreePositionsRec(
         gameData,
         copy,histCopy,nextPla,
@@ -1418,7 +1418,7 @@ FinishedGameData* Play::runGame(
         if(sidePositionForkLoc != Board::NULL_LOC) {
           SidePosition* sp = new SidePosition(board,hist,pla,gameData->changedNeuralNets.size());
           sp->hist.makeBoardMoveAssumeLegal(sp->board,sidePositionForkLoc,sp->pla);
-          sp->pla = getOpp(sp->pla);
+          sp->pla = sp->board.nextPla;
           if(sp->hist.isGameFinished) delete sp;
           else sidePositionsToSearch.push_back(sp);
         }
@@ -1509,7 +1509,7 @@ FinishedGameData* Play::runGame(
     int nextTurnIdx = hist.moveHistory.size();
     maybeCheckForNewNNEval(nextTurnIdx);
 
-    pla = getOpp(pla);
+    pla = board.nextPla;
   }
 
   gameData->endHist = hist;
@@ -1722,7 +1722,7 @@ FinishedGameData* Play::runGame(
 
         SidePosition* sp2 = new SidePosition(sp->board,sp->hist,sp->pla,gameData->changedNeuralNets.size());
         sp2->hist.makeBoardMoveAssumeLegal(sp2->board,responseLoc,sp2->pla);
-        sp2->pla = getOpp(sp2->pla);
+        sp2->pla = sp2->board.nextPla;
         if(sp2->hist.isGameFinished)
           delete sp2;
         else {
@@ -1737,7 +1737,7 @@ FinishedGameData* Play::runGame(
           Loc forkLoc = chooseRandomForkingMove(nnResultBuf.result.get(), sp2->board, sp2->hist, sp2->pla, gameRand, banMove);
           if(forkLoc != Board::NULL_LOC) {
             sp2->hist.makeBoardMoveAssumeLegal(sp2->board,forkLoc,sp2->pla);
-            sp2->pla = getOpp(sp2->pla);
+            sp2->pla = sp2->board.nextPla;
             if(sp2->hist.isGameFinished) delete sp2;
             else sidePositionsToSearch.push_back(sp2);
           }
@@ -1815,7 +1815,7 @@ static void replayGameUpToMove(const FinishedGameData* finishedGameData, int mov
     }
     assert(finishedGameData->endHist.moveHistory[i].pla == pla);
     hist.makeBoardMoveAssumeLegal(board,loc,pla);
-    pla = getOpp(pla);
+    pla = board.nextPla;
 
     if(hist.isGameFinished)
       return;
@@ -1894,7 +1894,7 @@ void Play::maybeForkGame(
     copyHist.makeBoardMoveAssumeLegal(copy,loc,pla);
     MiscNNInputParams nnInputParams;
     nnInputParams.drawEquivalentWinsForWhite = drawEquivalentWinsForWhite;
-    bot->nnEvaluator->evaluate(copy,copyHist,getOpp(pla),nnInputParams,buf,false,false);
+    bot->nnEvaluator->evaluate(copy,copyHist,copy.nextPla,nnInputParams,buf,false,false);
     std::shared_ptr<NNOutput> nnOutput = std::move(buf.result);
     double whiteScore = nnOutput->whiteScoreMean;
     if(bestMove == Board::NULL_LOC || (pla == P_WHITE && whiteScore > bestScore) || (pla == P_BLACK && whiteScore < bestScore)) {
@@ -1906,7 +1906,7 @@ void Play::maybeForkGame(
   //Make that move
   assert(hist.isLegal(board,bestMove,pla));
   hist.makeBoardMoveAssumeLegal(board,bestMove,pla);
-  pla = getOpp(pla);
+  pla = board.nextPla;
 
   //If the game is over now, don't actually do anything
   if(hist.isGameFinished)
@@ -1945,7 +1945,7 @@ void Play::maybeHintForkGame(
     return;
 
   hist.makeBoardMoveAssumeLegal(board,otherGameProps.hintLoc,pla);
-  pla = getOpp(pla);
+  pla = board.nextPla;
 
   //If the game is over now, don't actually do anything
   if(hist.isGameFinished)
