@@ -13,7 +13,7 @@
 
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 15
+#define COMPILE_MAX_BOARD_LEN 8
 #endif
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
@@ -21,7 +21,7 @@
 
 //每一步棋分为几个阶段
 //例如：象棋类分为“选子”和“选落点”2步，六子棋分为2步，amazons分为3步，也有一些棋不定步数
-static const int STAGE_NUM_EACH_PLA = 200;
+static const int STAGE_NUM_EACH_PLA = 3;
 
 struct Board;
 
@@ -47,7 +47,8 @@ static constexpr Color C_EMPTY = 0;
 static constexpr Color C_BLACK = 1;
 static constexpr Color C_WHITE = 2;
 static constexpr Color C_WALL = 3;
-static constexpr int NUM_BOARD_COLORS = 4;
+static constexpr Color C_BANLOC = 4;
+static constexpr int NUM_BOARD_COLORS = 5;
 
 static inline Color getOpp(Color c)
 {return c ^ 3;}
@@ -126,7 +127,7 @@ struct Board
   static bool IS_ZOBRIST_INITALIZED;
   static Hash128 ZOBRIST_SIZE_X_HASH[MAX_LEN+1];
   static Hash128 ZOBRIST_SIZE_Y_HASH[MAX_LEN+1];
-  static Hash128 ZOBRIST_BOARD_HASH[MAX_ARR_SIZE][4];
+  static Hash128 ZOBRIST_BOARD_HASH[MAX_ARR_SIZE][NUM_BOARD_COLORS];
   static Hash128 ZOBRIST_STAGENUM_HASH[STAGE_NUM_EACH_PLA];
   static Hash128 ZOBRIST_STAGELOC_HASH[MAX_ARR_SIZE][STAGE_NUM_EACH_PLA];
   static Hash128 ZOBRIST_NEXTPLA_HASH[4];
@@ -211,7 +212,7 @@ struct Board
 
   private:
   void init(int xS, int yS);
-
+  bool isQueenMove(Loc locSrc, Loc locDst) const;
 
   friend std::ostream& operator<<(std::ostream& out, const Board& board);
 

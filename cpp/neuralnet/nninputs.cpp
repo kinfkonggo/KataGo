@@ -672,45 +672,50 @@ void NNInputs::fillRowV7(
         setRowBin(rowBin,pos,1, 1.0f, posStride, featureStride);
       else if(stone == opp)
         setRowBin(rowBin,pos,2, 1.0f, posStride, featureStride);
+      else if(stone == C_BANLOC)
+        setRowBin(rowBin,pos,3, 1.0f, posStride, featureStride);
 
     }
   }
 
-  
-  //Hide history from the net if a pass would end things and we're behaving as if a pass won't.
-  //Or if the game is in fact over right now!
-  bool hideHistory = true;
-  //  hist.isGameFinished;
-
-  //Features 9,10,11,12,13
-  if(!hideHistory) {
-    const vector<Move>& moveHistory = hist.moveHistory;
-    size_t moveHistoryLen = moveHistory.size();
-    int numTurnsThisPhase = moveHistoryLen ;
-
-    if(numTurnsThisPhase >= 1 && moveHistory[moveHistoryLen-1].pla == opp) {
-      Loc prev1Loc = moveHistory[moveHistoryLen-1].loc;
-      if(prev1Loc == Board::PASS_LOC)
-        rowGlobal[0] = 1.0;
-      else if(prev1Loc != Board::NULL_LOC) {
-        int pos = NNPos::locToPos(prev1Loc,xSize,nnXLen,nnYLen);
-        setRowBin(rowBin,pos,9, 1.0f, posStride, featureStride);
-      }
-      if(numTurnsThisPhase >= 2 && moveHistory[moveHistoryLen-2].pla == pla) {
-        Loc prev2Loc = moveHistory[moveHistoryLen-2].loc;
-        if(prev2Loc == Board::PASS_LOC)
-          rowGlobal[1] = 1.0;
-        else if(prev2Loc != Board::NULL_LOC) {
-          int pos = NNPos::locToPos(prev2Loc,xSize,nnXLen,nnYLen);
-          setRowBin(rowBin,pos,10, 1.0f, posStride, featureStride);
-        }
-      }
+  //mid state
+  if (board.stage == 0)//选子
+  {
+    //do nothing
+  }
+  else if (board.stage == 1)//挪子
+  {
+    rowGlobal[0] = 1.0f;
+    Loc chosenMove = board.midLocs[0];
+    if (!board.isOnBoard(chosenMove))
+    {
+      std::cout << "nninput: chosen move not on board ";
+    }
+    else
+    {
+      int pos = NNPos::locToPos(chosenMove, board.x_size, nnXLen, nnYLen);
+      setRowBin(rowBin,pos,4, 1.0f, posStride, featureStride);
+    }
+  }
+  else if (board.stage == 2)//放障碍
+  {
+    rowGlobal[1] = 1.0f;
+    Loc chosenMove = board.midLocs[1];
+    if (!board.isOnBoard(chosenMove))
+    {
+      std::cout << "nninput: chosen move not on board ";
+    }
+    else
+    {
+      int pos = NNPos::locToPos(chosenMove, board.x_size, nnXLen, nnYLen);
+      setRowBin(rowBin,pos,5, 1.0f, posStride, featureStride);
     }
   }
 
 
-  //Global features.
-  //The first 2 of them were set already above to flag which of the past 5 moves were passes.
+
+
+
 
   //Tax
   if(hist.rules.taxRule == Rules::TAX_NONE) {}

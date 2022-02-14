@@ -948,7 +948,7 @@ void TrainingDataWriter::writeGame(const FinishedGameData& data) {
     assert(move.pla == nextPlayer);
     assert(hist.isLegal(board,move.loc,move.pla));
     hist.makeBoardMoveAssumeLegal(board, move.loc, move.pla);
-    board.nextPla;
+    nextPlayer=board.nextPla;
   }
 
   //Write side rows

@@ -883,7 +883,7 @@ Sgf::PositionSample Sgf::PositionSample::getColorFlipped() const {
   for(int y = 0; y < other.board.y_size; y++) {
     for(int x = 0; x < other.board.x_size; x++) {
       Loc loc = Location::getLoc(x,y,other.board.x_size);
-      if(other.board.colors[loc] == C_BLACK || other.board.colors[loc] == C_WHITE)
+      if(other.board.colors[loc] !=C_EMPTY&&other.board.colors[loc] !=C_WALL)
         newBoard.setStone(loc, getOpp(other.board.colors[loc]));
     }
   }
