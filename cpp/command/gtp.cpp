@@ -1002,8 +1002,10 @@ static GTPEngine::AnalyzeArgs parseAnalyzeCommand(
   //ownershipStdev <bool whether to show ownershipStdev or not>
   //pvVisits <bool whether to show pvVisits or not>
 
+
+  Player pla2;
   //Parse optional player
-  if(pieces.size() > numArgsParsed && PlayerIO::tryParsePlayer(pieces[numArgsParsed],pla))
+  if(pieces.size() > numArgsParsed && PlayerIO::tryParsePlayer(pieces[numArgsParsed],pla2))
     numArgsParsed += 1;
 
   //Parse optional interval float
@@ -1950,6 +1952,7 @@ int MainCmds::gtp(const vector<string>& args) {
         response = "Could not parse vertex: '" + pieces[1] + "'";
       }
       else {
+        pla = engine->bot->getRootBoard().nextPla;
         bool suc = engine->play(loc,pla);
         if(!suc) {
           responseIsError = true;
