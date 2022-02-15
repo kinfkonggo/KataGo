@@ -1,3 +1,4 @@
+#include "nninputs.h"
 #include "../neuralnet/nninputs.h"
 
 using namespace std;
@@ -61,6 +62,10 @@ double ScoreValue::getScoreStdev(double scoreMean, double scoreMeanSq) {
   if(variance <= 0.0)
     return 0.0;
   return sqrt(variance);
+}
+
+double ScoreValue::whiteScoreDrawAdjust(double finalWhiteMinusBlackScore, double drawEquivalentWinsForWhite, const BoardHistory& hist) {
+  return finalWhiteMinusBlackScore + hist.whiteKomiAdjustmentForDraws(drawEquivalentWinsForWhite);
 }
 
 //-----------------------------------------------------------------------------------------------------------
@@ -672,8 +677,8 @@ void NNInputs::fillRowV7(
         setRowBin(rowBin,pos,1, 1.0f, posStride, featureStride);
       else if(stone == opp)
         setRowBin(rowBin,pos,2, 1.0f, posStride, featureStride);
-      else if(stone == C_BANLOC)
-        setRowBin(rowBin,pos,3, 1.0f, posStride, featureStride);
+      //else if(stone == C_BANLOC)
+      //  setRowBin(rowBin,pos,3, 1.0f, posStride, featureStride);
 
     }
   }
@@ -687,31 +692,26 @@ void NNInputs::fillRowV7(
   {
     rowGlobal[0] = 1.0f;
     Loc chosenMove = board.midLocs[0];
-    if (!board.isOnBoard(chosenMove))
+    if (chosenMove == Board::PASS_LOC)
+    {
+      rowGlobal[1] = 1.0f;
+    }
+    else if (!board.isOnBoard(chosenMove))
     {
       std::cout << "nninput: chosen move not on board ";
     }
     else
     {
       int pos = NNPos::locToPos(chosenMove, board.x_size, nnXLen, nnYLen);
-      setRowBin(rowBin,pos,4, 1.0f, posStride, featureStride);
-    }
-  }
-  else if (board.stage == 2)//·ÅÕÏ°­
-  {
-    rowGlobal[1] = 1.0f;
-    Loc chosenMove = board.midLocs[1];
-    if (!board.isOnBoard(chosenMove))
-    {
-      std::cout << "nninput: chosen move not on board ";
-    }
-    else
-    {
-      int pos = NNPos::locToPos(chosenMove, board.x_size, nnXLen, nnYLen);
-      setRowBin(rowBin,pos,5, 1.0f, posStride, featureStride);
+      setRowBin(rowBin,pos,3, 1.0f, posStride, featureStride);
     }
   }
 
+  double isOdd = (board.x_size * board.y_size) % 2;
+  double komi = hist.rules.komi;
+  double komiint = 2 * floor((komi+isOdd) / 2) + 1-isOdd;
+  if (nextPlayer == C_WHITE)komiint = -komiint;
+  rowGlobal[2] = komiint * 0.2;
 
 
 

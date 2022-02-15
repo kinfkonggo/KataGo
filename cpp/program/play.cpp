@@ -1351,6 +1351,8 @@ FinishedGameData* Play::runGame(
 
   //Main play loop
   for(int i = 0; i<maxMovesPerGame; i++) {
+    if (i >= board.x_size*board.y_size*99)
+      board.printBoard(cout, board, Board::NULL_LOC, NULL);
     if(hist.isGameFinished)
       break;
     if(shouldStop != nullptr && shouldStop())
@@ -1549,8 +1551,8 @@ FinishedGameData* Play::runGame(
       finalValueTargets.win = (float)ScoreValue::whiteWinsOfWinner(hist.winner, gameData->drawEquivalentWinsForWhite);
       finalValueTargets.loss = 1.0f - finalValueTargets.win;
       finalValueTargets.noResult = 0.0f;
-      finalValueTargets.score = 0.0f;
-      finalValueTargets.hasLead = true;
+      finalValueTargets.score = (float)ScoreValue::whiteScoreDrawAdjust(hist.finalWhiteMinusBlackScore,gameData->drawEquivalentWinsForWhite,hist);
+      finalValueTargets.hasLead = false;
       finalValueTargets.lead = finalValueTargets.score;
 
     }

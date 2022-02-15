@@ -1,4 +1,4 @@
-#include "board.h"
+
 #include "../game/board.h"
 
 /*
@@ -304,6 +304,50 @@ int Board::numPlaStonesOnBoard(Player pla) const {
   return num;
 }
 
+int Board::getScoreWhite(Player emptyBelongTo) const
+{
+  int s = 0;
+  for(int y = 0; y < y_size; y++) {
+    for(int x = 0; x < x_size; x++) {
+      Loc loc = Location::getLoc(x,y,x_size);
+      if (colors[loc] == C_BLACK)
+        s -= 1;
+      else if (colors[loc] == C_WHITE)
+        s += 1;
+      else if (emptyBelongTo == C_BLACK)
+        s -= 1;
+      else
+        s += 1;
+    }
+  }
+  return s;
+}
+
+bool Board::nextPlayerHasNoLegalMove()
+{
+  if (stage != 0)return false;
+
+  for(int y = 0; y < y_size; y++) {
+    for (int x = 0; x < x_size; x++) {
+      Loc loc = Location::getLoc(x, y, x_size);
+      if (colors[loc] != C_EMPTY)
+        continue;
+
+      //检查周围两圈有没有自己的子
+      for (int y1 = y - 2; y1 <= y + 2; y1++) {
+        for (int x1 = x - 2; x1 <= x + 2; x1++) {
+          if (x1 < 0 || x1 >= x_size || y1 < 0 || y1 >= y_size)
+            continue;
+          Loc loc1 = Location::getLoc(x1, y1, x_size);
+          if (colors[loc1] == nextPla)
+            return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
 bool Board::setStone(Loc loc, Color color)
 {
   if(loc < 0 || loc >= MAX_ARR_SIZE || colors[loc] == C_WALL)
@@ -376,8 +420,17 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
       midLocs[i] = Board::NULL_LOC;
     }
 
-    if (loc == )return;
-    Board::setStone(loc, C_BANLOC);
+    if (!isOnBoard(loc))return;
+    Board::setStone(loc, pla);
+    for (int i = 0; i < 8; i++)
+    {
+      Loc loc1 = loc + adj_offsets[i];
+      if(isOnBoard(loc1)&&colors[loc1]==getOpp(pla))
+        Board::setStone(loc1, pla);
+    }
+
+    if (!isOnBoard(chosenLoc))return;
+    Board::setStone(chosenLoc, C_EMPTY);
   }
   else ASSERT_UNREACHABLE;
 }

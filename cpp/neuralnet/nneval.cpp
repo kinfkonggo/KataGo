@@ -458,7 +458,8 @@ void NNEvaluator::serve(
             policyProbs[pos] = (float)rand.nextGaussian();
           }
         }
-        policyProbs[NNPos::locToPos(Board::PASS_LOC,boardXSize,nnXLen,nnYLen)] = (float)rand.nextGaussian();
+        //increase pass policy
+        policyProbs[NNPos::locToPos(Board::PASS_LOC,boardXSize,nnXLen,nnYLen)] = (float)rand.nextGaussian()+2.0;
 
         resultBuf->result->nnXLen = nnXLen;
         resultBuf->result->nnYLen = nnYLen;

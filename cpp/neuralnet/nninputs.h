@@ -169,6 +169,8 @@ namespace ScoreValue {
   double whiteWinsOfWinner(Player winner, double drawEquivalentWinsForWhite);
   //Get the standard deviation of score given the E(score) and E(score^2)
   double getScoreStdev(double scoreMeanAvg, double scoreMeanSqAvg);
+  //The score difference that a game result should count as on average
+  double whiteScoreDrawAdjust(double finalWhiteMinusBlackScore, double drawEquivalentWinsForWhite, const BoardHistory& hist);
 }
 
 #endif  // NEURALNET_NNINPUTS_H_

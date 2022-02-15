@@ -1,3 +1,4 @@
+#include "boardhistory.h"
 #include "../game/boardhistory.h"
 
 #include <algorithm>
@@ -225,6 +226,19 @@ void BoardHistory::setWinner(Player pla)
   if (pla == C_EMPTY)isNoResult = true;
 }
 
+void BoardHistory::setScore(float whiteScore)
+{
+  isGameFinished = true;
+  isScored = true;
+  isNoResult = false;
+  isResignation = false;
+  finalWhiteMinusBlackScore = whiteScore+rules.komi;
+
+  if (finalWhiteMinusBlackScore > 0)winner = C_WHITE;
+  else if (finalWhiteMinusBlackScore < 0)winner = C_BLACK;
+  else winner = C_EMPTY;
+}
+
 
 bool BoardHistory::isLegal(const Board& board, Loc moveLoc, Player movePla) const {
   //Ko-moves in the encore that are recapture blocked are interpreted as pass-for-ko, so they are legal
@@ -279,11 +293,27 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
 
 void BoardHistory::maybeFinishGame(Board& board,Player lastPla,Loc lastLoc)
 {
-  if (lastLoc == Board::PASS_LOC)
+  //illegal pass
+  if (board.stage == 0 && lastLoc == Board::PASS_LOC)
   {
-    setWinner(getOpp(lastPla));
+    float maxScore = board.x_size * board.y_size + 0.5;
+    if (lastPla == C_WHITE)maxScore = -maxScore;
+    setScore(maxScore);
   }
-  //if (board.numStonesOnBoard() >= board.x_size * board.y_size)setWinner(C_EMPTY);
+
+  //normal ending
+  if (board.nextPlayerHasNoLegalMove())
+  {
+    setScore(board.getScoreWhite(lastPla));
+  }
+
+  //very long loop
+  if (moveHistory.size() >= 100 * board.x_size * board.y_size)
+  {
+    //noResult=true
+    setWinner(C_EMPTY);
+    std::cout << "A very long loop";
+  }
 }
 
 

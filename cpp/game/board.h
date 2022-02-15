@@ -21,7 +21,7 @@
 
 //每一步棋分为几个阶段
 //例如：象棋类分为“选子”和“选落点”2步，六子棋分为2步，amazons分为3步，也有一些棋不定步数
-static const int STAGE_NUM_EACH_PLA = 3;
+static const int STAGE_NUM_EACH_PLA = 2;
 
 struct Board;
 
@@ -154,6 +154,9 @@ struct Board
   //Count the number of stones on the board
   int numStonesOnBoard() const;
   int numPlaStonesOnBoard(Player pla) const;
+  int getScoreWhite(Player emptyBelongTo)const;
+  bool nextPlayerHasNoLegalMove();
+
 
   //Get a hash that combines the position of the board with simple ko prohibition and a player to move.
   Hash128 getSitHash(Player pla) const;
