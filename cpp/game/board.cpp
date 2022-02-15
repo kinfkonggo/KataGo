@@ -434,7 +434,7 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
       midLocs[i] = Board::NULL_LOC;
     }
 
-    if (loc == C_EMPTY)return;
+    if (loc == PASS_LOC)return;
     Board::setStone(loc, C_BANLOC);
   }
   else ASSERT_UNREACHABLE;
