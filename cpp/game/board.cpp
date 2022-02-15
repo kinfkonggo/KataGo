@@ -1,3 +1,4 @@
+#include "board.h"
 #include "../game/board.h"
 
 /*
@@ -156,68 +157,11 @@ void Board::init(int xS, int yS)
 
   Location::getAdjacentOffsets(adj_offsets,x_size);
 
-  if (x_size == 10 && y_size == 10)
-  {
-    setStone(Location::getLoc(3, 0, x_size), C_BLACK);
-    setStone(Location::getLoc(6, 0, x_size), C_BLACK);
-    setStone(Location::getLoc(0, 3, x_size), C_BLACK);
-    setStone(Location::getLoc(9, 3, x_size), C_BLACK);
-    setStone(Location::getLoc(3, 9, x_size), C_WHITE);
-    setStone(Location::getLoc(6, 9, x_size), C_WHITE);
-    setStone(Location::getLoc(0, 6, x_size), C_WHITE);
-    setStone(Location::getLoc(9, 6, x_size), C_WHITE);
-  }
-  else if (x_size == 8 && y_size == 8)
-  {
-    setStone(Location::getLoc(2, 0, x_size), C_BLACK);
-    setStone(Location::getLoc(5, 0, x_size), C_BLACK);
-    setStone(Location::getLoc(0, 2, x_size), C_BLACK);
-    setStone(Location::getLoc(7, 2, x_size), C_BLACK);
-    setStone(Location::getLoc(2, 7, x_size), C_WHITE);
-    setStone(Location::getLoc(5, 7, x_size), C_WHITE);
-    setStone(Location::getLoc(0, 5, x_size), C_WHITE);
-    setStone(Location::getLoc(7, 5, x_size), C_WHITE);
-  }
-  else{
-    std::cout << "Boardsize must be 10x10";
-    return;
-  }
+  setStone(Location::getLoc(0, 0, x_size), C_BLACK);
+  setStone(Location::getLoc(x_size-1, y_size-1, x_size), C_BLACK);
+  setStone(Location::getLoc(x_size-1, 0, x_size), C_WHITE);
+  setStone(Location::getLoc(0, y_size-1, x_size), C_WHITE);
 
-}
-
-bool Board::isQueenMove(Loc locSrc, Loc locDst) const
-{
-  if (!isOnBoard(locSrc))return false;
-  if (!isOnBoard(locDst))return false;
-  if(colors[locSrc]==C_EMPTY)return false;
-  if(colors[locDst]!=C_EMPTY)return false;
-  if (locSrc == locDst)return false;
-
-  int x1 = Location::getX(locSrc, x_size);
-  int y1 = Location::getY(locSrc, x_size);
-  int x2 = Location::getX(locDst, x_size);
-  int y2 = Location::getY(locDst, x_size);
-  int dx = x2 - x1, dy = y2 - y1;
-
-  if (dx != 0 && dy != 0 && dx != dy && dx != -dy)
-    return false;
-
-  int d = std::max(std::max(dx, -dx), std::max(dy, -dy));
-
-  if (dx > 0)dx = 1;
-  else if (dx < 0)dx = -1;
-  if (dy > 0)dy = 1;
-  else if (dy < 0)dy = -1;
-
-  for (int i = 1; i < d; i++)
-  {
-    int x = x1 + i * dx;
-    int y = y1 + i * dy;
-    Loc loc = Location::getLoc(x, y, x_size);
-    if (colors[loc] != C_EMPTY)
-      return false;
-  }
-  return true;
 }
 
 void Board::initHash()
@@ -302,13 +246,23 @@ bool Board::isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
   }
   else if (stage == 1)//落子
   {
+    if (colors[loc] != C_EMPTY)
+      return false;
     Loc chosenMove = midLocs[0];
-    return isQueenMove(chosenMove, loc);
-  }
-  else if (stage == 2)//放障碍
-  {
-    Loc chosenMove = midLocs[1];
-    return isQueenMove(chosenMove, loc);
+    if (chosenMove == PASS_LOC)//如果是复制棋子，第一步视为pass
+    {
+      //检查周围一圈是否有自己棋子
+      for (int i = 0; i < 8; i++)
+      {
+        if (colors[loc + adj_offsets[i]] == pla)
+          return true;
+      }
+      return false;
+    }
+    else//跳子
+    {
+      return Location::distanceMax(chosenMove, loc, x_size) == 2;
+    }
   }
 
   ASSERT_UNREACHABLE;
@@ -404,29 +358,17 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
     midLocs[0] = loc;
     pos_hash ^= ZOBRIST_STAGELOC_HASH[loc][0];
   }
-  else if (stage == 1)//挪子
-  {
-    stage = 2;
-    pos_hash ^= ZOBRIST_STAGENUM_HASH[1];
-    pos_hash ^= ZOBRIST_STAGENUM_HASH[2];
-
-    midLocs[1] = loc;
-    pos_hash ^= ZOBRIST_STAGELOC_HASH[loc][1];
-
-    if (loc == C_EMPTY)return;
-    Loc chosenLoc = midLocs[0];
-    setStone(chosenLoc, C_EMPTY);
-    setStone(loc, nextPla);
-  }
-  else if (stage == 2)//放障碍
+  else if (stage == 1)//落子
   {
     nextPla = getOpp(nextPla);
     pos_hash ^= ZOBRIST_NEXTPLA_HASH[getOpp(nextPla)];
     pos_hash ^= ZOBRIST_NEXTPLA_HASH[nextPla];
 
     stage = 0;
-    pos_hash ^= ZOBRIST_STAGENUM_HASH[2];
+    pos_hash ^= ZOBRIST_STAGENUM_HASH[1];
     pos_hash ^= ZOBRIST_STAGENUM_HASH[0];
+
+    Loc chosenLoc = midLocs[0];
 
     for (int i = 0; i < STAGE_NUM_EACH_PLA - 1; i++)
     {
@@ -434,7 +376,7 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
       midLocs[i] = Board::NULL_LOC;
     }
 
-    if (loc == C_EMPTY)return;
+    if (loc == )return;
     Board::setStone(loc, C_BANLOC);
   }
   else ASSERT_UNREACHABLE;
@@ -453,6 +395,13 @@ int Location::distance(Loc loc0, Loc loc1, int x_size) {
   int dx = getX(loc1,x_size) - getX(loc0,x_size);
   int dy = (loc1-loc0-dx) / (x_size+1);
   return (dx >= 0 ? dx : -dx) + (dy >= 0 ? dy : -dy);
+}
+
+int Location::distanceMax(Loc loc0, Loc loc1, int x_size)
+{
+  int dx = getX(loc1,x_size) - getX(loc0,x_size);
+  int dy = (loc1-loc0-dx) / (x_size+1);
+  return std::max((dx >= 0 ? dx : -dx), (dy >= 0 ? dy : -dy));
 }
 
 int Location::euclideanDistanceSquared(Loc loc0, Loc loc1, int x_size) {

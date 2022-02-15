@@ -13,7 +13,7 @@
 
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 8
+#define COMPILE_MAX_BOARD_LEN 7
 #endif
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
@@ -47,7 +47,7 @@ static constexpr Color C_EMPTY = 0;
 static constexpr Color C_BLACK = 1;
 static constexpr Color C_WHITE = 2;
 static constexpr Color C_WALL = 3;
-static constexpr Color C_BANLOC = 4;
+static constexpr Color C_BANLOC = 4;//not used
 static constexpr int NUM_BOARD_COLORS = 5;
 
 static inline Color getOpp(Color c)
@@ -76,6 +76,7 @@ namespace Location
   bool isCentral(Loc loc, int x_size, int y_size);
   bool isNearCentral(Loc loc, int x_size, int y_size);
   int distance(Loc loc0, Loc loc1, int x_size);
+  int distanceMax(Loc loc0, Loc loc1, int x_size);
   int euclideanDistanceSquared(Loc loc0, Loc loc1, int x_size);
 
   std::string toString(Loc loc, int x_size, int y_size);
@@ -212,7 +213,7 @@ struct Board
 
   private:
   void init(int xS, int yS);
-  bool isQueenMove(Loc locSrc, Loc locDst) const;
+
 
   friend std::ostream& operator<<(std::ostream& out, const Board& board);
 
