@@ -1351,8 +1351,8 @@ FinishedGameData* Play::runGame(
 
   //Main play loop
   for(int i = 0; i<maxMovesPerGame; i++) {
-    if (i >= board.x_size*board.y_size*99)
-      board.printBoard(cout, board, Board::NULL_LOC, NULL);
+    //if (i >= board.x_size*board.y_size*99)
+    //  board.printBoard(cout, board, Board::NULL_LOC, NULL);
     if(hist.isGameFinished)
       break;
     if(shouldStop != nullptr && shouldStop())

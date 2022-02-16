@@ -622,7 +622,7 @@ struct GTPEngine {
           out << " visits " << data.numVisits;
           out << " utility " << utility;
           out << " winrate " << winrate;
-          out << " scoreMean " << drawrate;
+          out << " scoreMean " << lead;
           out << " scoreStdev " << data.scoreStdev;
           out << " scoreLead " << lead;
           out << " scoreSelfplay " << scoreMean;
