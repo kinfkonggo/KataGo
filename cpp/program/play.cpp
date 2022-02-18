@@ -11,14 +11,15 @@
 
 using namespace std;
 
-static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& gameRand)
+static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& gameRand,bool isForSelfplay)
 {
   static const bool EARLY = false;
   static const double EARLYFILLRATE1 = 0.1;
   static const double EARLYFILLRATE2 = 0.03;
   pla = C_WHITE;
 
-  if (gameRand.nextBool(0.2))//ºÚÆåÂÒÈö
+  double randomBlackRate = isForSelfplay ? 0.2 : 0.0;
+  if (gameRand.nextBool(randomBlackRate))//ºÚÆåÂÒÈö
   {
     double fillRate = gameRand.nextExponential() * 0.07;//Æ½¾ùÌî26¸ö×Ó
     if (EARLY)fillRate = gameRand.nextGaussianTruncated(2)*EARLYFILLRATE1/2+EARLYFILLRATE1+0.0001;
@@ -306,7 +307,7 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
         Loc loc = Location::getLoc(x, y, board.x_size);
         if (color!=C_EMPTY&&board.isLegal(loc, color, false))hist.makeBoardMoveAssumeLegal(board,loc, color,NULL);
       }
-    double fillRate = gameRand.nextDouble();
+    double fillRate = isForSelfplay ? gameRand.nextDouble(): 0.0;
     fillRate = fillRate * fillRate * fillRate * fillRate * fillRate;
     fillRate = fillRate * 15 / 361.0;
     if (EARLY)fillRate = gameRand.nextExponential()*EARLYFILLRATE2;
@@ -1655,7 +1656,7 @@ FinishedGameData* Play::runGame(
       }
     }
   };
-  initRandomGame(board, hist, pla, gameRand);
+  initRandomGame(board, hist, pla, gameRand,playSettings.forSelfPlay);
   if(playSettings.initGamesWithPolicy && otherGameProps.allowPolicyInit) {
     double proportionOfBoardArea = otherGameProps.isSgfPos ? playSettings.startPosesPolicyInitAreaProp : playSettings.policyInitAreaProp;
     if(proportionOfBoardArea > 0) {
