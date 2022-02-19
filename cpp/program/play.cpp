@@ -21,7 +21,7 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
   double randomBlackRate = isForSelfplay ? 0.2 : 0.0;
   if (gameRand.nextBool(randomBlackRate))//黑棋乱撒
   {
-    double fillRate = gameRand.nextExponential() * 0.07;//平均填26个子
+    double fillRate = (gameRand.nextExponential()+gameRand.nextExponential()+gameRand.nextExponential()) * 0.023;//平均填26个子
     if (EARLY)fillRate = gameRand.nextGaussianTruncated(2)*EARLYFILLRATE1/2+EARLYFILLRATE1+0.0001;
     if (fillRate > 0.9)fillRate = 0.9;
     for (int y = 0; y < board.y_size; y++)
@@ -308,7 +308,7 @@ static void initRandomGame(Board& board, BoardHistory& hist, Player& pla, Rand& 
         if (color!=C_EMPTY&&board.isLegal(loc, color, false))hist.makeBoardMoveAssumeLegal(board,loc, color,NULL);
       }
     double fillRate = isForSelfplay ? gameRand.nextDouble(): 0.0;
-    fillRate = fillRate * fillRate * fillRate * fillRate * fillRate;
+    fillRate = pow(fillRate,20.0);
     fillRate = fillRate * 15 / 361.0;
     if (EARLY)fillRate = gameRand.nextExponential()*EARLYFILLRATE2;
     if (fillRate > 0.9)fillRate = 0.9;
