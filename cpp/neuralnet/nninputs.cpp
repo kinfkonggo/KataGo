@@ -676,38 +676,14 @@ void NNInputs::fillRowV7(
     }
   }
 
-  
-  //Hide history from the net if a pass would end things and we're behaving as if a pass won't.
-  //Or if the game is in fact over right now!
-  bool hideHistory = true;
-  //  hist.isGameFinished;
 
-  //Features 9,10,11,12,13
-  if(!hideHistory) {
-    const vector<Move>& moveHistory = hist.moveHistory;
-    size_t moveHistoryLen = moveHistory.size();
-    int numTurnsThisPhase = moveHistoryLen ;
+  rowGlobal[1] = hist.rules.taxRule == Rules::TAX_ALL ? 1.0 : 0.0;
 
-    if(numTurnsThisPhase >= 1 && moveHistory[moveHistoryLen-1].pla == opp) {
-      Loc prev1Loc = moveHistory[moveHistoryLen-1].loc;
-      if(prev1Loc == Board::PASS_LOC)
-        rowGlobal[0] = 1.0;
-      else if(prev1Loc != Board::NULL_LOC) {
-        int pos = NNPos::locToPos(prev1Loc,xSize,nnXLen,nnYLen);
-        setRowBin(rowBin,pos,9, 1.0f, posStride, featureStride);
-      }
-      if(numTurnsThisPhase >= 2 && moveHistory[moveHistoryLen-2].pla == pla) {
-        Loc prev2Loc = moveHistory[moveHistoryLen-2].loc;
-        if(prev2Loc == Board::PASS_LOC)
-          rowGlobal[1] = 1.0;
-        else if(prev2Loc != Board::NULL_LOC) {
-          int pos = NNPos::locToPos(prev2Loc,xSize,nnXLen,nnYLen);
-          setRowBin(rowBin,pos,10, 1.0f, posStride, featureStride);
-        }
-      }
-    }
-  }
-
+  double isOdd = (board.x_size * board.y_size) % 2;
+  double komi = hist.rules.komi;
+  double komiint = 2 * floor((komi+isOdd) / 2) + 1-isOdd;
+  if (nextPlayer == C_WHITE)komiint = -komiint;
+  rowGlobal[2] = komiint * 0.2;
 
   //Global features.
   //The first 2 of them were set already above to flag which of the past 5 moves were passes.

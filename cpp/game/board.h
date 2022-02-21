@@ -34,14 +34,6 @@ static constexpr Color C_WALL = 3;
 static constexpr int NUM_BOARD_COLORS = 4;
 
 
-typedef char MovePriority;
-static const MovePriority MP_NORMAL = 126;
-static const MovePriority MP_FIVE = 1;
-static const MovePriority MP_OPPOFOUR = 2;
-static const MovePriority MP_MYLIFEFOUR = 3;
-static const MovePriority MP_VCF = 4;
-static const MovePriority MP_USELESS = 127;
-static const MovePriority MP_ILLEGAL = -1;
 
 
 static inline Color getOpp(Color c)
@@ -139,12 +131,6 @@ struct Board
 
   bool isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const;
 
-  MovePriority getMovePriority(Player pla, Loc loc, bool isSixWin, bool isPassForbidded)const;
-  MovePriority getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const;
-private:
-  MovePriority getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, bool isSixWin, int adjID)const;
-  int connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isSixWin, bool& isLife)const;
-public:
 
   bool isOnBoard(Loc loc) const;
   //Is this board empty?
@@ -158,6 +144,7 @@ public:
 
   //Sets the specified stone if possible. Returns true usually, returns false location or color were out of range.
   bool setStone(Loc loc, Color color);
+  void setStoneAssumeLegal(Loc loc, Color color);
 
   //Attempts to play the specified move. Returns true if successful, returns false if the move was illegal.
   bool playMove(Loc loc, Player pla, bool isMultiStoneSuicideLegal);
@@ -171,6 +158,7 @@ public:
   Hash128 getPosHashAfterMove(Loc loc, Player pla) const;
 
 
+  int countScoreWhite(Color emptyOwner) const;
   //Run some basic sanity checks on the board state, throws an exception if not consistent, for testing/debugging
   void checkConsistency() const;
   //For the moment, only used in testing since it does extra consistency checks.

@@ -138,6 +138,12 @@ void Board::init(int xS, int yS)
 
   pos_hash = ZOBRIST_SIZE_X_HASH[x_size] ^ ZOBRIST_SIZE_Y_HASH[y_size];
   Location::getAdjacentOffsets(adj_offsets,x_size);
+
+  int halfX = x_size / 2, halfY = y_size / 2;
+  setStone(Location::getLoc(halfX, halfY, x_size), C_WHITE);
+  setStone(Location::getLoc(halfX-1, halfY-1, x_size), C_WHITE);
+  setStone(Location::getLoc(halfX-1, halfY, x_size), C_BLACK);
+  setStone(Location::getLoc(halfX, halfY-1, x_size), C_BLACK);
 }
 
 void Board::initHash()
@@ -194,92 +200,39 @@ bool Board::isOnBoard(Loc loc) const {
 bool Board::isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
 {
   (void)isMultiStoneSuicideLegal;
-  if(pla != P_BLACK && pla != P_WHITE)
+  if (pla != P_BLACK && pla != P_WHITE)
     return false;
-  return loc == PASS_LOC || (
-    loc >= 0 &&
-    loc < MAX_ARR_SIZE &&
-    (colors[loc] == C_EMPTY)
-  );
-}
-
-
-MovePriority Board::getMovePriority(Player pla, Loc loc, bool isSixWin, bool isPassForbidded)const
-{
-
-  if (loc == PASS_LOC)return isPassForbidded ? MP_ILLEGAL : MP_NORMAL;
-  if (!isLegal(loc, pla, false))return MP_ILLEGAL;
-  MovePriority MP = getMovePriorityAssumeLegal(pla, loc, isSixWin);
-  return MP;
-}
-MovePriority Board::getMovePriorityAssumeLegal(Player pla, Loc loc, bool isSixWin)const
-{
-  if (loc == PASS_LOC)return MP_NORMAL;
-  MovePriority MP = MP_NORMAL;
-  for (int i = 0; i < 4; i++)
+  if (loc!=PASS_LOC&&colors[loc] != C_EMPTY)return false;
+  if (!(loc >= 0 && loc < MAX_ARR_SIZE))return false;
+  if (loc != PASS_LOC)
   {
-    MovePriority tmpMP = getMovePriorityOneDirectionAssumeLegal(pla, loc, isSixWin, i);
-    if (tmpMP < MP)MP = tmpMP;
-  }
-  return MP;
-}
-MovePriority Board::getMovePriorityOneDirectionAssumeLegal(Player pla, Loc loc, bool isSixWin, int adjID) const
-{
-  assert(adjID >= 0 && adjID < 4);
-  Player opp = getOpp(pla);
-  short adj = adj_offsets[2*adjID];
-  bool isMyLife1, isMyLife2, isOppLife1, isOppLife2;
-  int myConNum = connectionLengthOneDirection(pla, loc, adj, isSixWin, isMyLife1) + connectionLengthOneDirection(pla, loc, -adj, isSixWin, isMyLife2) + 1;
-  int oppConNum = connectionLengthOneDirection(opp, loc, adj, isSixWin, isOppLife1) + connectionLengthOneDirection(opp, loc, -adj, isSixWin, isOppLife2) + 1;
-  if (myConNum == 5 || (myConNum > 5 && isSixWin))return MP_FIVE;
-#if RULE==RENJU
-  if ((oppConNum == 5 && opp == P_BLACK) || (oppConNum >= 5 && opp == P_WHITE))return MP_OPPOFOUR;
-#else
-  if (oppConNum == 5 || (oppConNum > 5 && isSixWin))return MP_OPPOFOUR;
-#endif //  RENJU
-
-
-  if (myConNum == 4 && isMyLife1&&isMyLife2)return MP_MYLIFEFOUR;
-  return MP_NORMAL;
-
-}
-
-int Board::connectionLengthOneDirection(Player pla, Loc loc, short adj, bool isSixWin, bool& isLife)const
-{
-  Loc tmploc = loc;
-  int conNum = 0;
-  isLife = false;
-  while (1)
-  {
-    tmploc += adj;
-    if (!isOnBoard(tmploc))break;
-    if (colors[tmploc] == pla)conNum++;
-    else if (colors[tmploc] == C_EMPTY)
+    for (int adj = 0; adj < 8; adj++)
     {
-      isLife = true;
-      if (!isSixWin)
-      {
+      Loc l = loc + adj_offsets[adj];
+      if (!isOnBoard(l)||colors[l]!=getOpp(pla))continue;
 
-        tmploc += adj;
-        if (isOnBoard(tmploc) && colors[tmploc] == pla)isLife = false;
-      }
-#if RULE==RENJU
-      if (pla == C_BLACK)
+      while (1)
       {
-
-        tmploc += adj;
-        if (isOnBoard(tmploc) && colors[tmploc] == C_BLACK)isLife = false;
+        l+=adj_offsets[adj];
+        if (!isOnBoard(l))break;
+        if (colors[l] == pla)return true;
+        if (colors[l] != getOpp(pla))break;
       }
-#endif
-      break;
     }
-    else break;
+    return false;
   }
-  return conNum;
-
-
-
+  else //Pass
+  {
+    for(int x=0;x<x_size;x++)
+      for (int y = 0; y < y_size; y++)
+      {
+        if (isLegal(Location::getLoc(x, y, x_size), pla, true))return false;
+      }
+    return true;
+  }
+  
 }
+
 bool Board::isEmpty() const {
   for(int y = 0; y < y_size; y++) {
     for(int x = 0; x < x_size; x++) {
@@ -321,19 +274,19 @@ bool Board::setStone(Loc loc, Color color)
     return false;
   if(color != C_BLACK && color != C_WHITE && color != C_EMPTY)
     return false;
-
-  if(colors[loc] == color)
-  {}
-  else if(colors[loc] == C_EMPTY)
-    playMoveAssumeLegal(loc,color);
-  else if(color == C_EMPTY)
-    removeSingleStone(loc);
-  else {
-    removeSingleStone(loc);
-    playMoveAssumeLegal(loc,color);
-  }
+  
+  setStoneAssumeLegal(loc, color);
 
   return true;
+}
+
+void Board::setStoneAssumeLegal(Loc loc, Color color)
+{
+
+  Color oldcolor = colors[loc];
+  colors[loc] = color;
+  pos_hash ^= ZOBRIST_BOARD_HASH[loc][oldcolor];
+  pos_hash ^= ZOBRIST_BOARD_HASH[loc][color];
 }
 
 
@@ -368,10 +321,40 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
   {
     return;
   }
+  setStone(loc, pla);
+  Player opp = getOpp(pla);
 
-
-  colors[loc] = pla;
-  pos_hash ^= ZOBRIST_BOARD_HASH[loc][pla];
+  for (int adj = 0; adj < 8; adj++)
+  {
+    Loc l = loc + adj_offsets[adj];
+    if (!isOnBoard(l) || colors[l] != getOpp(pla))continue;
+    bool needChange = false;
+    while (1)
+    {
+      l += adj_offsets[adj];
+      if (!isOnBoard(l))break;
+      if (colors[l] == pla)
+      {
+        needChange = true;
+        break;
+      }
+      if (colors[l] != getOpp(pla))break;
+    }
+    if (needChange)
+    {
+      Loc l = loc ;
+      while (1)
+      {
+        l += adj_offsets[adj];
+        assert(isOnBoard(l) && (colors[l] == pla || colors[l] == opp));
+        if (colors[l] == pla)
+        {
+          break;
+        }
+        else setStone(l, pla);
+      }
+    }
+  }
 }
 
 //Remove a single stone, even a stone part of a larger group.
@@ -398,6 +381,26 @@ int Location::euclideanDistanceSquared(Loc loc0, Loc loc1, int x_size) {
 
 //TACTICAL STUFF--------------------------------------------------------------------
 
+
+int Board::countScoreWhite(Color emptyOwner) const
+{
+  int bnum = 0, wnum = 0, empnum = 0;
+  for(int y = 0; y < y_size; y++) {
+    for(int x = 0; x < x_size; x++) {
+      Loc loc = Location::getLoc(x,y,x_size);
+      if(colors[loc] == C_BLACK )
+        bnum += 1;
+      else if(colors[loc] == C_WHITE )
+        wnum += 1;
+      else
+        empnum += 1;
+    }
+  }
+  if (emptyOwner == C_BLACK)bnum += empnum;
+  else if (emptyOwner == C_WHITE)wnum += empnum;
+  
+  return wnum-bnum;
+}
 
 void Board::checkConsistency() const {
   const string errLabel = string("Board::checkConsistency(): ");
