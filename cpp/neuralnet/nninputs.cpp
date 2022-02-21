@@ -689,6 +689,7 @@ void NNInputs::fillRowV7(
   //The first 2 of them were set already above to flag which of the past 5 moves were passes.
 
   //Tax
+  /*
   if(hist.rules.taxRule == Rules::TAX_NONE) {}
   else if(hist.rules.taxRule == Rules::TAX_SEKI)
     rowGlobal[15] = 1.0f;
@@ -697,6 +698,7 @@ void NNInputs::fillRowV7(
   }
   else
     ASSERT_UNREACHABLE;
+    */
 
 
 
