@@ -11,8 +11,8 @@ Hash128 VCFsolver::zob_board[2][sz][sz];
 VCFHashTable VCFsolver::hashtable(20, 2);
 uint64_t VCFsolver::MAXNODE = 50000;
 #else
-VCFHashTable VCFsolver::hashtable(27, 21);
-uint64_t VCFsolver::MAXNODE = 100000;
+VCFHashTable VCFsolver::hashtable(24, 18);
+uint64_t VCFsolver::MAXNODE = 10000;
 #endif
 
 
@@ -315,7 +315,7 @@ int32_t VCFsolver::setBoard(const Board& b, uint8_t pla)
   xsize = b.x_size;
   ysize = b.y_size;
 #if RULE==2
-  forbiddenSide = (pla == C_BLACK) ? C_MY : C_OPP;//如果自己是黑棋则为1，否则为2
+  forbiddenSide = (pla == C_BLACK) ? C_MY : C_OPP;//脠莽鹿没脳脭录潞脢脟潞脷脝氓脭貌脦陋1拢卢路帽脭貌脦陋2
 #endif
   movenum = 0;
   bestmovenum = 10000;
@@ -455,11 +455,11 @@ int32_t VCFsolver::setBoard(const Board& b, uint8_t pla)
           else
           {
             auto anotherOppFourPos = findEmptyPos(t, y, x);
-            if(anotherOppFourPos!= oppFourPos)result = -10000;//对手双四了，但不能直接return，因为自己有可能直接连五
+            if(anotherOppFourPos!= oppFourPos)result = -10000;//露脭脢脰脣芦脣脛脕脣拢卢碌芦虏禄脛脺脰卤陆脫return拢卢脪貌脦陋脳脭录潞脫脨驴脡脛脺脰卤陆脫脕卢脦氓
           }
           continue;
         }
-        if (my == 3 && opp%6 == 0)//眠三
+        if (my == 3 && opp%6 == 0)//脙脽脠媒
         {
           uint64_t locs= findEmptyPos(t, y, x);
           uint64_t threeEntry = (uint64_t(uint64_t(t)*sz*sz + uint64_t(y) * sz + x) << 32) | locs;
@@ -491,22 +491,22 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
   {
 
 #if RULE==2
-    //不需要考虑连五解禁，因为提前一步已经判断出来胜负了
-    //检查双四的方法：如果发现两个连五点，活四当且仅当两个点的距离为[0,+-5],[+-5,0],[+-5,+-5]
-    //活四的下一手一定可以胜，因为连五没禁手。当然，代码层面已经排除了对手提前一步冲四
-    //如果发现更多连五点，一定是双四禁手
+    //虏禄脨猫脪陋驴录脗脟脕卢脦氓陆芒陆没拢卢脪貌脦陋脤谩脟掳脪禄虏陆脪脩戮颅脜脨露脧鲁枚脌麓脢陇赂潞脕脣
+    //录矛虏茅脣芦脣脛碌脛路陆路篓拢潞脠莽鹿没路垄脧脰脕陆赂枚脕卢脦氓碌茫拢卢禄卯脣脛碌卤脟脪陆枚碌卤脕陆赂枚碌茫碌脛戮脿脌毛脦陋[0,+-5],[+-5,0],[+-5,+-5]
+    //禄卯脣脛碌脛脧脗脪禄脢脰脪禄露篓驴脡脪脭脢陇拢卢脪貌脦陋脕卢脦氓脙禄陆没脢脰隆拢碌卤脠禄拢卢麓煤脗毛虏茫脙忙脪脩戮颅脜脜鲁媒脕脣露脭脢脰脤谩脟掳脪禄虏陆鲁氓脣脛
+    //脠莽鹿没路垄脧脰赂眉露脿脕卢脦氓碌茫拢卢脪禄露篓脢脟脣芦脣脛陆没脢脰
     bool lifeFour = false;
     bool isForbidden = false;
 
-    //活三判据：在同一条线上同时产生连续两个或者三个三。之后对交点进行判断是否禁手，如果一条线产生的1或2个活四点都不是禁手说明是活三
-    int8_t threeCountDir[4] = {0, 0, 0, 0};//每个方向的新3个数,大于等于2说明可能有活三
-   // int16_t maybeLifeFourPoses[4][3] ;//所有可能的下一手的活四点
-    //第一个维度是4个方向，第二个维度的第一个数是活四点个数1或2，第二，三个是活四点
+    //禄卯脠媒脜脨戮脻拢潞脭脷脥卢脪禄脤玫脧脽脡脧脥卢脢卤虏煤脡煤脕卢脨酶脕陆赂枚禄貌脮脽脠媒赂枚脠媒隆拢脰庐潞贸露脭陆禄碌茫陆酶脨脨脜脨露脧脢脟路帽陆没脢脰拢卢脠莽鹿没脪禄脤玫脧脽虏煤脡煤碌脛1禄貌2赂枚禄卯脣脛碌茫露录虏禄脢脟陆没脢脰脣碌脙梅脢脟禄卯脠媒
+    int8_t threeCountDir[4] = {0, 0, 0, 0};//脙驴赂枚路陆脧貌碌脛脨脗3赂枚脢媒,麓贸脫脷碌脠脫脷2脣碌脙梅驴脡脛脺脫脨禄卯脠媒
+   // int16_t maybeLifeFourPoses[4][3] ;//脣霉脫脨驴脡脛脺碌脛脧脗脪禄脢脰碌脛禄卯脣脛碌茫
+    //碌脷脪禄赂枚脦卢露脠脢脟4赂枚路陆脧貌拢卢碌脷露镁赂枚脦卢露脠碌脛碌脷脪禄赂枚脢媒脢脟禄卯脣脛碌茫赂枚脢媒1禄貌2拢卢碌脷露镁拢卢脠媒赂枚脢脟禄卯脣脛碌茫
 
 #endif
     movenum++;
-    int32_t fourPos =-1;//这一步棋形成的冲四的防守点
-    bool winThisMove = false;//无禁手双四
+    int32_t fourPos =-1;//脮芒脪禄虏陆脝氓脨脦鲁脡碌脛鲁氓脣脛碌脛路脌脢脴碌茫
+    bool winThisMove = false;//脦脼陆没脢脰脣芦脣脛
   //  cout << "s\n";
     auto addandcheck = [&](int t, int y, int x)
     {
@@ -517,7 +517,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
 
       if (isPlaForbidden)
       {
-        if (msc > 5 && msc % 6 == 5)isForbidden = true;//长连
+        if (msc > 5 && msc % 6 == 5)isForbidden = true;//鲁陇脕卢
       }
 #endif
       if (oppstonecount[t][y][x]%6 != 0|| msc <= 2 || msc>5)return;
@@ -548,7 +548,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
           auto anotherFourPos = findEmptyPos(t, y, x);
           if (anotherFourPos != fourPos)
           {
-            //检查是否是活四
+            //录矛虏茅脢脟路帽脢脟禄卯脣脛
 #if RULE==2
             if (isPlaForbidden)
             {
@@ -565,7 +565,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
             if (!isForbidden)
 #endif
             {
-                winThisMove = true;//这个是无禁的双四
+                winThisMove = true;//脮芒赂枚脢脟脦脼陆没碌脛脣芦脣脛
             }
           }
         }
@@ -621,7 +621,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
 
 #if RULE==2
     //todo renju:check if is forbidden
-    //只检查33,因为 44 长连都检查了
+    //脰禄录矛虏茅33,脪貌脦陋 44 鲁陇脕卢露录录矛虏茅脕脣
     if (isPlaForbidden&&(!isForbidden))
     {
       int maybeLife3 = 0;
@@ -644,7 +644,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
 #endif
     if (winThisMove)
     {
-      result = 10000 - movenum - 1;//双四或活四
+      result = 10000 - movenum - 1;//脣芦脣脛禄貌禄卯脣脛
       if (bestmovenum > movenum + 1)
       {
         bestmovenum = movenum + 1;
@@ -655,7 +655,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
       }
     }
     
-    if (fourPos==-1)//这手棋不是冲四,只可能是暂时挡对手冲四才可能到这里
+    if (fourPos==-1)//脮芒脢脰脝氓虏禄脢脟鲁氓脣脛,脰禄驴脡脛脺脢脟脭脻脢卤碌虏露脭脢脰鲁氓脣脛虏脜驴脡脛脺碌陆脮芒脌茂
     {
       if (oppFourPos == -1)
       {
@@ -672,23 +672,23 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
   else if (pla == C_OPP)
   {
 #if RULE==2
-  //不需要考虑连五解禁，因为提前一步已经判断出来胜负了
-  //检查双四的方法：如果发现两个连五点，活四当且仅当两个点的距离为[0,+-5],[+-5,0],[+-5,+-5]
-  //活四的下一手一定可以胜，因为连五没禁手。当然，代码层面已经排除了对手提前一步冲四
-  //如果发现更多连五点，一定是双四禁手
+  //虏禄脨猫脪陋驴录脗脟脕卢脦氓陆芒陆没拢卢脪貌脦陋脤谩脟掳脪禄虏陆脪脩戮颅脜脨露脧鲁枚脌麓脢陇赂潞脕脣
+  //录矛虏茅脣芦脣脛碌脛路陆路篓拢潞脠莽鹿没路垄脧脰脕陆赂枚脕卢脦氓碌茫拢卢禄卯脣脛碌卤脟脪陆枚碌卤脕陆赂枚碌茫碌脛戮脿脌毛脦陋[0,+-5],[+-5,0],[+-5,+-5]
+  //禄卯脣脛碌脛脧脗脪禄脢脰脪禄露篓驴脡脪脭脢陇拢卢脪貌脦陋脕卢脦氓脙禄陆没脢脰隆拢碌卤脠禄拢卢麓煤脗毛虏茫脙忙脪脩戮颅脜脜鲁媒脕脣露脭脢脰脤谩脟掳脪禄虏陆鲁氓脣脛
+  //脠莽鹿没路垄脧脰赂眉露脿脕卢脦氓碌茫拢卢脪禄露篓脢脟脣芦脣脛陆没脢脰
   bool lifeFour = false;
   bool isForbidden = false;
 
-  //活三判据：在同一条线上同时产生连续两个或者三个三。之后对交点进行判断是否禁手，如果一条线产生的1或2个活四点都不是禁手说明是活三
-  int8_t threeCountDir[4] = { 0, 0, 0, 0 };//每个方向的新3个数,大于等于2说明可能有活三
- // int16_t maybeLifeFourPoses[4][3] ;//所有可能的下一手的活四点
-  //第一个维度是4个方向，第二个维度的第一个数是活四点个数1或2，第二，三个是活四点
+  //禄卯脠媒脜脨戮脻拢潞脭脷脥卢脪禄脤玫脧脽脡脧脥卢脢卤虏煤脡煤脕卢脨酶脕陆赂枚禄貌脮脽脠媒赂枚脠媒隆拢脰庐潞贸露脭陆禄碌茫陆酶脨脨脜脨露脧脢脟路帽陆没脢脰拢卢脠莽鹿没脪禄脤玫脧脽虏煤脡煤碌脛1禄貌2赂枚禄卯脣脛碌茫露录虏禄脢脟陆没脢脰脣碌脙梅脢脟禄卯脠媒
+  int8_t threeCountDir[4] = { 0, 0, 0, 0 };//脙驴赂枚路陆脧貌碌脛脨脗3赂枚脢媒,麓贸脫脷碌脠脫脷2脣碌脙梅驴脡脛脺脫脨禄卯脠媒
+ // int16_t maybeLifeFourPoses[4][3] ;//脣霉脫脨驴脡脛脺碌脛脧脗脪禄脢脰碌脛禄卯脣脛碌茫
+  //碌脷脪禄赂枚脦卢露脠脢脟4赂枚路陆脧貌拢卢碌脷露镁赂枚脦卢露脠碌脛碌脷脪禄赂枚脢媒脢脟禄卯脣脛碌茫赂枚脢媒1禄貌2拢卢碌脷露镁拢卢脠媒赂枚脢脟禄卯脣脛碌茫
 
 #endif
     //todo renju:check if is forbidden
-    oppFourPos = -1;//对手冲四直接记录在oppFourPos里
+    oppFourPos = -1;//露脭脢脰鲁氓脣脛脰卤陆脫录脟脗录脭脷oppFourPos脌茂
 
-    bool winThisMove = false;//无禁手双四
+    bool winThisMove = false;//脦脼陆没脢脰脣芦脣脛
 
     auto addandcheck = [&](int t, int y, int x)
     {
@@ -698,10 +698,10 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
 
       if (isPlaForbidden)
       {
-        if (osc > 5 && osc % 6 == 5)isForbidden = true;//长连
+        if (osc > 5 && osc % 6 == 5)isForbidden = true;//鲁陇脕卢
       }
 #endif
-      if (mystonecount[t][y][x]%6 != 0 || osc < 3 || osc >5)return;//无威胁
+      if (mystonecount[t][y][x]%6 != 0 || osc < 3 || osc >5)return;//脦脼脥镁脨虏
       if (osc == 3)
       {
 #if RULE==2
@@ -720,7 +720,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
           auto anotherFourPos = findEmptyPos(t, y, x);
           if (anotherFourPos != oppFourPos)
           {
-            //检查是否是活四
+            //录矛虏茅脢脟路帽脢脟禄卯脣脛
 #if RULE==2
             if (isPlaForbidden)
             {
@@ -737,7 +737,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
             if (!isForbidden)
 #endif
             {
-              winThisMove = true;//这个是无禁的双四
+              winThisMove = true;//脮芒赂枚脢脟脦脼陆没碌脛脣芦脣脛
             }
 
 
@@ -793,7 +793,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
 
 #if RULE==2
     //todo renju:check if is forbidden
-    //只检查33,因为 44 长连都检查了
+    //脰禄录矛虏茅33,脪貌脦陋 44 鲁陇脕卢露录录矛虏茅脕脣
     if (isPlaForbidden && (!isForbidden))
     {
       int maybeLife3 = 0;
@@ -820,9 +820,9 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
     }
 
 #if RULE==2
-    if (isForbidden)//抓禁成功
+    if (isForbidden)//脳楼陆没鲁脡鹿娄
     {
-      result = 10000 - movenum - 1;//双四或活四
+      result = 10000 - movenum - 1;//脣芦脣脛禄貌禄卯脣脛
       if (bestmovenum > movenum + 1)
       {
         bestmovenum = movenum + 1;
@@ -840,7 +840,7 @@ int32_t VCFsolver::play(int x, int y, uint8_t pla, bool updateHash)
 void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bool updateHash)
 {
   threeCount = threeCount1;
-  oppFourPos = oppFourPos1;//这两个没必要传进来，可以原地修改，但是怕忘
+  oppFourPos = oppFourPos1;//脮芒脕陆赂枚脙禄卤脴脪陋麓芦陆酶脌麓拢卢驴脡脪脭脭颅碌脴脨脼赂脛拢卢碌芦脢脟脜脗脥眉
   //result = 0;
   auto pla = board[y][x];
   board[y][x] = 0;
@@ -853,7 +853,7 @@ void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bo
 #endif
   if (updateHash) boardhash ^= zob_board[pla - 1][y][x];
 
-  //这地方代码复用很差劲，如果要改，需要改一大堆
+  //脮芒碌脴路陆麓煤脗毛赂麓脫脙潞脺虏卯戮垄拢卢脠莽鹿没脪陋赂脛拢卢脨猫脪陋赂脛脪禄麓贸露脩
   if (pla == C_MY)
   {
     movenum--;
@@ -948,7 +948,7 @@ void VCFsolver::undo(int x, int y, int64_t oppFourPos1, uint64_t threeCount1, bo
 
 int32_t VCFsolver::solveIter(bool isRoot)
 {
-  //查hash表在落子之后计算stonecount之前，不在这里
+  //虏茅hash卤铆脭脷脗盲脳脫脰庐潞贸录脝脣茫stonecount脰庐脟掳拢卢虏禄脭脷脮芒脌茂
   nodenum++;
   if (nodenum>= MAXNODE)
   {
@@ -956,19 +956,19 @@ int32_t VCFsolver::solveIter(bool isRoot)
   }
 
   int32_t maxMovenum = bestmovenum - 1;
-  if (movenum + 2 > maxMovenum)return -(movenum + 2);//这一手肯定无法连五，那至少movenum+2手
+  if (movenum + 2 > maxMovenum)return -(movenum + 2);//脮芒脪禄脢脰驴脧露篓脦脼路篓脕卢脦氓拢卢脛脟脰脕脡脵movenum+2脢脰
 
-  //先备份
+  //脧脠卤赂路脻
   auto oppFourPos_old = oppFourPos;
   auto threeCount_old = threeCount;
 
-  //先看看对手上一步是不是冲四
+  //脧脠驴麓驴麓露脭脢脰脡脧脪禄虏陆脢脟虏禄脢脟鲁氓脣脛
   if (oppFourPos != -1)
   {
     int solutionPos = -1;
     int x = oppFourPos % sz, y = oppFourPos / sz;
     int32_t result=play(x,y, C_MY,true);
-    if (resultNotSure(result) )//说明自己的防守也是冲四,可以继续计算。不是双四，所以至少还需要movenum+2手
+    if (resultNotSure(result) )//脣碌脙梅脳脭录潞碌脛路脌脢脴脪虏脢脟鲁氓脣脛,驴脡脪脭录脤脨酶录脝脣茫隆拢虏禄脢脟脣芦脣脛拢卢脣霉脪脭脰脕脡脵禄鹿脨猫脪陋movenum+2脢脰
     {
         auto defendPos = findDefendPosOfFive(y, x);
         result = play(defendPos % sz, defendPos / sz, C_OPP, true);
@@ -977,19 +977,19 @@ int32_t VCFsolver::solveIter(bool isRoot)
     }
     undo(x, y, oppFourPos_old, threeCount_old, true);
     //if (resultNotSure(result))cout << "bug: no result";
-    if (result >0)//vcf成功
+    if (result >0)//vcf鲁脡鹿娄
     {
       solutionPos = oppFourPos;
       if (isRoot)rootresultpos = oppFourPos;
     }
 
-    //存hash表
+    //麓忙hash卤铆
     hashtable.set(boardhash, (int64_t(solutionPos) << 32) | int64_t(result));
 
     return result;
   }
 
-  //否则是对手没有冲四的情况
+  //路帽脭貌脢脟露脭脢脰脙禄脫脨鲁氓脣脛碌脛脟茅驴枚
   int solutionPos = -1;
   int bestresult = -10000;
   for (int threeID = threeCount - 1; threeID >= 0; threeID--)
@@ -1003,7 +1003,7 @@ int32_t VCFsolver::solveIter(bool isRoot)
     int y = threeEntry / sz;
     int x = threeEntry % sz;
 
-    if (oppstonecount[t][y][x]%6 != 0 || mystonecount[t][y][x] != 3)continue;//这个眠三已经失效
+    if (oppstonecount[t][y][x]%6 != 0 || mystonecount[t][y][x] != 3)continue;//脮芒赂枚脙脽脠媒脪脩戮颅脢搂脨搂
 
     auto playandcalculate = [&](uint16_t posMy, uint16_t posOpp)
     {
@@ -1011,7 +1011,7 @@ int32_t VCFsolver::solveIter(bool isRoot)
       auto hashchange = zob_board[0][y1][x1] ^ zob_board[1][y2][x2];
       boardhash ^= hashchange;
 
-      //无禁在这里查hash表，有禁在落子后查，为了避免下禁手
+      //脦脼陆没脭脷脮芒脌茂虏茅hash卤铆拢卢脫脨陆没脭脷脗盲脳脫潞贸虏茅拢卢脦陋脕脣卤脺脙芒脧脗陆没脢脰
 #if RULE!=2
       auto resultAndLoc = hashtable.get(boardhash);
       int32_t result = resultAndLoc & 0xFFFFFFFF;
@@ -1053,9 +1053,9 @@ int32_t VCFsolver::solveIter(bool isRoot)
     };
 
     playandcalculate(pos1, pos2);
-    if (bestresult >= 10000 - movenum - 2)break;//如果已经发现双四，则无需考虑其他走法
+    if (bestresult >= 10000 - movenum - 2)break;//脠莽鹿没脪脩戮颅路垄脧脰脣芦脣脛拢卢脭貌脦脼脨猫驴录脗脟脝盲脣没脳脽路篓
     playandcalculate(pos2, pos1);
-    if (bestresult >= 10000 - movenum - 2)break;//如果已经发现双四，则无需考虑其他走法
+    if (bestresult >= 10000 - movenum - 2)break;//脠莽鹿没脪脩戮颅路垄脧脰脣芦脣脛拢卢脭貌脦脼脨猫驴录脗脟脝盲脣没脳脽路篓
   }
   hashtable.set(boardhash, (int64_t(solutionPos) << 32) | int64_t(bestresult));
   if (isRoot)rootresultpos = solutionPos;
@@ -1065,7 +1065,7 @@ int32_t VCFsolver::solveIter(bool isRoot)
 }
 
 #if RULE==2
-bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
+bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//录矛虏茅陆没脢脰
 {
   if (board[y][x] != 0)return false;
   auto p = forbiddenSide;
@@ -1079,16 +1079,16 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
   bool five = false;
   bool lifeFour = false;
 
-    //活三判据：在同一条线上同时产生连续两个或者三个三。之后对交点进行判断是否禁手，如果一条线产生的1或2个活四点都不是禁手说明是活三
-    int8_t threeCountDir[4] = { 0, 0, 0, 0 };//每个方向的新3个数,大于等于2说明可能有活三
+    //禄卯脠媒脜脨戮脻拢潞脭脷脥卢脪禄脤玫脧脽脡脧脥卢脢卤虏煤脡煤脕卢脨酶脕陆赂枚禄貌脮脽脠媒赂枚脠媒隆拢脰庐潞贸露脭陆禄碌茫陆酶脨脨脜脨露脧脢脟路帽陆没脢脰拢卢脠莽鹿没脪禄脤玫脧脽虏煤脡煤碌脛1禄貌2赂枚禄卯脣脛碌茫露录虏禄脢脟陆没脢脰脣碌脙梅脢脟禄卯脠媒
+    int8_t threeCountDir[4] = { 0, 0, 0, 0 };//脙驴赂枚路陆脧貌碌脛脨脗3赂枚脢媒,麓贸脫脷碌脠脫脷2脣碌脙梅驴脡脛脺脫脨禄卯脠媒
 
-    int32_t fourPos = -1;//这一步棋形成的冲四的防守点
+    int32_t fourPos = -1;//脮芒脪禄虏陆脝氓脨脦鲁脡碌脛鲁氓脣脛碌脛路脌脢脴碌茫
     auto addandcheck = [&](int t, int y, int x)
     {
       bstonecount[t][y][x]++;
       auto bsc = bstonecount[t][y][x];
      // cout <<int(bsc)<<" ";
-        if (bsc > 5 && bsc % 6 == 5)isForbidden = true;//长连
+        if (bsc > 5 && bsc % 6 == 5)isForbidden = true;//鲁陇脕卢
       if (wstonecount[t][y][x] % 6 != 0 || bsc <= 2 || bsc > 5)return;
       if (bsc == 3)
       {
@@ -1105,7 +1105,7 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
           auto anotherFourPos = findEmptyPos(t, y, x);
           if (anotherFourPos != fourPos)
           {
-            //检查是否是活四
+            //录矛虏茅脢脟路帽脢脟禄卯脣脛
               if (lifeFour)isForbidden = true;
               else
               {
@@ -1165,7 +1165,7 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
       addandcheck(3, y1, x1);
     }
 
-    //只检查33,因为 44 长连都检查了
+    //脰禄录矛虏茅33,脪貌脦陋 44 鲁陇脕卢露录录矛虏茅脕脣
     if (!isForbidden)
     {
       int maybeLife3 = 0;
@@ -1184,7 +1184,7 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
       }
     }
 
-    //恢复原样
+    //禄脰赂麓脭颅脩霉
     board[y][x] = 0;
     addNeighborSix(y, x, p, -6);
     auto subandcheck = [&](int t, int y, int x)
@@ -1233,7 +1233,7 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
 
 
     if (five)isForbidden = fiveForbidden;
-    //注：活三判断的时候调用这个函数，fiveForbidden=true。连五当然不是禁手，但是这个函数只会在活三判断中调用，活三下一手是活四，如果活四同时生成五则不是活四，把连五当做禁手刚好可以让活四的判断变成正确的
+    //脳垄拢潞禄卯脠媒脜脨露脧碌脛脢卤潞貌碌梅脫脙脮芒赂枚潞炉脢媒拢卢fiveForbidden=true隆拢脕卢脦氓碌卤脠禄虏禄脢脟陆没脢脰拢卢碌芦脢脟脮芒赂枚潞炉脢媒脰禄禄谩脭脷禄卯脠媒脜脨露脧脰脨碌梅脫脙拢卢禄卯脠媒脧脗脪禄脢脰脢脟禄卯脣脛拢卢脠莽鹿没禄卯脣脛脥卢脢卤脡煤鲁脡脦氓脭貌虏禄脢脟禄卯脣脛拢卢掳脩脕卢脦氓碌卤脳枚陆没脢脰赂脮潞脙驴脡脪脭脠脙禄卯脣脛碌脛脜脨露脧卤盲鲁脡脮媒脠路碌脛
 
 
    // print();
@@ -1242,17 +1242,17 @@ bool VCFsolver::isForbiddenMove(int y, int x,bool fiveForbidden)//检查禁手
 
 
 }
-bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
+bool VCFsolver::checkLife3(int y, int x, int t)//录矛虏茅脢脟路帽脢脟禄卯脠媒
 {
-  //前提是已经落子并且stonecount计数了
+  //脟掳脤谩脢脟脪脩戮颅脗盲脳脫虏垄脟脪stonecount录脝脢媒脕脣
   auto p = forbiddenSide;
   auto stonecount = (p == C_MY) ? mystonecount : oppstonecount;
   auto ostonecount = (p == C_MY) ? oppstonecount:mystonecount  ;
-  int16_t pos1 = -1, pos2 = -1;//两个活四点，如果只有0个或者1个则用-1填充
+  int16_t pos1 = -1, pos2 = -1;//脕陆赂枚禄卯脣脛碌茫拢卢脠莽鹿没脰禄脫脨0赂枚禄貌脮脽1赂枚脭貌脫脙-1脤卯鲁盲
 
-  int ct=0;//出现了连续几个眠三，ct=1则无活四，ct=2则1个活四点，ct=3则两个活四点
-  int ctstart=-1;//从第几个五元组开始连续出现眠三
-  //根据t和stonecount找活四点
+  int ct=0;//鲁枚脧脰脕脣脕卢脨酶录赂赂枚脙脽脠媒拢卢ct=1脭貌脦脼禄卯脣脛拢卢ct=2脭貌1赂枚禄卯脣脛碌茫拢卢ct=3脭貌脕陆赂枚禄卯脣脛碌茫
+  int ctstart=-1;//麓脫碌脷录赂赂枚脦氓脭陋脳茅驴陋脢录脕卢脨酶鲁枚脧脰脙脽脠媒
+  //赂霉戮脻t潞脥stonecount脮脪禄卯脣脛碌茫
 
   switch (t)
   {
@@ -1265,7 +1265,7 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
       int x1 = x - i;
       if (x1 < 0)break;
       if (x1 >= xsize - 4)continue;
-      //以下这段复制4遍
+      //脪脭脧脗脮芒露脦赂麓脰脝4卤茅
       int sc = stonecount[t][y1][x1];
       int osc = ostonecount[t][y1][x1];
       if (sc == 3&&(osc%6==0))
@@ -1279,17 +1279,17 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
       }
       else
       {
-        if (ct >= 2)break;//找到连续的3了
-        if (ct == 1)//孤立的一个3，忽略
+        if (ct >= 2)break;//脮脪碌陆脕卢脨酶碌脛3脕脣
+        if (ct == 1)//鹿脗脕垄碌脛脪禄赂枚3拢卢潞枚脗脭
         {
           ct = 0;
           ctstart = -1;
         }
       }
     }
-    if (ct == 2)//跳活三或者隔一个被堵住的活三
+    if (ct == 2)//脤酶禄卯脠媒禄貌脮脽赂么脪禄赂枚卤禄露脗脳隆碌脛禄卯脠媒
     {
-      //+xx+x+或+x+xx+或o+xxx++
+      //+xx+x+禄貌+x+xx+禄貌o+xxx++
       for (int i = 0; i < 4; i++)
       {
         int y1 = y ;
@@ -1306,7 +1306,7 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
         print();
       }
     }
-    else if (ct == 3)//连着的活三
+    else if (ct == 3)//脕卢脳脜碌脛禄卯脠媒
     {
       //+xxx+
       pos1 = (y)*sz + (x - ctstart + 3);
@@ -1336,17 +1336,17 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
       }
       else
       {
-        if (ct >= 2)break;//找到连续的3了
-        if (ct == 1)//孤立的一个3，忽略
+        if (ct >= 2)break;//脮脪碌陆脕卢脨酶碌脛3脕脣
+        if (ct == 1)//鹿脗脕垄碌脛脪禄赂枚3拢卢潞枚脗脭
         {
           ct = 0;
           ctstart = -1;
         }
       }
     }
-    if (ct == 2)//跳活三或者隔一个被堵住的活三
+    if (ct == 2)//脤酶禄卯脠媒禄貌脮脽赂么脪禄赂枚卤禄露脗脳隆碌脛禄卯脠媒
     {
-      //+xx+x+或+x+xx+或o+xxx++
+      //+xx+x+禄貌+x+xx+禄貌o+xxx++
       for (int i = 0; i < 4; i++)
       {
         int y1 = y - ctstart + i;
@@ -1363,7 +1363,7 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
         print();
       }
     }
-    else if (ct == 3)//连着的活三
+    else if (ct == 3)//脕卢脳脜碌脛禄卯脠媒
     {
       //+xxx+
       pos1 = (y - ctstart + 3)*sz + (x);
@@ -1394,17 +1394,17 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
       }
       else
       {
-        if (ct >= 2)break;//找到连续的3了
-        if (ct == 1)//孤立的一个3，忽略
+        if (ct >= 2)break;//脮脪碌陆脕卢脨酶碌脛3脕脣
+        if (ct == 1)//鹿脗脕垄碌脛脪禄赂枚3拢卢潞枚脗脭
         {
           ct = 0;
           ctstart = -1;
         }
       }
     }
-    if (ct == 2)//跳活三或者隔一个被堵住的活三
+    if (ct == 2)//脤酶禄卯脠媒禄貌脮脽赂么脪禄赂枚卤禄露脗脳隆碌脛禄卯脠媒
     {
-      //+xx+x+或+x+xx+或o+xxx++
+      //+xx+x+禄貌+x+xx+禄貌o+xxx++
       for (int i = 0; i < 4; i++)
       {
         int y1 = y - ctstart + i;
@@ -1421,7 +1421,7 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
         print();
       }
     }
-    else if (ct == 3)//连着的活三
+    else if (ct == 3)//脕卢脳脜碌脛禄卯脠媒
     {
       //+xxx+
       pos1 = (y - ctstart + 3) * sz + (x - ctstart + 3);
@@ -1452,17 +1452,17 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
       }
       else
       {
-        if (ct >= 2)break;//找到连续的3了
-        if (ct == 1)//孤立的一个3，忽略
+        if (ct >= 2)break;//脮脪碌陆脕卢脨酶碌脛3脕脣
+        if (ct == 1)//鹿脗脕垄碌脛脪禄赂枚3拢卢潞枚脗脭
         {
           ct = 0;
           ctstart = -1;
         }
       }
     }
-    if (ct == 2)//跳活三或者隔一个被堵住的活三
+    if (ct == 2)//脤酶禄卯脠媒禄貌脮脽赂么脪禄赂枚卤禄露脗脳隆碌脛禄卯脠媒
     {
-      //+xx+x+或+x+xx+或o+xxx++
+      //+xx+x+禄貌+x+xx+禄貌o+xxx++
       for (int i = 0; i < 4; i++)
       {
         int y1 = y + ctstart - i;
@@ -1479,7 +1479,7 @@ bool VCFsolver::checkLife3(int y, int x, int t)//检查是否是活三
         print();
       }
     }
-    else if (ct == 3)//连着的活三
+    else if (ct == 3)//脕卢脳脜碌脛禄卯脠媒
     {
       //+xxx+
       pos1 = (y + ctstart - 3) * sz + (x - ctstart + 3);

@@ -203,6 +203,7 @@ struct GTPEngine {
   double analysisWideRootNoise;
   bool genmoveAntiMirror;
   bool analysisAntiMirror;
+  bool fixedBoardsize;
 
   NNEvaluator* nnEval;
   AsyncBot* bot;
@@ -233,7 +234,7 @@ struct GTPEngine {
     double dynamicPDACapPerOppLead, double staticPDA, bool staticPDAPrecedence,
     double genmoveWRN, double analysisWRN,
     bool genmoveAntiMir, bool analysisAntiMir,
-    Player persp, int pvLen
+    Player persp, int pvLen, bool fixedBS
   )
     :nnModelFile(modelFile),
      analysisPVLen(pvLen),
@@ -257,7 +258,8 @@ struct GTPEngine {
      lastSearchFactor(1.0),
      desiredDynamicPDAForWhite(0.0),
      perspective(persp),
-     genmoveTimeSum(0.0)
+     genmoveTimeSum(0.0),
+     fixedBoardsize(fixedBS)
   {
   }
 
@@ -274,7 +276,9 @@ struct GTPEngine {
   Rules getCurrentRules() {
     return currentRules;
   }
-
+  bool isFixedBoardsize() {
+    return fixedBoardsize;
+  }
   void clearStatsForNewGame() {
     //Currently nothing
   }
@@ -1229,7 +1233,7 @@ int MainCmds::gtp(const vector<string>& args) {
     cfg.contains("dynamicPlayoutDoublingAdvantageCapPerOppLead") ? cfg.getDouble("dynamicPlayoutDoublingAdvantageCapPerOppLead",0.0,0.5) : 0.045;
   double staticPlayoutDoublingAdvantage = initialParams.playoutDoublingAdvantage;
   const bool staticPDATakesPrecedence = cfg.contains("playoutDoublingAdvantage") && !cfg.contains("dynamicPlayoutDoublingAdvantageCapPerOppLead");
-
+  const bool fixedBoardsize = cfg.contains("fixedBoardsize") ? cfg.getBool("fixedBoardsize") : true;
   int defaultBoardXSize = -1;
   int defaultBoardYSize = -1;
   Setup::loadDefaultBoardXYSize(cfg,logger,defaultBoardXSize,defaultBoardYSize);
@@ -1256,7 +1260,7 @@ int MainCmds::gtp(const vector<string>& args) {
     staticPlayoutDoublingAdvantage,staticPDATakesPrecedence,
     genmoveWideRootNoise,analysisWideRootNoise,
     genmoveAntiMirror,analysisAntiMirror,
-    perspective,analysisPVLen
+    perspective,analysisPVLen,fixedBoardsize
   );
   engine->setOrResetBoardSize(cfg,logger,seedRand,defaultBoardXSize,defaultBoardYSize,loggingToStderr);
 
@@ -1441,8 +1445,11 @@ int MainCmds::gtp(const vector<string>& args) {
       else if(newXSize > Board::MAX_LEN || newYSize > Board::MAX_LEN) {
         responseIsError = true;
         response = Global::strprintf("unacceptable size (Board::MAX_LEN is %d, consider increasing and recompiling)",(int)Board::MAX_LEN);
-      }
-      else {
+      } else {
+	// check the boardsize
+	if (engine->isFixedBoardsize()) {
+	    assert(newXSize == Board::MAX_LEN && newYSize == Board::MAX_LEN);
+	}
         engine->setOrResetBoardSize(cfg,logger,seedRand,newXSize,newYSize,loggingToStderr);
       }
     }

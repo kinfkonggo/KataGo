@@ -11,7 +11,20 @@
 #define FREESTYLE 0  // freestyle rule, 6 is win
 #define STANDARD 1   // standard rule, 6 is not win
 #define RENJU 2      // renju mode
+
+#ifdef USE_RULE_RENJU
 #define RULE RENJU
+#endif
+#ifdef USE_RULE_FREESTYLE
+#define RULE FREESTYLE
+#endif
+#ifdef USE_RULE_STANDARD
+#define RULE STANDARD
+#endif
+#ifndef RULE
+#define RULE RENJU
+#endif
+
 
 #if(RULE < 0 || RULE > 2)
 static_assert(false,"rule must be 1, 2, 3");

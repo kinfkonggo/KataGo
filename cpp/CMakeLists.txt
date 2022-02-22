@@ -26,9 +26,15 @@ endif()
 #--------------------------- CMAKE VARIABLES (partly for Cmake GUI) ----------------------------------------------------
 
 set(BUILD_DISTRIBUTED 0 CACHE BOOL "Build with http support for contributing to distributed training")
+set(USE_RULE CACHE STRING "Build with the gomoku rule")
+set(USE_BOARDSIZE 15 CACHE STRING "Build with the gomoku boardsize")
 set(USE_BACKEND CACHE STRING "Neural net backend")
 string(TOUPPER "${USE_BACKEND}" USE_BACKEND)
+string(TOUPPER "${USE_RULE}" USE_RULE)
+string(TOUPPER "${USE_BOARDSIZE}" USE_BOARDSIZE)
 set_property(CACHE USE_BACKEND PROPERTY STRINGS "" CUDA TENSORRT OPENCL EIGEN)
+set_property(CACHE USE_RULE PROPERTY STRINGS "" FREESTYLE STANDARD RENJU)
+set_property(CACHE USE_BOARDSIZE PROPERTY STRINGS "" 12 13 14 15 20 25)
 
 set(USE_TCMALLOC 0 CACHE BOOL "Use TCMalloc")
 set(NO_GIT_REVISION 0 CACHE BOOL "Disable embedding the git revision into the compiled exe")
@@ -83,8 +89,19 @@ elseif(USE_BACKEND STREQUAL "")
 else()
   message(FATAL_ERROR "Unrecognized backend: " ${USE_BACKEND})
 endif()
-
-
+if(USE_RULE STREQUAL "FREESTYLE")
+   message(STATUS "-DUSE_RULE=FREESTYLE, using FREESTYLE RULE")
+   add_compile_definitions(USE_RULE_FREESTYLE)
+endif()
+if(USE_RULE STREQUAL "STANDARD")
+   message(STATUS "-DUSE_RULE=STANDARD, using STANDARD RULE")
+   add_compile_definitions(USE_RULE_STANDARD)
+endif()
+if(USE_RULE STREQUAL "RENJU")
+   message(STATUS "-DUSE_RULE=RENJU, using RENJU RULE")
+   add_compile_definitions(USE_RULE_RENJU)
+endif()
+add_compile_definitions(COMPILE_MAX_BOARD_LEN=${USE_BOARDSIZE})
 #--------------------------- TCMALLOC ----------------------------------------------------------------------------------
 
 if(USE_TCMALLOC)
