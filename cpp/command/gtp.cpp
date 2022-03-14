@@ -628,7 +628,7 @@ struct GTPEngine {
           out << " winrate " << winrate;
           out << " scoreMean " << drawrate;
           out << " scoreStdev " << data.scoreStdev;
-          out << " scoreLead " << lead;
+          out << " scoreLead " << drawrate;
           out << " scoreSelfplay " << scoreMean;
           out << " prior " << data.policyPrior;
           out << " lcb " << lcb;
